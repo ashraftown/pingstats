@@ -4,6 +4,8 @@ A lightweight macOS menu bar application that continuously monitors network late
 
 ## Features
 
+![Screenshot](Screenshot.png)
+
 ### Menu Bar Icon
 - **Dynamic colored indicator**: Shows current network status at a glance
   - 🟢 Green: < 50ms (excellent)
