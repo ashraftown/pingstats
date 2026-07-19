@@ -21,39 +21,31 @@ fi
 mkdir -p "$(dirname "${OUTPUT_DMG}")"
 rm -f "${OUTPUT_DMG}"
 
-# Stage install layout: app + Applications shortcut
+# Stage only the app. create-dmg --app-drop-link adds the Applications shortcut.
 cp -R "${APP_PATH}" "${STAGE_DIR}/PingMenuBar.app"
-ln -s /Applications "${STAGE_DIR}/Applications"
 
 if command -v create-dmg >/dev/null 2>&1; then
-  # Pretty Finder window: app on the left, Applications on the right
-  create-dmg \
-    --volname "${VOLUME_NAME}" \
-    --volicon "${STAGE_DIR}/PingMenuBar.app/Contents/Resources/AppIcon.icns" \
-    --window-pos 200 120 \
-    --window-size 660 400 \
-    --icon-size 100 \
-    --icon "PingMenuBar.app" 160 180 \
-    --hide-extension "PingMenuBar.app" \
-    --app-drop-link 480 180 \
-    --no-internet-enable \
-    "${OUTPUT_DMG}" \
-    "${STAGE_DIR}" || {
-      # create-dmg exits non-zero if the volume icon is missing; retry without it
-      create-dmg \
-        --volname "${VOLUME_NAME}" \
-        --window-pos 200 120 \
-        --window-size 660 400 \
-        --icon-size 100 \
-        --icon "PingMenuBar.app" 160 180 \
-        --hide-extension "PingMenuBar.app" \
-        --app-drop-link 480 180 \
-        --no-internet-enable \
-        "${OUTPUT_DMG}" \
-        "${STAGE_DIR}"
-    }
+  CREATE_DMG_ARGS=(
+    --volname "${VOLUME_NAME}"
+    --window-pos 200 120
+    --window-size 660 400
+    --icon-size 100
+    --icon "PingMenuBar.app" 160 180
+    --hide-extension "PingMenuBar.app"
+    --app-drop-link 480 180
+    --no-internet-enable
+  )
+
+  # Optional volume icon only if the built app actually embeds one
+  ICNS="${STAGE_DIR}/PingMenuBar.app/Contents/Resources/AppIcon.icns"
+  if [[ -f "${ICNS}" ]]; then
+    CREATE_DMG_ARGS+=(--volicon "${ICNS}")
+  fi
+
+  create-dmg "${CREATE_DMG_ARGS[@]}" "${OUTPUT_DMG}" "${STAGE_DIR}"
 else
   echo "create-dmg not found; using hdiutil fallback (no custom window layout)" >&2
+  ln -s /Applications "${STAGE_DIR}/Applications"
   hdiutil create \
     -volname "${VOLUME_NAME}" \
     -srcfolder "${STAGE_DIR}" \
