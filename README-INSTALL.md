@@ -1,50 +1,16 @@
-# Installing PingMenuBar to Launch on Startup
+# Install notes
 
-## Quick Method (Recommended)
+Prefer the main [README](README.md):
 
-1. **Build the app** in Xcode (press Cmd+B)
+- **DMG** from GitHub Releases (drag to Applications)
+- Or build **Release** in Xcode and copy `PingMenuBar.app` to `/Applications`
+- **Open at Login** from the app popup (recommended)
 
-2. **Run the install script**:
-   ```bash
-   ./install-launch-agent.sh
-   ```
+## Optional LaunchAgent script
 
-This will:
-- Copy the app to /Applications
-- Create a launch agent to start it automatically on login
-- Launch the app immediately
-
-## Manual Method
-
-1. **Build the app** in Xcode (Cmd+B)
-
-2. **Find the built app**:
-   ```bash
-   open ~/Library/Developer/Xcode/DerivedData/PingMenuBar-*/Build/Products/Debug/
-   ```
-
-3. **Copy to Applications**:
-   - Drag `PingMenuBar.app` to your Applications folder
-
-4. **Add to Login Items**:
-   - Open **System Settings**
-   - Go to **General → Login Items**
-   - Click the **+** button
-   - Select **PingMenuBar** from Applications
-   - Done!
-
-## Uninstalling Auto-Launch
-
-If you used the script:
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.example.PingMenuBar.plist
-rm ~/Library/LaunchAgents/com.example.PingMenuBar.plist
+./install-launch-agent.sh
 ```
 
-If you used Login Items:
-- Go to **System Settings → General → Login Items**
-- Select PingMenuBar and click the **-** button
-
-## Testing
-
-After installation, log out and log back in. The ping menu bar icon should appear automatically!
+This copies a DerivedData build into `/Applications` and registers a LaunchAgent.  
+Do **not** enable both the LaunchAgent and the in-app **Open at Login** checkbox.

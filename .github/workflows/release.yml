@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version label for the artifact (e.g. 1.0.0). Used when not building a tag."
+        required: false
+        default: "dev"
+
+permissions:
+  contents: write
+
+jobs:
+  build-dmg:
+    name: Build macOS DMG
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app
+          xcodebuild -version
+
+      - name: Resolve version
+        id: meta
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="${{ github.event.inputs.version || 'dev' }}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "dmg_name=PingMenuBar-${VERSION}.dmg" >> "$GITHUB_OUTPUT"
+
+      - name: Build Release
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project PingMenuBar.xcodeproj \
+            -scheme PingMenuBar \
+            -configuration Release \
+            -derivedDataPath .build \
+            -destination "platform=macOS" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+          APP_PATH=".build/Build/Products/Release/PingMenuBar.app"
+          test -d "${APP_PATH}"
+          echo "APP_PATH=${APP_PATH}" >> "$GITHUB_ENV"
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Create DMG
+        run: |
+          set -euo pipefail
+          chmod +x scripts/create-dmg.sh
+          mkdir -p dist
+          ./scripts/create-dmg.sh "${APP_PATH}" "dist/${{ steps.meta.outputs.dmg_name }}"
+          # Also keep a stable name for convenience
+          cp "dist/${{ steps.meta.outputs.dmg_name }}" dist/PingMenuBar.dmg
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.dmg_name }}
+          path: |
+            dist/${{ steps.meta.outputs.dmg_name }}
+            dist/PingMenuBar.dmg
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/${{ steps.meta.outputs.dmg_name }}
+            dist/PingMenuBar.dmg
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

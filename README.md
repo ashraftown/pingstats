@@ -1,100 +1,158 @@
+<div align="center">
+
 # PingMenuBar
 
-A lightweight macOS menu bar application that continuously monitors network latency with real-time visual feedback.
+**A tiny macOS menu bar app for live network latency.**
+
+Glanceable RTT in your menu bar · rolling min/avg/max · pinable popup · open at login
+
+[![macOS 13+](https://img.shields.io/badge/macOS-13%2B-black?style=flat-square&logo=apple)](#requirements)
+[![Swift](https://img.shields.io/badge/Swift-5-F05138?style=flat-square&logo=swift&logoColor=white)](#build-from-source)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+[![Release](https://img.shields.io/badge/release-DMG-blue?style=flat-square)](#install)
+
+<br />
+
+<img src="Screenshot.png" alt="PingMenuBar screenshot" width="420" />
+
+<br />
+
+**Drag · Drop · Done** — release DMGs use the classic Applications install layout.
+
+</div>
+
+---
 
 ## Features
 
-![Screenshot](Screenshot.png)
+| | |
+|---|---|
+| **Menu bar** | Latest ping (ms) with color: green &lt;50 · yellow &lt;100 · orange &lt;200 · red ≥200 |
+| **Popup** | Latest, min/avg/max, resolved IP, live bar graph |
+| **Host** | Any IP or hostname (default `8.8.8.8`) |
+| **Interval** | 1s / 2s / 5s / 10s / 30s (persisted) |
+| **Pin** | Keep the popup open while you work elsewhere |
+| **Open at Login** | System Login Items via `SMAppService` |
+| **Quiet** | `LSUIElement` — no Dock icon |
 
-### Menu Bar Icon
-- **Dynamic colored indicator**: Shows current network status at a glance
-  - 🟢 Green: < 50ms (excellent)
-  - 🟡 Yellow: 50-100ms (good)
-  - 🟠 Orange: 100-200ms (fair)
-  - 🔴 Red: > 200ms (poor)
-  - ⚪ Gray: Not connected
-- **30-second rolling average**: Displays the average ping time over the last 30 seconds
-- **Compact design**: Minimal space usage in your menu bar
+---
 
-### Popup Interface
-- **Real-time statistics**: Latest ping, Min/Avg/Max over 30 seconds
-- **DNS resolution**: Automatically resolves domain names to IP addresses
-- **Live graph**: Visual history of the last 30 pings with color-coded bars
-- **Connection status**: Clear indication of connectivity state
-- **Custom host support**: Ping any hostname or IP address
+## Install
 
-### Auto-Start
-- Automatically begins pinging 8.8.8.8 (Google DNS) on launch
-- Runs silently in the background
-- Hidden from Dock for a clean desktop experience
+### DMG (recommended)
+
+1. Download **`PingMenuBar-*.dmg`** from the repo **Releases** page
+2. Open the DMG
+3. Drag **PingMenuBar** onto **Applications**
+4. Launch from Applications (or Spotlight)
+5. Optional: open the popup → enable **Open at Login**
+
+> **Gatekeeper note:** CI builds are unsigned. First launch may require  
+> **Right-click → Open**, or **System Settings → Privacy & Security → Open Anyway**.
+
+### Build from source
+
+```bash
+git clone <your-fork-or-repo-url>.git
+cd pingmenubar
+open PingMenuBar.xcodeproj
+```
+
+In Xcode: scheme **PingMenuBar**, configuration **Release**, then **Product → Build** (⌘B).
+
+Copy:
+
+```text
+~/Library/Developer/Xcode/DerivedData/PingMenuBar-*/Build/Products/Release/PingMenuBar.app
+```
+
+into `/Applications`.
+
+---
 
 ## Usage
 
-### Basic Operation
-1. **View status**: The menu bar icon shows your current network latency
-2. **Open popup**: Click the icon to see detailed statistics and graph
-3. **Change host**: Enter a different hostname or IP address and click "Ping"
-4. **Stop pinging**: Click "Stop" to pause monitoring
-5. **Quit**: Click the X button to exit the application
+1. **Menu bar** — latest RTT + status color  
+2. **Click icon** — popup with stats, graph, host & interval  
+3. **Click outside** — dismiss (or use **pin** to keep open)  
+4. **Stop → edit host → Start** — change target  
+5. **Every** — change ping interval  
+6. **Open at Login** — bottom-left checkbox  
+7. **Quit PingMenuBar** — bottom-right  
 
-### Supported Hosts
-- IP addresses: `8.8.8.8`, `1.1.1.1`, etc.
-- Domain names: `google.com`, `github.com`, etc. (automatically resolved to IP)
+---
 
-## Installation
+## How it works
 
-### Build from Source
-1. Open `PingMenuBar.xcodeproj` in Xcode
-2. Build the project (Cmd+B)
-3. Run the app (Cmd+R)
+- Shells out to `/sbin/ping -c 1` and parses `time=… ms` (same numbers as Terminal)
+- Menu bar shows the **latest** sample; popup keeps **min/avg/max** over the last 30 successes
+- Sandbox is **off** so `ping` can run
+- Requires **macOS 13+**
 
-### Launch on Startup (Optional)
-Run the included installation script:
+---
+
+## Releases (DMG via GitHub Actions)
+
+Pushing a version tag builds a **drag-to-Applications** DMG on `macos-14` and attaches it to a GitHub Release:
+
 ```bash
-./install-launch-agent.sh
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
-Or manually:
-1. Build the app in Xcode
-2. Copy `PingMenuBar.app` to your Applications folder
-3. Go to **System Settings → General → Login Items**
-4. Click **+** and add PingMenuBar
+Workflow: [`.github/workflows/release.yml`](.github/workflows/release.yml)
 
-## Technical Details
+What you get in the DMG:
 
-- **Ping method**: Uses `/sbin/ping` via Process execution
-- **Update frequency**: Every 1 second
-- **History**: Stores last 30 ping results (30 seconds)
-- **DNS resolution**: Uses `getaddrinfo` for hostname lookup
-- **Sandbox**: Disabled to allow ping execution
-- **Requirements**: macOS 13.0+
+- `PingMenuBar.app` (left)
+- Shortcut to **Applications** (right) — classic “drag to install” layout via [`create-dmg`](https://github.com/create-dmg/create-dmg)
 
-## Project Structure
+You can also run the workflow manually (**Actions → Release → Run workflow**) to produce an artifact without a tag.
 
-```
-PingMenuBar/
-├── PingMenuBarApp.swift      # Main app & menu bar icon rendering
-├── ContentView.swift          # Popup UI & graph visualization
-├── PingManager.swift          # Ping logic & DNS resolution
-├── Info.plist                 # App configuration
-└── Assets.xcassets/           # App assets
-```
+Local DMG (on a Mac, after a Release build):
 
-## Uninstalling Auto-Launch
-
-If you used the install script:
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.example.PingMenuBar.plist
-rm ~/Library/LaunchAgents/com.example.PingMenuBar.plist
+brew install create-dmg   # optional but prettier layout
+./scripts/create-dmg.sh /path/to/PingMenuBar.app dist/PingMenuBar.dmg
 ```
 
-Or via System Settings:
-- **System Settings → General → Login Items**
-- Select PingMenuBar and click **-**
+---
+
+## Project layout
+
+```text
+pingmenubar/
+├── PingMenuBar/                 # App sources
+│   ├── PingMenuBarApp.swift     # App, menu bar, popup UI, login item
+│   ├── PingManager.swift        # Ping + stats
+│   ├── Assets.xcassets/
+│   ├── Info.plist
+│   └── PingMenuBar.entitlements
+├── PingMenuBar.xcodeproj/
+├── scripts/create-dmg.sh        # DMG packager
+├── .github/workflows/release.yml
+├── Screenshot.png
+├── LICENSE
+└── README.md
+```
+
+---
+
+## Credits
+
+This project started from **[MenuPIng](https://github.com/NimbleAINinja/MenuPIng)** by **[NimbleAINinja](https://github.com/NimbleAINinja)** — thank you for the original menu bar ping app and structure.
+
+PingMenuBar continues that idea with UX and packaging changes (latest-in-menu-bar, interval control, pin, open-at-login, DMG releases, and related fixes).
+
+---
+
+## Requirements
+
+- macOS **13.0** or later  
+- Xcode **15+** to build from source  
+
+---
 
 ## License
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
+[MIT](LICENSE) — see the license file for full terms. Original MenuPIng work is credited above; this repository is also under MIT.
