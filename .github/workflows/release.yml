@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Select Xcode
         run: |
@@ -47,7 +47,7 @@ jobs:
             -scheme PingMenuBar \
             -configuration Release \
             -derivedDataPath .build \
-            -destination "platform=macOS" \
+            -destination "platform=macOS,arch=arm64" \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
@@ -55,10 +55,17 @@ jobs:
 
           APP_PATH=".build/Build/Products/Release/PingMenuBar.app"
           test -d "${APP_PATH}"
+          # Confirm app icon was compiled into the bundle
+          test -f "${APP_PATH}/Contents/Resources/AppIcon.icns" \
+            || ls -la "${APP_PATH}/Contents/Resources/"
           echo "APP_PATH=${APP_PATH}" >> "$GITHUB_ENV"
 
       - name: Install create-dmg
-        run: brew install create-dmg
+        run: |
+          set -euo pipefail
+          # Quiet preinstalled untrusted taps on GitHub runners (Homebrew tap-trust noise)
+          brew untap aws/tap 2>/dev/null || true
+          brew install create-dmg
 
       - name: Create DMG
         run: |
@@ -70,7 +77,7 @@ jobs:
           cp "dist/${{ steps.meta.outputs.dmg_name }}" dist/PingMenuBar.dmg
 
       - name: Upload DMG artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.meta.outputs.dmg_name }}
           path: |
@@ -79,7 +86,7 @@ jobs:
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             dist/${{ steps.meta.outputs.dmg_name }}

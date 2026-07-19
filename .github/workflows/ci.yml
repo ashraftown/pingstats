@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build macOS
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app
+          xcodebuild -version
+
+      - name: Build Release
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project PingMenuBar.xcodeproj \
+            -scheme PingMenuBar \
+            -configuration Release \
+            -derivedDataPath .build \
+            -destination "platform=macOS,arch=arm64" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+          APP_PATH=".build/Build/Products/Release/PingMenuBar.app"
+          test -d "${APP_PATH}"
+          test -f "${APP_PATH}/Contents/Resources/AppIcon.icns" \
+            || ls -la "${APP_PATH}/Contents/Resources/"
