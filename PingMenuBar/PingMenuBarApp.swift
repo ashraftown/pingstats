@@ -8,7 +8,13 @@ struct PingMenuBarApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
   var body: some Scene {
-    Settings {
+    // SwiftUI requires at least one Scene. Do **not** use `Settings { … }` —
+    // that creates a real “Ping Menu Bar Settings” window on launch.
+    // A never-inserted MenuBarExtra satisfies the protocol without UI;
+    // the actual status item + popover are owned by AppDelegate.
+    MenuBarExtra(isInserted: .constant(false)) {
+      EmptyView()
+    } label: {
       EmptyView()
     }
   }
@@ -104,6 +110,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.accessory)
+
+    // Menu-bar-only app: dismiss any Scene-created windows (e.g. leftover Settings).
+    for window in NSApp.windows {
+      window.close()
+    }
 
     popoverCoordinator.appDelegate = self
 
