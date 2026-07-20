@@ -1,12 +1,31 @@
 # Install notes
 
-Prefer the main [README](README.md):
+Prefer the main [README](README.md).
 
-- **DMG** from GitHub Releases (drag to Applications)
-- **First open:** double-click **Open PingMenuBar** on the DMG (unsigned builds)
-- Fallback: `xattr -cr /Applications/PingMenuBar.app && open /Applications/PingMenuBar.app`
-- Or build **Release** in Xcode and copy `PingMenuBar.app` to `/Applications`
-- **Open at Login** from the app popup (recommended)
+## DMG (unsigned release)
+
+1. Drag **PingMenuBar** to Applications  
+2. Open Terminal and run:
+
+```bash
+xattr -cr /Applications/PingMenuBar.app && open /Applications/PingMenuBar.app
+```
+
+Or, with the DMG still mounted:
+
+```bash
+bash "/Volumes/PingMenuBar/install.sh"
+```
+
+Do **not** double-click the app or `install.sh` for the first open — Gatekeeper blocks both the same way.
+
+## Build from source
+
+Build **Release** in Xcode and copy `PingMenuBar.app` to `/Applications`.
+
+## Open at Login
+
+Use the in-app **Open at Login** checkbox (recommended).
 
 ## Optional LaunchAgent script
 
