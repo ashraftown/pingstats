@@ -106,6 +106,7 @@ What you get in the DMG:
 
 - `PingMenuBar.app` (left)
 - Shortcut to **Applications** (right) — classic “drag to install” layout via [`create-dmg`](https://github.com/create-dmg/create-dmg)
+- Custom Finder background with **Click & Drag to Install** guidance (`assets/dmg-background.png`)
 
 You can also run the workflow manually (**Actions → Release → Run workflow**) to produce an artifact without a tag.
 
@@ -129,6 +130,9 @@ pingmenubar/
 │   ├── Info.plist
 │   └── PingMenuBar.entitlements
 ├── PingMenuBar.xcodeproj/
+├── assets/
+│   ├── dmg-background.png       # Finder window background (1x)
+│   └── dmg-background@2x.png    # Retina source
 ├── scripts/create-dmg.sh        # DMG packager
 ├── .github/workflows/release.yml
 ├── Screenshot.png

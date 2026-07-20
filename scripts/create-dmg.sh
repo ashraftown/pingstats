@@ -36,6 +36,14 @@ if command -v create-dmg >/dev/null 2>&1; then
     --no-internet-enable
   )
 
+  # Custom Finder background with “Click & Drag to Install” guidance
+  BACKGROUND="${ROOT_DIR}/assets/dmg-background.png"
+  if [[ -f "${BACKGROUND}" ]]; then
+    CREATE_DMG_ARGS+=(--background "${BACKGROUND}")
+  else
+    echo "Warning: DMG background not found at ${BACKGROUND}" >&2
+  fi
+
   # Optional volume icon only if the built app actually embeds one
   ICNS="${STAGE_DIR}/PingMenuBar.app/Contents/Resources/AppIcon.icns"
   if [[ -f "${ICNS}" ]]; then
