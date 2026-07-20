@@ -33,18 +33,20 @@ cp -R "${APP_PATH}" "${STAGE_DIR}/PingMenuBar.app"
 cp "${HOWTO_SRC}" "${STAGE_DIR}/${HOWTO_NAME}"
 
 if command -v create-dmg >/dev/null 2>&1; then
-  # Layout:
+  # Layout (matches assets/dmg-background.png 660×500):
   #   [App] ----→ [Applications]
-  #   [How to Open]
+  #        [How to Open]
+  # Leave room under the guide icon for the Finder label so it is not clipped.
   CREATE_DMG_ARGS=(
     --volname "${VOLUME_NAME}"
-    --window-pos 200 120
-    --window-size 660 420
-    --icon-size 100
-    --icon "PingMenuBar.app" 160 150
+    --window-pos 200 100
+    --window-size 660 500
+    --icon-size 96
+    --icon "PingMenuBar.app" 160 190
     --hide-extension "PingMenuBar.app"
-    --app-drop-link 480 150
-    --icon "${HOWTO_NAME}" 320 320
+    --app-drop-link 500 190
+    --icon "${HOWTO_NAME}" 330 390
+    --hide-extension "${HOWTO_NAME}"
     --no-internet-enable
   )
 
