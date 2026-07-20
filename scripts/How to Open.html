@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>How to open PingMenuBar</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 34rem;
+      margin: 2.5rem auto;
+      padding: 0 1.25rem;
+    }
+    h1 { font-size: 1.35rem; font-weight: 650; margin: 0 0 0.75rem; }
+    p, li { color: inherit; }
+    ol { padding-left: 1.25rem; }
+    li { margin: 0.55rem 0; }
+    .note {
+      margin-top: 1.5rem;
+      padding: 0.85rem 1rem;
+      border-radius: 10px;
+      background: color-mix(in srgb, CanvasText 8%, Canvas);
+    }
+    a.button {
+      display: inline-block;
+      margin: 0.35rem 0.5rem 0.35rem 0;
+      padding: 0.55rem 0.9rem;
+      border-radius: 8px;
+      background: #0071e3;
+      color: #fff !important;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    a.button:hover { filter: brightness(1.06); }
+    a.secondary {
+      color: #0071e3;
+    }
+    code {
+      font: 0.92em/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>How to open PingMenuBar</h1>
+  <p>
+    This build is not notarized by Apple, so macOS blocks it the first time with
+    <em>“Apple could not verify…”</em>. That warning cannot be removed without an
+    Apple Developer account. Allow the app once in <strong>Privacy &amp; Security</strong>.
+  </p>
+
+  <ol>
+    <li>Drag <strong>PingMenuBar</strong> to the <strong>Applications</strong> folder.</li>
+    <li>
+      Open <strong>PingMenuBar</strong> from Applications once.
+      When the warning appears, click <strong>Done</strong>
+      (this makes the allow control show up in Settings).
+    </li>
+    <li>
+      Open Privacy &amp; Security settings:
+      <div>
+        <a class="button" href="x-apple.systempreferences:com.apple.preference.security">Open Privacy &amp; Security</a>
+      </div>
+      <p style="margin: 0.4rem 0 0; font-size: 0.92rem; opacity: 0.85;">
+        If that button does nothing, try
+        <a class="secondary" href="x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension">this alternate link</a>,
+        or open <strong>System Settings → Privacy &amp; Security</strong> yourself.
+      </p>
+    </li>
+    <li>
+      Scroll down to the message about PingMenuBar and click
+      <strong>Open Anyway</strong>. Confirm if asked.
+    </li>
+    <li>PingMenuBar should open and appear in the menu bar. Later launches work normally.</li>
+  </ol>
+
+  <div class="note">
+    <strong>Tip:</strong> There are no install scripts on purpose — double-clicked scripts
+    are blocked the same way as the app. Allowing the app once in Privacy &amp; Security
+    is the simplest path.
+  </div>
+</body>
+</html>

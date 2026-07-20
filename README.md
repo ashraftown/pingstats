@@ -17,7 +17,7 @@ Glanceable RTT in your menu bar · rolling min/avg/max · pinable popup · open 
 
 <br />
 
-**Drag · Drop · Terminal once** — release DMGs use the classic Applications layout; first open needs a one-line Terminal command (unsigned builds).
+**Drag · Drop · Allow once** — release DMGs use the classic Applications layout; first open is allowed in Privacy & Security.
 
 </div>
 
@@ -42,24 +42,16 @@ Glanceable RTT in your menu bar · rolling min/avg/max · pinable popup · open 
 ### DMG (recommended)
 
 1. Download **`PingMenuBar-*.dmg`** from the repo **Releases** page
-2. Open the DMG and open **START HERE.txt**
+2. Open the DMG → open **How to Open** (short guide + link)
 3. Drag **PingMenuBar** onto **Applications**
-4. **First open** — paste this into **Terminal** and press Return:
+4. Open the app once (warning appears — click **Done**)
+5. Use the guide’s **Open Privacy & Security** link (or System Settings → Privacy & Security)
+6. Click **Open Anyway** for PingMenuBar
+7. Later opens work normally; optional: enable **Open at Login** in the popup
 
-```bash
-xattr -cr /Applications/PingMenuBar.app && open /Applications/PingMenuBar.app
-```
-
-5. Later opens: Applications or Spotlight as usual  
-6. Optional: enable **Open at Login** in the app popup
-
-> **Why Terminal?** Releases are **not** Apple-notarized. On modern macOS, double-clicking an  
-> unsigned download (the **app or a `.command` helper**) hits the same Gatekeeper block:  
-> *“Apple could not verify…”* with **Done** / **Move to Bin**. That dialog cannot be customized.  
-> Running `xattr` in Terminal clears quarantine once; after that, normal double-click works.
->
-> **Alternatives on the DMG:** run `bash /Volumes/PingMenuBar/install.sh`, or open  
-> **Privacy & Security** → **Open Anyway** after trying the app once.
+> Releases are **not** Apple-notarized (no Developer ID). On modern macOS the first launch  
+> shows *“Apple could not verify…”* — that system dialog cannot be customized. Allowing the  
+> app once under **Privacy & Security → Open Anyway** is the simple path (no scripts).
 
 ### Build from source
 
@@ -116,9 +108,7 @@ Workflow: [`.github/workflows/release.yml`](.github/workflows/release.yml)
 What you get in the DMG:
 
 - `PingMenuBar.app` (left) + shortcut to **Applications** (right)
-- **START HERE.txt** — first-open instructions (Terminal one-liner)
-- **install.sh** — optional installer; run via Terminal (`bash …`), not double-click
-- **Privacy & Security.webloc** — jumps to System Settings for **Open Anyway**
+- **How to Open.html** — first-open steps + link into Privacy & Security
 - Custom Finder background (`assets/dmg-background.png`) via [`create-dmg`](https://github.com/create-dmg/create-dmg)
 
 You can also run the workflow manually (**Actions → Release → Run workflow**) to produce an artifact without a tag.
@@ -147,10 +137,8 @@ pingmenubar/
 │   ├── dmg-background.png       # Finder window background (1x)
 │   └── dmg-background@2x.png    # Retina source
 ├── scripts/
-│   ├── create-dmg.sh                # DMG packager
-│   ├── START HERE.txt               # First-open instructions (staged into DMG)
-│   ├── install.sh                   # Terminal installer (staged into DMG)
-│   └── Privacy & Security.webloc    # Opens Privacy & Security settings
+│   ├── create-dmg.sh          # DMG packager
+│   └── How to Open.html       # First-open guide (staged into DMG)
 ├── .github/workflows/release.yml
 ├── Screenshot.png
 ├── LICENSE

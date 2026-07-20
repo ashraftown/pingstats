@@ -7,14 +7,8 @@ APP_PATH="${1:-}"
 OUTPUT_DMG="${2:-${ROOT_DIR}/dist/PingMenuBar.dmg}"
 VOLUME_NAME="PingMenuBar"
 STAGE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/pingmenubar-dmg.XXXXXX")"
-
-# Staged helpers (unsigned builds cannot rely on double-click; see START HERE.txt)
-START_SRC="${ROOT_DIR}/scripts/START HERE.txt"
-INSTALL_SRC="${ROOT_DIR}/scripts/install.sh"
-WEBLOC_SRC="${ROOT_DIR}/scripts/Privacy & Security.webloc"
-START_NAME="START HERE.txt"
-INSTALL_NAME="install.sh"
-WEBLOC_NAME="Privacy & Security.webloc"
+HOWTO_SRC="${ROOT_DIR}/scripts/How to Open.html"
+HOWTO_NAME="How to Open.html"
 
 cleanup() {
   rm -rf "${STAGE_DIR}"
@@ -26,41 +20,31 @@ if [[ -z "${APP_PATH}" || ! -d "${APP_PATH}" ]]; then
   exit 1
 fi
 
-for required in "${START_SRC}" "${INSTALL_SRC}" "${WEBLOC_SRC}"; do
-  if [[ ! -f "${required}" ]]; then
-    echo "Missing DMG helper file: ${required}" >&2
-    exit 1
-  fi
-done
+if [[ ! -f "${HOWTO_SRC}" ]]; then
+  echo "Missing first-open guide: ${HOWTO_SRC}" >&2
+  exit 1
+fi
 
 mkdir -p "$(dirname "${OUTPUT_DMG}")"
 rm -f "${OUTPUT_DMG}"
 
-# Stage app + first-open docs/helpers.
+# Stage app + simple first-open guide (no scripts — Gatekeeper blocks those too).
 cp -R "${APP_PATH}" "${STAGE_DIR}/PingMenuBar.app"
-cp "${START_SRC}" "${STAGE_DIR}/${START_NAME}"
-cp "${INSTALL_SRC}" "${STAGE_DIR}/${INSTALL_NAME}"
-cp "${WEBLOC_SRC}" "${STAGE_DIR}/${WEBLOC_NAME}"
-chmod a+x "${STAGE_DIR}/${INSTALL_NAME}"
-
-# Remove obsolete helper name if present from older packaging experiments
-rm -f "${STAGE_DIR}/Open PingMenuBar.command" "${STAGE_DIR}/HOW-TO-OPEN.txt"
+cp "${HOWTO_SRC}" "${STAGE_DIR}/${HOWTO_NAME}"
 
 if command -v create-dmg >/dev/null 2>&1; then
   # Layout:
-  #   [App] ------------→ [Applications]
-  #   [START HERE]   [install.sh]   [Privacy]
+  #   [App] ----→ [Applications]
+  #   [How to Open]
   CREATE_DMG_ARGS=(
     --volname "${VOLUME_NAME}"
-    --window-pos 200 100
-    --window-size 700 480
-    --icon-size 88
-    --icon "PingMenuBar.app" 140 140
+    --window-pos 200 120
+    --window-size 660 420
+    --icon-size 100
+    --icon "PingMenuBar.app" 160 150
     --hide-extension "PingMenuBar.app"
-    --app-drop-link 520 140
-    --icon "${START_NAME}" 140 340
-    --icon "${INSTALL_NAME}" 330 340
-    --icon "${WEBLOC_NAME}" 520 340
+    --app-drop-link 480 150
+    --icon "${HOWTO_NAME}" 320 320
     --no-internet-enable
   )
 

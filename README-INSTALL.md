@@ -5,19 +5,12 @@ Prefer the main [README](README.md).
 ## DMG (unsigned release)
 
 1. Drag **PingMenuBar** to Applications  
-2. Open Terminal and run:
+2. Open the app once (warning → **Done**)  
+3. Open **How to Open** on the DMG and use **Open Privacy & Security**,  
+   or go to **System Settings → Privacy & Security**  
+4. Click **Open Anyway** for PingMenuBar  
 
-```bash
-xattr -cr /Applications/PingMenuBar.app && open /Applications/PingMenuBar.app
-```
-
-Or, with the DMG still mounted:
-
-```bash
-bash "/Volumes/PingMenuBar/install.sh"
-```
-
-Do **not** double-click the app or `install.sh` for the first open — Gatekeeper blocks both the same way.
+No install scripts — double-clicked helpers are blocked the same way as the app.
 
 ## Build from source
 
