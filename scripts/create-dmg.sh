@@ -7,6 +7,10 @@ APP_PATH="${1:-}"
 OUTPUT_DMG="${2:-${ROOT_DIR}/dist/PingMenuBar.dmg}"
 VOLUME_NAME="PingMenuBar"
 STAGE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/pingmenubar-dmg.XXXXXX")"
+HELPER_SRC="${ROOT_DIR}/scripts/Open PingMenuBar.command"
+HOWTO_SRC="${ROOT_DIR}/scripts/HOW-TO-OPEN.txt"
+HELPER_NAME="Open PingMenuBar.command"
+HOWTO_NAME="HOW-TO-OPEN.txt"
 
 cleanup() {
   rm -rf "${STAGE_DIR}"
@@ -18,21 +22,40 @@ if [[ -z "${APP_PATH}" || ! -d "${APP_PATH}" ]]; then
   exit 1
 fi
 
+if [[ ! -f "${HELPER_SRC}" ]]; then
+  echo "Missing first-open helper: ${HELPER_SRC}" >&2
+  exit 1
+fi
+
+if [[ ! -f "${HOWTO_SRC}" ]]; then
+  echo "Missing first-open notes: ${HOWTO_SRC}" >&2
+  exit 1
+fi
+
 mkdir -p "$(dirname "${OUTPUT_DMG}")"
 rm -f "${OUTPUT_DMG}"
 
-# Stage only the app. create-dmg --app-drop-link adds the Applications shortcut.
+# Stage app + first-open helper (unsigned builds hit Gatekeeper without this).
 cp -R "${APP_PATH}" "${STAGE_DIR}/PingMenuBar.app"
+cp "${HELPER_SRC}" "${STAGE_DIR}/${HELPER_NAME}"
+cp "${HOWTO_SRC}" "${STAGE_DIR}/${HOWTO_NAME}"
+chmod a+x "${STAGE_DIR}/${HELPER_NAME}"
 
 if command -v create-dmg >/dev/null 2>&1; then
+  # Layout:
+  #   [App] ----→ [Applications]
+  #   [Open helper]   [HOW-TO-OPEN]
   CREATE_DMG_ARGS=(
     --volname "${VOLUME_NAME}"
     --window-pos 200 120
-    --window-size 660 400
+    --window-size 660 460
     --icon-size 100
-    --icon "PingMenuBar.app" 160 180
+    --icon "PingMenuBar.app" 160 150
     --hide-extension "PingMenuBar.app"
-    --app-drop-link 480 180
+    --app-drop-link 480 150
+    --icon "${HELPER_NAME}" 160 340
+    --hide-extension "${HELPER_NAME}"
+    --icon "${HOWTO_NAME}" 480 340
     --no-internet-enable
   )
 

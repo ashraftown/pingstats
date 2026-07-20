@@ -1,0 +1,29 @@
+PingMenuBar — first open (unsigned release)
+==========================================
+
+macOS may block the app the first time with:
+  “Apple could not verify PingMenuBar is free of malware…”
+
+That dialog cannot be customized. Releases are not Apple-notarized.
+
+Easiest (recommended)
+---------------------
+1. Drag PingMenuBar to Applications (if you have not already).
+2. Double-click “Open PingMenuBar” on this disk.
+3. If Terminal asks to run the script, choose Open / Allow.
+4. The helper clears quarantine and launches the app.
+5. Later opens: double-click PingMenuBar in Applications as usual.
+
+If the helper is also blocked
+-----------------------------
+Open Terminal and paste:
+
+  xattr -cr /Applications/PingMenuBar.app && open /Applications/PingMenuBar.app
+
+Press Return.
+
+Manual Gatekeeper path
+----------------------
+1. Try to open PingMenuBar once (the warning appears).
+2. System Settings → Privacy & Security.
+3. Scroll down and click Open Anyway for PingMenuBar.

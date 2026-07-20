@@ -17,7 +17,7 @@ Glanceable RTT in your menu bar · rolling min/avg/max · pinable popup · open 
 
 <br />
 
-**Drag · Drop · Done** — release DMGs use the classic Applications install layout.
+**Drag · Drop · Open** — release DMGs use the classic Applications install layout, plus a first-open helper for Gatekeeper.
 
 </div>
 
@@ -44,11 +44,23 @@ Glanceable RTT in your menu bar · rolling min/avg/max · pinable popup · open 
 1. Download **`PingMenuBar-*.dmg`** from the repo **Releases** page
 2. Open the DMG
 3. Drag **PingMenuBar** onto **Applications**
-4. Launch from Applications (or Spotlight)
-5. Optional: open the popup → enable **Open at Login**
+4. **First open:** double-click **Open PingMenuBar** on the same DMG  
+   (clears macOS quarantine on the unsigned build, then launches the app)
+5. Later opens: launch from Applications or Spotlight as usual
+6. Optional: open the popup → enable **Open at Login**
 
-> **Gatekeeper note:** CI builds are unsigned. First launch may require  
-> **Right-click → Open**, or **System Settings → Privacy & Security → Open Anyway**.
+> **Why the extra step?** Release builds are **not** Apple-notarized (no Developer ID).  
+> On modern macOS, double-clicking an unsigned download often only shows  
+> *“Apple could not verify…”* with **Done** / **Move to Bin** — even with Right-click → Open.  
+> That system dialog cannot be customized. The DMG helper is the practical workaround.
+>
+> **If “Open PingMenuBar” is also blocked**, paste this in Terminal:
+>
+> ```bash
+> xattr -cr /Applications/PingMenuBar.app && open /Applications/PingMenuBar.app
+> ```
+>
+> Or: try opening the app once → **System Settings → Privacy & Security → Open Anyway**.
 
 ### Build from source
 
@@ -104,9 +116,10 @@ Workflow: [`.github/workflows/release.yml`](.github/workflows/release.yml)
 
 What you get in the DMG:
 
-- `PingMenuBar.app` (left)
-- Shortcut to **Applications** (right) — classic “drag to install” layout via [`create-dmg`](https://github.com/create-dmg/create-dmg)
-- Custom Finder background with **Click & Drag to Install** guidance (`assets/dmg-background.png`)
+- `PingMenuBar.app` (left) + shortcut to **Applications** (right)
+- **Open PingMenuBar** — first-open helper (clears quarantine, then launches)
+- **HOW-TO-OPEN.txt** — short Gatekeeper notes / Terminal fallback
+- Custom Finder background (`assets/dmg-background.png`) via [`create-dmg`](https://github.com/create-dmg/create-dmg)
 
 You can also run the workflow manually (**Actions → Release → Run workflow**) to produce an artifact without a tag.
 
@@ -133,7 +146,10 @@ pingmenubar/
 ├── assets/
 │   ├── dmg-background.png       # Finder window background (1x)
 │   └── dmg-background@2x.png    # Retina source
-├── scripts/create-dmg.sh        # DMG packager
+├── scripts/
+│   ├── create-dmg.sh              # DMG packager
+│   ├── Open PingMenuBar.command   # First-open helper (staged into DMG)
+│   └── HOW-TO-OPEN.txt            # Gatekeeper notes (staged into DMG)
 ├── .github/workflows/release.yml
 ├── Screenshot.png
 ├── LICENSE
