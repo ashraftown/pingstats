@@ -4,12 +4,12 @@ import ServiceManagement
 import SwiftUI
 
 @main
-struct PingMenuBarApp: App {
+struct PingStatsApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
   var body: some Scene {
     // SwiftUI requires at least one Scene. Do **not** use `Settings { … }` —
-    // that creates a real “Ping Menu Bar Settings” window on launch.
+    // that creates a real “PingStats Settings” window on launch.
     // A never-inserted MenuBarExtra satisfies the protocol without UI;
     // the actual status item + popover are owned by AppDelegate.
     MenuBarExtra(isInserted: .constant(false)) {
@@ -61,7 +61,7 @@ final class LoginItemManager: ObservableObject {
     case .notFound:
       isEnabled = false
       needsApproval = false
-      statusHint = "Move PingMenuBar to Applications, then try again"
+      statusHint = "Move PingStats to Applications, then try again"
     case .notRegistered:
       isEnabled = false
       needsApproval = false
@@ -364,7 +364,7 @@ struct ContentView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       HStack {
-        Text("PingMenuBar")
+        Text("PingStats")
           .font(.headline)
         Spacer()
         Button {
@@ -476,7 +476,7 @@ struct ContentView: View {
           Toggle("Open at Login", isOn: openAtLoginBinding)
             .toggleStyle(.checkbox)
             .controlSize(.small)
-            .help("Start PingMenuBar automatically when you log in")
+            .help("Start PingStats automatically when you log in")
 
           if loginItems.needsApproval {
             Button("Allow…") {
@@ -489,7 +489,7 @@ struct ContentView: View {
 
           Spacer()
 
-          Button("Quit PingMenuBar") {
+          Button("Quit PingStats") {
             NSApp.terminate(nil)
           }
           .buttonStyle(.bordered)

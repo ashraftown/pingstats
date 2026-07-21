@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  macos:
     name: Build macOS
     runs-on: macos-14
 
@@ -27,8 +27,8 @@ jobs:
         run: |
           set -euo pipefail
           xcodebuild \
-            -project PingMenuBar.xcodeproj \
-            -scheme PingMenuBar \
+            -project src/macos/PingStats.xcodeproj \
+            -scheme PingStats \
             -configuration Release \
             -derivedDataPath .build \
             -destination "platform=macOS,arch=arm64" \
@@ -37,7 +37,28 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build
 
-          APP_PATH=".build/Build/Products/Release/PingMenuBar.app"
+          APP_PATH=".build/Build/Products/Release/PingStats.app"
           test -d "${APP_PATH}"
           test -f "${APP_PATH}/Contents/Resources/AppIcon.icns" \
             || ls -la "${APP_PATH}/Contents/Resources/"
+
+  windows:
+    name: Build Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+
+      - name: Restore
+        run: dotnet restore src/windows/PingStats.Windows/PingStats.Windows.csproj
+
+      - name: Build Release
+        run: dotnet build src/windows/PingStats.Windows/PingStats.Windows.csproj -c Release --no-restore

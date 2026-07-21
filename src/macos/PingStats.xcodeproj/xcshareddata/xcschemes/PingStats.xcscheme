@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A6000001000000000000001"
-               BuildableName = "PingMenuBar.app"
-               BlueprintName = "PingMenuBar"
-               ReferencedContainer = "container:PingMenuBar.xcodeproj">
+               BuildableName = "PingStats.app"
+               BlueprintName = "PingStats"
+               ReferencedContainer = "container:PingStats.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -44,9 +44,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A6000001000000000000001"
-            BuildableName = "PingMenuBar.app"
-            BlueprintName = "PingMenuBar"
-            ReferencedContainer = "container:PingMenuBar.xcodeproj">
+            BuildableName = "PingStats.app"
+            BlueprintName = "PingStats"
+            ReferencedContainer = "container:PingStats.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -61,9 +61,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A6000001000000000000001"
-            BuildableName = "PingMenuBar.app"
-            BlueprintName = "PingMenuBar"
-            ReferencedContainer = "container:PingMenuBar.xcodeproj">
+            BuildableName = "PingStats.app"
+            BlueprintName = "PingStats"
+            ReferencedContainer = "container:PingStats.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

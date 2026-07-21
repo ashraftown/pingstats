@@ -1,0 +1,305 @@
+<Window x:Class="PingStats.PopupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PingStats"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Width="320"
+        Deactivated="OnDeactivated"
+        Loaded="OnLoaded"
+        SizeToContent="Height"
+        MinHeight="200"
+        MaxHeight="600">
+  <Window.Resources>
+    <Style TargetType="Button" x:Key="ActionButton">
+      <Setter Property="Padding" Value="8,4"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="4"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="#333333"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style TargetType="ComboBox" x:Key="ThemedComboBoxStyle">
+      <Setter Property="OverridesDefaultStyle" Value="True"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ComboBox">
+            <Grid>
+              <ToggleButton x:Name="ToggleButton"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Foreground="{TemplateBinding Foreground}"
+                            IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                            IsHitTestVisible="True"
+                            SnapsToDevicePixels="True">
+                <ToggleButton.Template>
+                  <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4"
+                            Padding="4,0,0,0"
+                            SnapsToDevicePixels="True">
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="*"/>
+                          <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ContentPresenter Grid.Column="0"
+                                          Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                          VerticalAlignment="Center"
+                                          Margin="0,2,0,2"/>
+                        <Path Grid.Column="1"
+                              x:Name="Arrow"
+                              Data="M0,0 L5,5 L10,0"
+                              Stroke="{TemplateBinding Foreground}"
+                              StrokeThickness="1.5"
+                              Fill="Transparent"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Margin="0,0,6,0"/>
+                      </Grid>
+                    </Border>
+                  </ControlTemplate>
+                </ToggleButton.Template>
+              </ToggleButton>
+              <Popup x:Name="PART_Popup"
+                     IsOpen="{TemplateBinding IsDropDownOpen}"
+                     Placement="Bottom"
+                     AllowsTransparency="True"
+                     Focusable="False"
+                     PopupAnimation="Slide">
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                        MinWidth="3">
+                  <ScrollViewer>
+                    <ItemsPresenter/>
+                  </ScrollViewer>
+                </Border>
+              </Popup>
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="Button" x:Key="ProminentButton">
+      <Setter Property="Padding" Value="8,6"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}"
+                    CornerRadius="6"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </Window.Resources>
+
+  <Border x:Name="PopupBorder"
+          CornerRadius="10"
+          BorderThickness="1"
+          Padding="16">
+    <Border.Effect>
+      <DropShadowEffect Color="Black" Opacity="0.4" BlurRadius="20" ShadowDepth="4"/>
+    </Border.Effect>
+
+    <StackPanel>
+      <!-- Header -->
+      <Grid Margin="0,0,0,8">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock Grid.Column="0"
+                   x:Name="TitleText"
+                   Text="PingStats"
+                   FontSize="16"
+                   FontWeight="SemiBold"
+                   VerticalAlignment="Center"
+                   MouseDown="OnWindowMouseDown"/>
+        <Button Grid.Column="2"
+                x:Name="PinButton"
+                Style="{StaticResource ActionButton}"
+                Click="OnPinToggle"
+                ToolTip="Pin \u2014 keep open when clicking outside">
+          <Viewbox Width="14" Height="14">
+            <Canvas Width="24" Height="24">
+              <Path x:Name="PinIcon"
+                    Data="M12,2 C10.9,2 10,2.9 10,4 L10,9 L6,18 L18,18 L14,9 L14,4 C14,2.9 13.1,2 12,2 Z"
+                    Fill="Transparent"
+                    Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
+                    StrokeThickness="1.5"/>
+            </Canvas>
+          </Viewbox>
+        </Button>
+      </Grid>
+
+      <!-- Host -->
+      <Grid Margin="0,0,0,8">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="56"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock Grid.Column="0"
+                   x:Name="HostLabel"
+                   Text="Host:"
+                   VerticalAlignment="Center"/>
+        <TextBox Grid.Column="1"
+                 x:Name="HostTextBox"
+                 KeyDown="OnHostKeyDown"/>
+      </Grid>
+
+      <!-- Interval -->
+      <Grid Margin="0,0,0,8">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="56"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock Grid.Column="0"
+                   x:Name="IntervalLabel"
+                   Text="Every:"
+                   VerticalAlignment="Center"/>
+        <ComboBox Grid.Column="1"
+                  x:Name="IntervalCombo"
+                  Style="{StaticResource ThemedComboBoxStyle}"
+                  SelectedIndex="0"
+                  HorizontalAlignment="Stretch"
+                  Margin="0,0,8,0"
+                  FontSize="12">
+          <ComboBoxItem Tag="1">1 second</ComboBoxItem>
+          <ComboBoxItem Tag="2">2 seconds</ComboBoxItem>
+          <ComboBoxItem Tag="5">5 seconds</ComboBoxItem>
+          <ComboBoxItem Tag="10">10 seconds</ComboBoxItem>
+          <ComboBoxItem Tag="30">30 seconds</ComboBoxItem>
+        </ComboBox>
+        <TextBlock Grid.Column="2"
+                   x:Name="StatusLabel"
+                   Text="paused"
+                   FontSize="11"
+                   VerticalAlignment="Center"/>
+      </Grid>
+
+      <!-- Start/Stop -->
+      <Button x:Name="StartStopButton"
+              Style="{StaticResource ProminentButton}"
+              Click="OnStartStopToggle"
+              Margin="0,0,0,6">
+        <TextBlock x:Name="StartStopText" Text="Start" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+      </Button>
+
+      <!-- Separator -->
+      <Rectangle x:Name="Separator1" Height="1" Margin="0,6"/>
+
+      <!-- Stats -->
+      <StackPanel Margin="0,8,0,0" x:Name="StatsPanel">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="80"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <TextBlock Grid.Column="0" x:Name="LatestLabel" Text="Latest:" FontFamily="Consolas"/>
+          <TextBlock Grid.Column="1" x:Name="LatestValue" FontWeight="SemiBold" FontFamily="Consolas"/>
+        </Grid>
+        <Grid Margin="0,4,0,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="80"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <TextBlock Grid.Column="0" x:Name="StatsLabel" Text="Min/Avg/Max:" FontFamily="Consolas"/>
+          <TextBlock Grid.Column="1" x:Name="StatsValue" FontWeight="SemiBold" FontFamily="Consolas"/>
+        </Grid>
+        <Grid Margin="0,4,0,0" x:Name="IPRow" Visibility="Collapsed">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="80"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <TextBlock Grid.Column="0" x:Name="IPLabel" Text="IP:" FontFamily="Consolas"/>
+          <TextBlock Grid.Column="1" x:Name="IPValue" FontWeight="SemiBold" FontFamily="Consolas"/>
+        </Grid>
+        <Grid Margin="0,4,0,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="80"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <TextBlock Grid.Column="0" x:Name="StatusLabel2" Text="Status:" FontFamily="Consolas"/>
+          <TextBlock Grid.Column="1" x:Name="StatusValue" FontWeight="SemiBold" FontFamily="Consolas"/>
+        </Grid>
+      </StackPanel>
+
+      <!-- Separator -->
+      <Rectangle x:Name="Separator2" Height="1" Margin="0,8"/>
+
+      <!-- Graph -->
+      <Border x:Name="GraphBorder"
+              CornerRadius="4"
+              Height="80"
+              Margin="0,8,0,0"
+              ClipToBounds="True">
+        <Canvas x:Name="GraphCanvas" SizeChanged="OnGraphSizeChanged"/>
+      </Border>
+
+      <!-- Separator -->
+      <Rectangle x:Name="Separator3" Height="1" Margin="0,8"/>
+
+      <!-- Footer -->
+      <Grid Margin="0,6,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <CheckBox Grid.Column="0"
+                  x:Name="LoginCheckBox"
+                  Content="Open at Login"
+                  FontSize="12"
+                  Checked="OnLoginCheckChanged"
+                  Unchecked="OnLoginCheckChanged"/>
+        <Button x:Name="QuitButton"
+                Grid.Column="2"
+                Style="{StaticResource ActionButton}"
+                Padding="6,3"
+                FontSize="11"
+                Click="OnQuit">
+          <TextBlock Text="Quit PingStats"/>
+        </Button>
+      </Grid>
+    </StackPanel>
+  </Border>
+</Window>

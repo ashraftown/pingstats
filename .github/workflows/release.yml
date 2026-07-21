@@ -15,9 +15,30 @@ permissions:
   contents: write
 
 jobs:
-  build-dmg:
+  meta:
+    name: Resolve version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+
+    steps:
+      - id: version
+        env:
+          VERSION_INPUT: ${{ github.event.inputs.version }}
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="${VERSION_INPUT:-dev}"
+          fi
+          VERSION="${VERSION//[^a-zA-Z0-9._-]/}"
+          VERSION="${VERSION:-dev}"
+          echo "value=${VERSION}" >> "$GITHUB_OUTPUT"
+
+  macos:
     name: Build macOS DMG
     runs-on: macos-14
+    needs: meta
 
     steps:
       - name: Checkout
@@ -28,23 +49,12 @@ jobs:
           sudo xcode-select -s /Applications/Xcode.app
           xcodebuild -version
 
-      - name: Resolve version
-        id: meta
-        run: |
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION="${{ github.event.inputs.version || 'dev' }}"
-          fi
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "dmg_name=PingMenuBar-${VERSION}.dmg" >> "$GITHUB_OUTPUT"
-
       - name: Build Release
         run: |
           set -euo pipefail
           xcodebuild \
-            -project PingMenuBar.xcodeproj \
-            -scheme PingMenuBar \
+            -project src/macos/PingStats.xcodeproj \
+            -scheme PingStats \
             -configuration Release \
             -derivedDataPath .build \
             -destination "platform=macOS,arch=arm64" \
@@ -53,9 +63,8 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build
 
-          APP_PATH=".build/Build/Products/Release/PingMenuBar.app"
+          APP_PATH=".build/Build/Products/Release/PingStats.app"
           test -d "${APP_PATH}"
-          # Confirm app icon was compiled into the bundle
           test -f "${APP_PATH}/Contents/Resources/AppIcon.icns" \
             || ls -la "${APP_PATH}/Contents/Resources/"
           echo "APP_PATH=${APP_PATH}" >> "$GITHUB_ENV"
@@ -63,7 +72,6 @@ jobs:
       - name: Install create-dmg
         run: |
           set -euo pipefail
-          # Quiet preinstalled untrusted taps on GitHub runners (Homebrew tap-trust noise)
           brew untap aws/tap 2>/dev/null || true
           brew install create-dmg
 
@@ -72,26 +80,72 @@ jobs:
           set -euo pipefail
           chmod +x scripts/create-dmg.sh
           mkdir -p dist
-          ./scripts/create-dmg.sh "${APP_PATH}" "dist/${{ steps.meta.outputs.dmg_name }}"
-          # Also keep a stable name for convenience
-          cp "dist/${{ steps.meta.outputs.dmg_name }}" dist/PingMenuBar.dmg
+          ./scripts/create-dmg.sh "${APP_PATH}" "dist/PingStats-${{ needs.meta.outputs.version }}.dmg"
+          cp "dist/PingStats-${{ needs.meta.outputs.version }}.dmg" dist/PingStats.dmg
 
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ steps.meta.outputs.dmg_name }}
+          name: PingStats-${{ needs.meta.outputs.version }}-macos
           path: |
-            dist/${{ steps.meta.outputs.dmg_name }}
-            dist/PingMenuBar.dmg
+            dist/PingStats-${{ needs.meta.outputs.version }}.dmg
+            dist/PingStats.dmg
 
-      - name: Create GitHub Release
+      - name: Attach to GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            dist/${{ steps.meta.outputs.dmg_name }}
-            dist/PingMenuBar.dmg
+            dist/PingStats-${{ needs.meta.outputs.version }}.dmg
+            dist/PingStats.dmg
           generate_release_notes: true
           fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  windows:
+    name: Build Windows
+    runs-on: windows-latest
+    needs: meta
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+
+      - name: Restore
+        run: dotnet restore src/windows/PingStats.Windows/PingStats.Windows.csproj
+
+      - name: Publish Release
+        run: |
+          dotnet publish src/windows/PingStats.Windows/PingStats.Windows.csproj `
+            -c Release `
+            --no-restore `
+            -r win-x64 `
+            --self-contained `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -o publish/PingStats
+
+      - name: Zip artifact
+        run: |
+          Compress-Archive -Path publish/PingStats/* -DestinationPath "PingStats-${{ needs.meta.outputs.version }}-windows.zip"
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: PingStats-${{ needs.meta.outputs.version }}-windows
+          path: PingStats-${{ needs.meta.outputs.version }}-windows.zip
+
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: PingStats-${{ needs.meta.outputs.version }}-windows.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -38,6 +38,14 @@ Package.resolved
 *.swp
 *~
 
+# .NET / Windows
+src/windows/PingStats.Windows/bin/
+src/windows/PingStats.Windows/obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
 # Env / secrets
 .env
 .env.*

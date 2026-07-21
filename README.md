@@ -1,24 +1,27 @@
 <div align="center">
 
-# PingMenuBar
+# PingStats
 
-**A tiny macOS menu bar app for live network latency.**
+**Live network latency on macOS and Windows.**
 
-Glanceable RTT in your menu bar · rolling min/avg/max · pinable popup · open at login
+Glanceable RTT in your menu bar (macOS) / system tray (Windows) · rolling min/avg/max · pinable popup · open at login
 
 [![macOS 13+](https://img.shields.io/badge/macOS-13%2B-black?style=flat-square&logo=apple)](#requirements)
-[![Swift](https://img.shields.io/badge/Swift-5-F05138?style=flat-square&logo=swift&logoColor=white)](#build-from-source)
+[![Swift](https://img.shields.io/badge/Swift-5-F05138?style=flat-square&logo=swift&logoColor=white)](#macos--build-from-source)
+[![Windows](https://img.shields.io/badge/Windows-10%2B-blue?style=flat-square&logo=windows)](#windows)
+[![.NET](https://img.shields.io/badge/.NET-8-512BD4?style=flat-square&logo=dotnet)](#windows)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 [![Release](https://img.shields.io/badge/release-DMG-blue?style=flat-square)](#install)
 
 <br />
 
-<img src="assets/screenshots/pingmenubar-icon.png" alt="PingMenuBar menu bar icon" width="300" />
-<img src="assets/screenshots/pingmenubar-popup-ui.png" alt="PingMenuBar popup UI" width="420" />
+<img src="assets/screenshots/pingstats-icon.png" alt="PingStats menu bar icon" width="300" />
+<img src="assets/screenshots/pingstats-popup-ui.png" alt="PingStats popup UI" width="420" />
 
 <br />
 
-**Drag · Drop · Allow once** — release DMGs use the classic Applications layout; first open is allowed in Privacy & Security.
+**macOS** — Drag · Drop · Allow once. Release DMGs use the classic Applications layout.  
+**Windows** — `dotnet build` from source, or grab a published artifact from Actions.
 
 </div>
 
@@ -28,13 +31,13 @@ Glanceable RTT in your menu bar · rolling min/avg/max · pinable popup · open 
 
 | | |
 |---|---|
-| **Menu bar** | Latest ping (ms) with color: green &lt;50 · yellow &lt;100 · orange &lt;200 · red ≥200 |
+| **macOS menu bar** / **Windows tray** | Latest ping (ms) with color: green &lt;50 · yellow &lt;100 · orange &lt;200 · red ≥200 |
 | **Popup** | Latest, min/avg/max, resolved IP, live bar graph |
 | **Host** | Any IP or hostname (default `8.8.8.8`) |
 | **Interval** | 1s / 2s / 5s / 10s / 30s (persisted) |
 | **Pin** | Keep the popup open while you work elsewhere |
-| **Open at Login** | System Login Items via `SMAppService` |
-| **Quiet** | `LSUIElement` — no Dock icon |
+| **Open at Login** | System Login Items (macOS) / Registry Run key (Windows) |
+| **Quiet** | No Dock icon (macOS) / system-tray-only (Windows) |
 
 ---
 
@@ -42,35 +45,51 @@ Glanceable RTT in your menu bar · rolling min/avg/max · pinable popup · open 
 
 ### DMG (recommended)
 
-1. Download **`PingMenuBar-*.dmg`** from the repo **Releases** page
+1. Download **`PingStats-*.dmg`** from the repo **Releases** page
 2. Open the DMG → open **How to Open** (short guide + link)
-3. Drag **PingMenuBar** onto **Applications**
+3. Drag **PingStats** onto **Applications**
 4. Open the app once (warning appears — click **Done**)
 5. Use the guide’s **Open Privacy & Security** link (or System Settings → Privacy & Security)
-6. Click **Open Anyway** for PingMenuBar
+6. Click **Open Anyway** for PingStats
 7. Later opens work normally; optional: enable **Open at Login** in the popup
 
 > Releases are **not** Apple-notarized (no Developer ID). On modern macOS the first launch  
 > shows *“Apple could not verify…”* — that system dialog cannot be customized. Allowing the  
 > app once under **Privacy & Security → Open Anyway** is the simple path (no scripts).
 
-### Build from source
+### macOS — Build from source
 
 ```bash
 git clone <your-fork-or-repo-url>.git
 cd pingmenubar
-open PingMenuBar.xcodeproj
+open src/macos/PingStats.xcodeproj
 ```
 
-In Xcode: scheme **PingMenuBar**, configuration **Release**, then **Product → Build** (⌘B).
+In Xcode: scheme **PingStats**, configuration **Release**, then **Product → Build** (⌘B).
 
 Copy:
 
 ```text
-~/Library/Developer/Xcode/DerivedData/PingMenuBar-*/Build/Products/Release/PingMenuBar.app
+~/Library/Developer/Xcode/DerivedData/PingStats-*/Build/Products/Release/PingStats.app
 ```
 
 into `/Applications`.
+
+### Windows — Build from source
+
+```bash
+git clone <your-fork-or-repo-url>.git
+cd pingmenubar
+dotnet build src/windows/PingStats.Windows/PingStats.Windows.csproj -c Release
+```
+
+The output binary will be at:
+
+```text
+src/windows/PingStats.Windows/bin/Release/net8.0-windows/PingStats.exe
+```
+
+Requires [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) and Windows 10+.
 
 ---
 
@@ -82,16 +101,25 @@ into `/Applications`.
 4. **Stop → edit host → Start** — change target  
 5. **Every** — change ping interval  
 6. **Open at Login** — bottom-left checkbox  
-7. **Quit PingMenuBar** — bottom-right  
+7. **Quit PingStats** — bottom-right  
 
 ---
 
 ## How it works
 
+### macOS
+
 - Shells out to `/sbin/ping -c 1` and parses `time=… ms` (same numbers as Terminal)
 - Menu bar shows the **latest** sample; popup keeps **min/avg/max** over the last 30 successes
 - Sandbox is **off** so `ping` can run
-- Requires **macOS 13+**
+
+### Windows
+
+- Shells out to `ping -n 1` and parses `time<…ms` (same numbers as Command Prompt)
+- System tray icon shows the **latest** sample; popup keeps **min/avg/max** over the last 30 successes
+- No sandbox restrictions
+
+Both platforms track the same stats and share the same feature set.
 
 ---
 
@@ -108,7 +136,7 @@ Workflow: [`.github/workflows/release.yml`](.github/workflows/release.yml)
 
 What you get in the DMG:
 
-- `PingMenuBar.app` (left) + shortcut to **Applications** (right)
+- `PingStats.app` (left) + shortcut to **Applications** (right)
 - **How to Open.html** — first-open steps + link into Privacy & Security
 - Custom Finder background (`assets/dmg-background.png`) via [`create-dmg`](https://github.com/create-dmg/create-dmg)
 
@@ -118,7 +146,7 @@ Local DMG (on a Mac, after a Release build):
 
 ```bash
 brew install create-dmg   # optional but prettier layout
-./scripts/create-dmg.sh /path/to/PingMenuBar.app dist/PingMenuBar.dmg
+./scripts/create-dmg.sh /path/to/PingStats.app dist/PingStats.dmg
 ```
 
 ---
@@ -128,29 +156,38 @@ brew install create-dmg   # optional but prettier layout
 ```text
 pingmenubar/
 ├── .github/workflows/
-│   ├── ci.yml                  # Build and test workflow
-│   └── release.yml             # Release workflow
-├── PingMenuBar/                 # App sources
-│   ├── PingMenuBarApp.swift     # App, menu bar, popup UI, login item
-│   ├── PingManager.swift        # Ping + stats
-│   ├── Assets.xcassets/
-│   ├── Info.plist
-│   └── PingMenuBar.entitlements
-├── PingMenuBar.xcodeproj/
+│   ├── ci.yml                      # Build and test workflow
+│   └── release.yml                 # Release workflow
+├── src/
+│   ├── macos/
+│   │   ├── PingStats/              # macOS app sources
+│   │   │   ├── PingStatsApp.swift  # App, menu bar, popup UI, login item
+│   │   │   ├── PingManager.swift   # Ping + stats
+│   │   │   ├── Assets.xcassets/
+│   │   │   ├── Info.plist
+│   │   │   └── PingStats.entitlements
+│   │   └── PingStats.xcodeproj/
+│   └── windows/
+│       └── PingStats.Windows/      # Windows app sources
+│           ├── App.xaml(.cs)
+│           ├── TrayManager.cs
+│           ├── PingManager.cs
+│           ├── PopupWindow.xaml(.cs)
+│           └── PingStats.Windows.csproj
 ├── assets/
-│   ├── dmg-background.png       # Finder window background (1x)
-│   └── dmg-background@2x.png    # Retina source
-│   └── screenshots/             # README images
-│       ├── pingmenubar-icon.png # Menu bar icon screenshot
-│       └── pingmenubar-popup-ui.png # Popup UI screenshot
+│   ├── dmg-background.png          # Finder window background (1x)
+│   └── dmg-background@2x.png       # Retina source
+│   └── screenshots/                # README images
+│       ├── pingstats-icon.png      # Menu bar icon screenshot
+│       └── pingstats-popup-ui.png  # Popup UI screenshot
 ├── scripts/
-│   ├── create-dmg.sh            # DMG packager
-│   └── How to Open.html          # First-open guide (staged into DMG)
-├── CONTRIBUTING.md                # Contribution guide
+│   ├── create-dmg.sh               # DMG packager
+│   └── How to Open.html            # First-open guide (staged into DMG)
+├── CONTRIBUTING.md
 ├── LICENSE
-├── README-INSTALL.md             # Installation details
+├── README-INSTALL.md
 ├── README.md
-└── SECURITY.md                    # Vulnerability reporting policy
+└── SECURITY.md
 ```
 
 ---
@@ -159,14 +196,21 @@ pingmenubar/
 
 This project started from **[MenuPIng](https://github.com/NimbleAINinja/MenuPIng)** by **[NimbleAINinja](https://github.com/NimbleAINinja)** — thank you for the original menu bar ping app and structure.
 
-PingMenuBar continues that idea with UX and packaging changes (latest-in-menu-bar, interval control, pin, open-at-login, DMG releases, and related fixes).
+PingStats continues that idea with UX and packaging changes (latest-in-menu-bar, interval control, pin, open-at-login, DMG releases, and related fixes).
 
 ---
 
 ## Requirements
 
+### macOS
+
 - macOS **13.0** or later  
 - Xcode **15+** to build from source  
+
+### Windows
+
+- Windows **10** or later  
+- [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) to build from source  
 
 ---
 
