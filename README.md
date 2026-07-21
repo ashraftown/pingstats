@@ -146,9 +146,11 @@ pingmenubar/
 ├── scripts/
 │   ├── create-dmg.sh            # DMG packager
 │   └── How to Open.html          # First-open guide (staged into DMG)
+├── CONTRIBUTING.md                # Contribution guide
 ├── LICENSE
 ├── README-INSTALL.md             # Installation details
-└── README.md
+├── README.md
+└── SECURITY.md                    # Vulnerability reporting policy
 ```
 
 ---
