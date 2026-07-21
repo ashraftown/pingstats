@@ -135,17 +135,22 @@ jobs:
       - name: Zip artifact
         run: |
           Compress-Archive -Path publish/PingStats/* -DestinationPath "PingStats-${{ needs.meta.outputs.version }}-windows.zip"
+          Copy-Item "PingStats-${{ needs.meta.outputs.version }}-windows.zip" PingStats-windows.zip
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v6
         with:
           name: PingStats-${{ needs.meta.outputs.version }}-windows
-          path: PingStats-${{ needs.meta.outputs.version }}-windows.zip
+          path: |
+            PingStats-${{ needs.meta.outputs.version }}-windows.zip
+            PingStats-windows.zip
 
       - name: Attach to GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v3
         with:
-          files: PingStats-${{ needs.meta.outputs.version }}-windows.zip
+          files: |
+            PingStats-${{ needs.meta.outputs.version }}-windows.zip
+            PingStats-windows.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
