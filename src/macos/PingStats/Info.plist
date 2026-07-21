@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleIdentifier</key>
-	<string>com.corewaze.PingMenuBar</string>
+	<string>com.corewaze.PingStats</string>
 	<key>CFBundleName</key>
-	<string>PingMenuBar</string>
+	<string>PingStats</string>
 	<key>CFBundleDisplayName</key>
-	<string>Ping Menu Bar</string>
+	<string>PingStats</string>
 	<key>CFBundleVersion</key>
 	<string>1.0</string>
 	<key>CFBundleShortVersionString</key>

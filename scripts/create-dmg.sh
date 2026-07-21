@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Build a classic “drag to Applications” DMG from PingMenuBar.app
+# Build a classic “drag to Applications” DMG from PingStats.app
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_PATH="${1:-}"
-OUTPUT_DMG="${2:-${ROOT_DIR}/dist/PingMenuBar.dmg}"
-VOLUME_NAME="PingMenuBar"
-STAGE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/pingmenubar-dmg.XXXXXX")"
+OUTPUT_DMG="${2:-${ROOT_DIR}/dist/PingStats.dmg}"
+VOLUME_NAME="PingStats"
+STAGE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/pingstats-dmg.XXXXXX")"
 HOWTO_SRC="${ROOT_DIR}/scripts/How to Open.html"
 HOWTO_NAME="How to Open.html"
 BACKGROUND_SRC="${ROOT_DIR}/assets/dmg-background.png"
@@ -23,7 +23,7 @@ cleanup() {
 trap cleanup EXIT
 
 if [[ -z "${APP_PATH}" || ! -d "${APP_PATH}" ]]; then
-  echo "Usage: $0 /path/to/PingMenuBar.app [output.dmg]" >&2
+  echo "Usage: $0 /path/to/PingStats.app [output.dmg]" >&2
   exit 1
 fi
 
@@ -69,7 +69,7 @@ mkdir -p "$(dirname "${OUTPUT_DMG}")"
 rm -f "${OUTPUT_DMG}"
 
 # Stage app + simple first-open guide (no scripts — Gatekeeper blocks those too).
-cp -R "${APP_PATH}" "${STAGE_DIR}/PingMenuBar.app"
+cp -R "${APP_PATH}" "${STAGE_DIR}/PingStats.app"
 cp "${HOWTO_SRC}" "${STAGE_DIR}/${HOWTO_NAME}"
 
 if command -v create-dmg >/dev/null 2>&1; then
@@ -84,8 +84,8 @@ if command -v create-dmg >/dev/null 2>&1; then
     --window-size "${WIN_W}" "${WIN_H}"
     --icon-size 96
     --text-size 12
-    --icon "PingMenuBar.app" 170 200
-    --hide-extension "PingMenuBar.app"
+    --icon "PingStats.app" 170 200
+    --hide-extension "PingStats.app"
     --app-drop-link 530 200
     --icon "${HOWTO_NAME}" 350 420
     --hide-extension "${HOWTO_NAME}"
@@ -93,7 +93,7 @@ if command -v create-dmg >/dev/null 2>&1; then
     --no-internet-enable
   )
 
-  ICNS="${STAGE_DIR}/PingMenuBar.app/Contents/Resources/AppIcon.icns"
+  ICNS="${STAGE_DIR}/PingStats.app/Contents/Resources/AppIcon.icns"
   if [[ -f "${ICNS}" ]]; then
     CREATE_DMG_ARGS+=(--volicon "${ICNS}")
   fi

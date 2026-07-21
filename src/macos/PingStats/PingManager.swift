@@ -20,8 +20,8 @@ class PingManager: NSObject, ObservableObject {
     private var pingTimer: Timer?
     private var isPingInFlight = false
 
-    private static let hostKey = "PingMenuBar.host"
-    private static let intervalKey = "PingMenuBar.intervalSeconds"
+    private static let hostKey = "PingStats.host"
+    private static let intervalKey = "PingStats.intervalSeconds"
     private static let defaultHost = "8.8.8.8"
     private static let defaultInterval: Double = 1.0
 

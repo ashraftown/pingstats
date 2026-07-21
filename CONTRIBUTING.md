@@ -1,10 +1,10 @@
-# Contributing to PingMenuBar
+# Contributing to PingStats
 
 Issues and pull requests are welcome. Please keep each change focused and include a clear description of the problem it solves.
 
 ## Development
 
-- Build and run the `PingMenuBar` scheme in Xcode on macOS 13 or later.
+- Build and run the `PingStats` scheme in `src/macos/PingStats.xcodeproj` in Xcode on macOS 13 or later.
 - Before opening a pull request, ensure the project builds in the Release configuration.
 - Follow the existing Swift style and avoid unrelated formatting changes.
 
