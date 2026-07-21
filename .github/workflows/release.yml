@@ -115,7 +115,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup .NET
-          uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 8.x
 
@@ -131,7 +131,6 @@ jobs:
             --self-contained `
             -p:IncludeNativeLibrariesForSelfExtract=true `
             -p:PublishSingleFile=true `
-            -p:PublishTrimmed=true `
             -p:DebugType=None -p:DebugSymbols=false `
             -o publish/PingStats
 
