@@ -105,10 +105,18 @@ public class TrayManager : IDisposable
         g.DrawString(displayText, font, Brushes.White, textX, textY, StringFormat);
 
         var hIcon = bitmap.GetHicon();
-        var oldIcon = _notifyIcon.Icon;
-        _notifyIcon.Icon = Icon.FromHandle(hIcon);
-        oldIcon?.Dispose();
-        DestroyIcon(hIcon);
+        try
+        {
+            using var tmp = Icon.FromHandle(hIcon);
+            var newIcon = (Icon)tmp.Clone();
+            var oldIcon = _notifyIcon.Icon;
+            _notifyIcon.Icon = newIcon;
+            oldIcon?.Dispose();
+        }
+        finally
+        {
+            DestroyIcon(hIcon);
+        }
     }
 
     private Color GetColor()

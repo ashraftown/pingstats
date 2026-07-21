@@ -102,7 +102,7 @@ public class PingManager : IDisposable
             {
                 lock (_lock)
                 {
-                    if (!IsRunning || Host != target) return;
+                    if (!IsRunning || Host != target || _generation != gen) return;
 
                     ResolvedIP = resolvedHost;
                     StatusMessage = "Connecting...";
