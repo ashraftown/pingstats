@@ -209,10 +209,7 @@ public class PingManager : IDisposable
                 lock (_lock)
                 {
                     if (!IsRunning || Host != host || _generation != generation)
-                    {
-                        _isPingInFlight = false;
                         return;
-                    }
 
                     _isPingInFlight = false;
 
@@ -245,8 +242,9 @@ public class PingManager : IDisposable
             {
                 lock (_lock)
                 {
+                    if (!IsRunning || _generation != generation)
+                        return;
                     _isPingInFlight = false;
-                    if (!IsRunning || _generation != generation) return;
                     StatusMessage = $"Error: {ex.Message}";
                     IsConnected = false;
                     LatestLatency = "\u2717";
