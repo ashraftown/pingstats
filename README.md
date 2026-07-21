@@ -29,6 +29,7 @@ Glanceable RTT in your menu bar (macOS) / system tray (Windows) · rolling min/a
 
 ## Features
 
+| Feature | Description |
 |---|---|
 | **macOS menu bar** / **Windows tray** | Latest ping (ms) with color: green &lt;50 · yellow &lt;100 · orange &lt;200 · red ≥200 |
 | **Popup** | Latest, min/avg/max, resolved IP, live bar graph |
