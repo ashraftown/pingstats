@@ -130,6 +130,9 @@ jobs:
             -r win-x64 `
             --self-contained `
             -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:PublishSingleFile=true `
+            -p:PublishTrimmed=true `
+            -p:DebugType=None -p:DebugSymbols=false `
             -o publish/PingStats
 
       - name: Zip artifact
