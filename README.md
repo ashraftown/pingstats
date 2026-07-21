@@ -7,7 +7,7 @@
 Glanceable RTT in your menu bar (macOS) / system tray (Windows) · rolling min/avg/max · pinable popup · open at login
 
 [![macOS 13+](https://img.shields.io/badge/macOS-13%2B-black?style=flat-square&logo=apple)](#requirements)
-[![Swift](https://img.shields.io/badge/Swift-5-F05138?style=flat-square&logo=swift&logoColor=white)](#build-from-source)
+[![Swift](https://img.shields.io/badge/Swift-5-F05138?style=flat-square&logo=swift&logoColor=white)](#macos--build-from-source)
 [![Windows](https://img.shields.io/badge/Windows-10%2B-blue?style=flat-square&logo=windows)](#windows)
 [![.NET](https://img.shields.io/badge/.NET-8-512BD4?style=flat-square&logo=dotnet)](#windows)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)

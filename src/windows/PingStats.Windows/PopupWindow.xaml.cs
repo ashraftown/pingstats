@@ -30,6 +30,7 @@ public partial class PopupWindow : Window
         Loaded += (_, _) =>
         {
             HostTextBox.Text = _pingManager.Host;
+            HostTextBox.TextChanged += (_, _) => UpdateUI();
             SetIntervalSelection(_pingManager.IntervalSeconds);
             ApplyTheme();
             UpdateUI();
@@ -352,27 +353,36 @@ public partial class PopupWindow : Window
 
     private static void SetStartupWithWindows(bool enable)
     {
-        using var key = Registry.CurrentUser.OpenSubKey(
-            @"Software\Microsoft\Windows\CurrentVersion\Run", true);
-        if (key == null) return;
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Run", true);
+            if (key == null) return;
 
-        if (enable)
-        {
-            var exePath = Environment.ProcessPath;
-            if (exePath != null)
-                key.SetValue("PingStats", $"\"{exePath}\"");
+            if (enable)
+            {
+                var exePath = Environment.ProcessPath;
+                if (exePath != null)
+                    key.SetValue("PingStats", $"\"{exePath}\"");
+            }
+            else
+            {
+                key.DeleteValue("PingStats", false);
+            }
         }
-        else
-        {
-            key.DeleteValue("PingStats", false);
-        }
+        catch { }
     }
 
     private static bool IsStartupWithWindowsEnabled()
     {
-        using var key = Registry.CurrentUser.OpenSubKey(
-            @"Software\Microsoft\Windows\CurrentVersion\Run", false);
-        return key?.GetValue("PingStats") != null;
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Run", false);
+            return key?.GetValue("PingStats") != null;
+        }
+        catch { }
+        return false;
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)

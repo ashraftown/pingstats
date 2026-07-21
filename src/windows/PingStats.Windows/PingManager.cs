@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Timer = System.Timers.Timer;
 
 namespace PingStats;
@@ -201,29 +199,12 @@ public class PingManager : IDisposable
         {
             try
             {
-                var process = new Process
-                {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = "ping",
-                        Arguments = $"-n 1 -w 2000 {host}",
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true,
-                    }
-                };
+                using var ping = new System.Net.NetworkInformation.Ping();
+                var reply = ping.Send(host, 2000);
 
-                process.Start();
-
-                var exited = process.WaitForExit(5000);
-                if (!exited)
-                {
-                    try { process.Kill(); } catch { }
-                }
-
-                var output = process.StandardOutput.ReadToEnd();
-                var latency = ParsePingOutput(output);
+                double? latency = reply.Status == System.Net.NetworkInformation.IPStatus.Success
+                    ? reply.RoundtripTime
+                    : null;
 
                 lock (_lock)
                 {
@@ -275,18 +256,6 @@ public class PingManager : IDisposable
                 }
             }
         });
-    }
-
-    private static double? ParsePingOutput(string output)
-    {
-        var match = Regex.Match(output, @"time[=<](\d+(?:\.\d+)?)\s*ms");
-        if (match.Success && double.TryParse(match.Groups[1].Value, out var ms))
-            return ms;
-
-        if (Regex.IsMatch(output, @"time<1ms"))
-            return 0.5;
-
-        return null;
     }
 
     private void UpdateStats()
