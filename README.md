@@ -15,8 +15,8 @@ Glanceable RTT in your menu bar (macOS) / system tray (Windows) · rolling min/a
 
 <br />
 
-<table border="0" cellpadding="0" cellspacing="0"><tr>
-<td valign="middle" style="padding: 0;"><img src="assets/screenshots/pingstats-icon.png" alt="PingStats menu bar icon" width="200" /></td>
+<table border="0" cellpadding="0" cellspacing="0" style="border: none;"><tr>
+<td valign="middle" style="padding: 0 10px;"><img src="assets/screenshots/pingstats-icon.png" alt="PingStats menu bar icon" width="200" /></td>
 <td valign="middle" style="padding: 0;"><img src="assets/screenshots/pingstats-popup-ui.png" alt="PingStats popup UI" width="420" /></td>
 </tr></table>
 
