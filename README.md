@@ -13,7 +13,8 @@ Glanceable RTT in your menu bar · rolling min/avg/max · pinable popup · open 
 
 <br />
 
-<img src="Screenshot.png" alt="PingMenuBar screenshot" width="420" />
+<img src="pingmenubar-icon.png" alt="PingMenuBar menu bar icon" width="300" />
+<img src="pingmenubar-popup-ui.png" alt="PingMenuBar popup UI" width="420" />
 
 <br />
 
@@ -140,7 +141,8 @@ pingmenubar/
 │   ├── create-dmg.sh          # DMG packager
 │   └── How to Open.html       # First-open guide (staged into DMG)
 ├── .github/workflows/release.yml
-├── Screenshot.png
+├── pingmenubar-icon.png         # Menu bar icon screenshot
+├── pingmenubar-popup-ui.png     # Popup UI screenshot
 ├── LICENSE
 └── README.md
 ```
