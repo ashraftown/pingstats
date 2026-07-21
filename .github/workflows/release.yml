@@ -120,7 +120,7 @@ jobs:
           dotnet-version: 8.x
 
       - name: Restore
-        run: dotnet restore src/windows/PingStats.Windows/PingStats.Windows.csproj
+        run: dotnet restore src/windows/PingStats.Windows/PingStats.Windows.csproj -r win-x64
 
       - name: Publish Release
         run: |
