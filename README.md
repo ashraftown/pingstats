@@ -21,7 +21,7 @@ Glanceable RTT in your menu bar (macOS) / system tray (Windows) · rolling min/a
 <br />
 
 **macOS** — Drag · Drop · Allow once. Release DMGs use the classic Applications layout.  
-**Windows** — `dotnet build` from source, or grab a published artifact from Actions.
+**Windows** — `dotnet build` from source, or grab a published zip from Releases.
 
 </div>
 
@@ -29,7 +29,6 @@ Glanceable RTT in your menu bar (macOS) / system tray (Windows) · rolling min/a
 
 ## Features
 
-| | |
 |---|---|
 | **macOS menu bar** / **Windows tray** | Latest ping (ms) with color: green &lt;50 · yellow &lt;100 · orange &lt;200 · red ≥200 |
 | **Popup** | Latest, min/avg/max, resolved IP, live bar graph |
