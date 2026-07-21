@@ -28,6 +28,7 @@ public class PingManager : IDisposable
     private readonly object _lock = new();
     private Timer? _pingTimer;
     private bool _isPingInFlight;
+    private int _generation;
 
     private const string DefaultHost = "8.8.8.8";
     private const double DefaultInterval = 1.0;
@@ -85,6 +86,7 @@ public class PingManager : IDisposable
             }
 
             var target = Host;
+            var gen = ++_generation;
             PingResults.Clear();
             StatusMessage = "Resolving...";
             LatestLatency = "--";
@@ -109,8 +111,8 @@ public class PingManager : IDisposable
                     NotifyStateChanged();
 
                     _isPingInFlight = true;
-                    PerformPing(target);
-                    ScheduleTimer(target);
+                    PerformPing(target, gen);
+                    ScheduleTimer(target, gen);
                 }
             });
         }
@@ -125,11 +127,11 @@ public class PingManager : IDisposable
             SaveSettings();
 
             if (IsRunning)
-                ScheduleTimer(Host);
+                ScheduleTimer(Host, _generation);
         }
     }
 
-    private void ScheduleTimer(string target)
+    private void ScheduleTimer(string target, int generation)
     {
         _pingTimer?.Dispose();
         var interval = TimeSpan.FromSeconds(IntervalSeconds);
@@ -138,10 +140,10 @@ public class PingManager : IDisposable
         {
             lock (_lock)
             {
-                if (IsRunning && Host == target && !_isPingInFlight)
+                if (IsRunning && Host == target && !_isPingInFlight && _generation == generation)
                 {
                     _isPingInFlight = true;
-                    PerformPing(target);
+                    PerformPing(target, generation);
                 }
             }
         };
@@ -193,7 +195,7 @@ public class PingManager : IDisposable
         }
     }
 
-    private void PerformPing(string host)
+    private void PerformPing(string host, int generation)
     {
         System.Threading.ThreadPool.QueueUserWorkItem(_ =>
         {
@@ -225,7 +227,7 @@ public class PingManager : IDisposable
 
                 lock (_lock)
                 {
-                    if (!IsRunning || Host != host)
+                    if (!IsRunning || Host != host || _generation != generation)
                     {
                         _isPingInFlight = false;
                         return;
@@ -263,7 +265,7 @@ public class PingManager : IDisposable
                 lock (_lock)
                 {
                     _isPingInFlight = false;
-                    if (!IsRunning) return;
+                    if (!IsRunning || _generation != generation) return;
                     StatusMessage = $"Error: {ex.Message}";
                     IsConnected = false;
                     LatestLatency = "\u2717";

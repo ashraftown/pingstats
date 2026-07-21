@@ -22,12 +22,27 @@ class PingManager: NSObject, ObservableObject {
 
     private static let hostKey = "PingStats.host"
     private static let intervalKey = "PingStats.intervalSeconds"
+    private static let oldHostKey = "PingMenuBar.host"
+    private static let oldIntervalKey = "PingMenuBar.intervalSeconds"
     private static let defaultHost = "8.8.8.8"
     private static let defaultInterval: Double = 1.0
 
     override init() {
-        let savedHost = UserDefaults.standard.string(forKey: Self.hostKey) ?? Self.defaultHost
-        let savedInterval = UserDefaults.standard.object(forKey: Self.intervalKey) as? Double
+        let ud = UserDefaults.standard
+
+        if ud.object(forKey: Self.hostKey) == nil,
+           let oldHost = ud.string(forKey: Self.oldHostKey), !oldHost.isEmpty
+        {
+            ud.set(oldHost, forKey: Self.hostKey)
+        }
+        if ud.object(forKey: Self.intervalKey) == nil,
+           let oldInterval = ud.object(forKey: Self.oldIntervalKey) as? Double, oldInterval > 0
+        {
+            ud.set(oldInterval, forKey: Self.intervalKey)
+        }
+
+        let savedHost = ud.string(forKey: Self.hostKey) ?? Self.defaultHost
+        let savedInterval = ud.object(forKey: Self.intervalKey) as? Double
         self.host = savedHost.isEmpty ? Self.defaultHost : savedHost
         self.intervalSeconds = Self.clampedInterval(savedInterval ?? Self.defaultInterval)
         super.init()

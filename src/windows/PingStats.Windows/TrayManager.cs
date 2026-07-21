@@ -1,12 +1,15 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace PingStats;
 
 public class TrayManager : IDisposable
 {
+    [DllImport("user32.dll")]
+    private static extern bool DestroyIcon(IntPtr handle);
     private readonly NotifyIcon _notifyIcon;
     private readonly PingManager _pingManager;
 
@@ -61,16 +64,19 @@ public class TrayManager : IDisposable
 
     private void OnStateChanged()
     {
-        UpdateIcon();
-
-        if (_notifyIcon.ContextMenuStrip?.Items["StartStop"] is ToolStripMenuItem item)
+        System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
         {
-            item.Text = _pingManager.IsRunning ? "Stop" : "Start";
-        }
+            UpdateIcon();
 
-        _notifyIcon.Text = _pingManager.IsRunning
-            ? $"PingStats - {_pingManager.Host}\n{_pingManager.LatestLatency}"
-            : "PingStats - Stopped";
+            if (_notifyIcon.ContextMenuStrip?.Items["StartStop"] is ToolStripMenuItem item)
+            {
+                item.Text = _pingManager.IsRunning ? "Stop" : "Start";
+            }
+
+            _notifyIcon.Text = _pingManager.IsRunning
+                ? $"PingStats - {_pingManager.Host}\n{_pingManager.LatestLatency}"
+                : "PingStats - Stopped";
+        });
     }
 
     private void UpdateIcon()
@@ -102,6 +108,7 @@ public class TrayManager : IDisposable
         var oldIcon = _notifyIcon.Icon;
         _notifyIcon.Icon = Icon.FromHandle(hIcon);
         oldIcon?.Dispose();
+        DestroyIcon(hIcon);
     }
 
     private Color GetColor()
