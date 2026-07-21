@@ -61,7 +61,7 @@ Glanceable RTT in your menu bar (macOS) / system tray (Windows) · rolling min/a
 
 ```bash
 git clone <your-fork-or-repo-url>.git
-cd pingmenubar
+cd pingstats
 open src/macos/PingStats.xcodeproj
 ```
 
@@ -79,7 +79,7 @@ into `/Applications`.
 
 ```bash
 git clone <your-fork-or-repo-url>.git
-cd pingmenubar
+cd pingstats
 dotnet build src/windows/PingStats.Windows/PingStats.Windows.csproj -c Release
 ```
 
@@ -154,7 +154,7 @@ brew install create-dmg   # optional but prettier layout
 ## Project layout
 
 ```text
-pingmenubar/
+pingstats/
 ├── .github/workflows/
 │   ├── ci.yml                      # Build and test workflow
 │   └── release.yml                 # Release workflow
