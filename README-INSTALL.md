@@ -19,12 +19,3 @@ Build **Release** in Xcode and copy `PingMenuBar.app` to `/Applications`.
 ## Open at Login
 
 Use the in-app **Open at Login** checkbox (recommended).
-
-## Optional LaunchAgent script
-
-```bash
-./install-launch-agent.sh
-```
-
-This copies a DerivedData build into `/Applications` and registers a LaunchAgent.  
-Do **not** enable both the LaunchAgent and the in-app **Open at Login** checkbox.

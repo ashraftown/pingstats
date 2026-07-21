@@ -146,7 +146,6 @@ pingmenubar/
 ├── scripts/
 │   ├── create-dmg.sh            # DMG packager
 │   └── How to Open.html          # First-open guide (staged into DMG)
-├── install-launch-agent.sh       # Launch Agent installer
 ├── LICENSE
 ├── README-INSTALL.md             # Installation details
 └── README.md
