@@ -13,8 +13,8 @@ Glanceable RTT in your menu bar · rolling min/avg/max · pinable popup · open 
 
 <br />
 
-<img src="pingmenubar-icon.png" alt="PingMenuBar menu bar icon" width="300" />
-<img src="pingmenubar-popup-ui.png" alt="PingMenuBar popup UI" width="420" />
+<img src="assets/screenshots/pingmenubar-icon.png" alt="PingMenuBar menu bar icon" width="300" />
+<img src="assets/screenshots/pingmenubar-popup-ui.png" alt="PingMenuBar popup UI" width="420" />
 
 <br />
 
@@ -127,6 +127,9 @@ brew install create-dmg   # optional but prettier layout
 
 ```text
 pingmenubar/
+├── .github/workflows/
+│   ├── ci.yml                  # Build and test workflow
+│   └── release.yml             # Release workflow
 ├── PingMenuBar/                 # App sources
 │   ├── PingMenuBarApp.swift     # App, menu bar, popup UI, login item
 │   ├── PingManager.swift        # Ping + stats
@@ -137,13 +140,15 @@ pingmenubar/
 ├── assets/
 │   ├── dmg-background.png       # Finder window background (1x)
 │   └── dmg-background@2x.png    # Retina source
+│   └── screenshots/             # README images
+│       ├── pingmenubar-icon.png # Menu bar icon screenshot
+│       └── pingmenubar-popup-ui.png # Popup UI screenshot
 ├── scripts/
-│   ├── create-dmg.sh          # DMG packager
-│   └── How to Open.html       # First-open guide (staged into DMG)
-├── .github/workflows/release.yml
-├── pingmenubar-icon.png         # Menu bar icon screenshot
-├── pingmenubar-popup-ui.png     # Popup UI screenshot
+│   ├── create-dmg.sh            # DMG packager
+│   └── How to Open.html          # First-open guide (staged into DMG)
+├── install-launch-agent.sh       # Launch Agent installer
 ├── LICENSE
+├── README-INSTALL.md             # Installation details
 └── README.md
 ```
 
