@@ -29,14 +29,15 @@ class PingManager: NSObject, ObservableObject {
 
     override init() {
         let ud = UserDefaults.standard
+        let oldUD = UserDefaults(suiteName: "com.corewaze.PingMenuBar")
 
         if ud.object(forKey: Self.hostKey) == nil,
-           let oldHost = ud.string(forKey: Self.oldHostKey), !oldHost.isEmpty
+           let oldHost = oldUD?.string(forKey: Self.oldHostKey), !oldHost.isEmpty
         {
             ud.set(oldHost, forKey: Self.hostKey)
         }
         if ud.object(forKey: Self.intervalKey) == nil,
-           let oldInterval = ud.object(forKey: Self.oldIntervalKey) as? Double, oldInterval > 0
+           let oldInterval = oldUD?.object(forKey: Self.oldIntervalKey) as? Double, oldInterval > 0
         {
             ud.set(oldInterval, forKey: Self.intervalKey)
         }

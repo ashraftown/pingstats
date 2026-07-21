@@ -44,10 +44,6 @@ final class LoginItemManager: ObservableObject {
   @Published private(set) var statusHint: String?
 
   init() {
-    if SMAppService.mainApp.status != .enabled {
-      // Remove legacy login item registered under the old bundle ID
-      SMLoginItemSetEnabled("com.corewaze.PingMenuBar" as CFString, false)
-    }
     refresh()
   }
 
