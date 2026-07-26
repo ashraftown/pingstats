@@ -10,7 +10,7 @@
     "deploy": "astro build && wrangler versions upload"
   },
   "dependencies": {
-    "astro": "^5.0.0"
+    "astro": "^7.1.0"
   },
   "devDependencies": {}
 }
