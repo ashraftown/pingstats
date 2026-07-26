@@ -6,12 +6,18 @@
   <div class="container">
     <h2 class="section-title">See it in action</h2>
     <p class="section-subtitle">
-      Real-time latency stats right from your menu bar — color-coded, always visible.
+      Real-time latency stats right from your menu bar or system tray — color-coded, always visible.
     </p>
-    <figure class="screenshot-card">
-      <img src="/pingstats-popup-ui.png" alt="PingStats popup UI showing live stats and bar graph" loading="lazy" />
-      <figcaption>Detailed stats and live bar graph</figcaption>
-    </figure>
+    <div class="screenshots-grid">
+      <figure class="screenshot-card screenshot-card--icon">
+        <img src="/pingstats-icon.png" alt="PingStats menu bar icon" width="76" height="72" loading="lazy" />
+        <figcaption>Live ping in the menu bar / system tray</figcaption>
+      </figure>
+      <figure class="screenshot-card screenshot-card--popup">
+        <img src="/pingstats-popup-ui.png" alt="PingStats popup UI showing live stats and bar graph" loading="lazy" />
+        <figcaption>Detailed stats and live bar graph</figcaption>
+      </figure>
+    </div>
   </div>
 </section>
 
@@ -20,16 +26,38 @@
     background: var(--bg-secondary);
   }
 
+  .screenshots-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 24px;
+    align-items: start;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
   .screenshot-card {
     border-radius: var(--radius);
     overflow: hidden;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    max-width: 606px;
-    margin: 0 auto;
   }
 
-  .screenshot-card img {
+  .screenshot-card--icon {
+    text-align: center;
+    padding: 20px;
+  }
+
+  .screenshot-card--icon img {
+    display: block;
+    margin: 0 auto;
+    image-rendering: auto;
+  }
+
+  .screenshot-card--popup {
+    max-width: 606px;
+  }
+
+  .screenshot-card--popup img {
     width: 100%;
     height: auto;
     display: block;
@@ -40,5 +68,16 @@
     font-size: 0.9rem;
     color: var(--text-secondary);
     text-align: center;
+  }
+
+  @media (max-width: 600px) {
+    .screenshots-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .screenshot-card--icon {
+      max-width: 160px;
+      margin: 0 auto;
+    }
   }
 </style>
