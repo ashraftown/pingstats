@@ -1,0 +1,91 @@
+---
+const features = [
+  {
+    title: "Color-coded RTT",
+    desc: "Green under 50ms, yellow under 100ms, orange under 200ms, red above — status at a glance.",
+  },
+  {
+    title: "Min / Avg / Max stats",
+    desc: "Track min, average, and max round-trip time for every session.",
+  },
+  {
+    title: "Live bar graph",
+    desc: "A rolling graph of the last 30 pings so you can spot trends instantly.",
+  },
+  {
+    title: "Configurable host & interval",
+    desc: "Ping any host you choose and set the interval from 1s to 30s.",
+  },
+  {
+    title: "Pin to keep open",
+    desc: "Pin the popup so it stays visible while you work.",
+  },
+  {
+    title: "Open at Login",
+    desc: "Launch PingStats automatically when you start your computer.",
+  },
+];
+---
+
+<section class="section features">
+  <div class="container">
+    <h2 class="section-title">Everything you need</h2>
+    <p class="section-subtitle">
+      Simple, focused, and built for developers who care about their network.
+    </p>
+    <div class="features-grid">
+      {
+        features.map((f) => (
+          <div class="feature-card">
+            <h3>{f.title}</h3>
+            <p>{f.desc}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    transition: border-color 0.2s ease;
+  }
+
+  .feature-card:hover {
+    border-color: var(--accent);
+  }
+
+  .feature-card h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .feature-card p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  @media (max-width: 800px) {
+    .features-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 500px) {
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

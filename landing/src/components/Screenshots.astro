@@ -1,0 +1,62 @@
+---
+
+---
+
+<section class="section screenshots">
+  <div class="container">
+    <h2 class="section-title">See it in action</h2>
+    <p class="section-subtitle">
+      A clean, color-coded display that fits right into your workflow.
+    </p>
+    <div class="screenshots-grid">
+      <figure class="screenshot-card">
+        <img src="/pingstats-icon.png" alt="PingStats menu bar icon" loading="lazy" />
+        <figcaption>Menu bar icon with live ping</figcaption>
+      </figure>
+      <figure class="screenshot-card">
+        <img src="/pingstats-popup-ui.png" alt="PingStats popup UI" loading="lazy" />
+        <figcaption>Detailed stats and live bar graph</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<style>
+  .screenshots {
+    background: var(--bg-secondary);
+  }
+
+  .screenshots-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .screenshot-card {
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+  }
+
+  .screenshot-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .screenshot-card figcaption {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+
+  @media (max-width: 700px) {
+    .screenshots-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

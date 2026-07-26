@@ -46,6 +46,9 @@ src/windows/PingStats.Windows/obj/
 *.userosscache
 *.sln.docstates
 
+# Node.js / Astro landing page
+node_modules/
+
 # Env / secrets
 .env
 .env.*

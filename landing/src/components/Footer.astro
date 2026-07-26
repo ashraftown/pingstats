@@ -1,0 +1,51 @@
+---
+const GITHUB_REPO = "https://github.com/ashraftown/pingstats";
+---
+
+<footer class="footer">
+  <div class="container footer-content">
+    <div class="footer-links">
+      <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href={`${GITHUB_REPO}/releases`} target="_blank" rel="noopener noreferrer">Releases</a>
+      <a href={`${GITHUB_REPO}/blob/main/LICENSE`} target="_blank" rel="noopener noreferrer">License</a>
+    </div>
+    <p class="footer-copy">
+      &copy; {new Date().getFullYear()} Corewaze. MIT Licensed.
+    </p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+  }
+
+  .footer-links a:hover {
+    color: var(--accent);
+  }
+
+  .footer-copy {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+</style>

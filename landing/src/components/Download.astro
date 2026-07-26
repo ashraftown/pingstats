@@ -1,0 +1,86 @@
+---
+const macOS_DMG =
+  "https://github.com/ashraftown/pingstats/releases/latest/download/PingStats.dmg";
+const windows_ZIP =
+  "https://github.com/ashraftown/pingstats/releases/latest/download/PingStats-windows.zip";
+---
+
+<section class="section download">
+  <div class="container">
+    <h2 class="section-title">Get PingStats</h2>
+    <p class="section-subtitle">
+      Free and open source. Download for your platform.
+    </p>
+    <div class="download-grid">
+      <div class="download-card">
+        <div class="download-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <h3>macOS</h3>
+        <p>Requires macOS 13+<br />Apple Silicon & Intel</p>
+        <a href={macOS_DMG} class="btn btn-primary">
+          Download .dmg
+        </a>
+      </div>
+      <div class="download-card">
+        <div class="download-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/><path d="M3 14h7v7H3z"/><path d="M14 14h7v7h-7z"/></svg>
+        </div>
+        <h3>Windows</h3>
+        <p>Requires Windows 10+<br />x86_64</p>
+        <a href={windows_ZIP} class="btn btn-primary">
+          Download .zip
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .download {
+    background: var(--bg-secondary);
+  }
+
+  .download-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .download-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 36px 28px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .download-icon {
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .download-card h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .download-card p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 550px) {
+    .download-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

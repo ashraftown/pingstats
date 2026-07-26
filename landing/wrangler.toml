@@ -1,0 +1,6 @@
+name = "pingstats-landing"
+main = "dist/_worker.js"
+compatibility_date = "2025-07-01"
+
+[env.production]
+routes = [{ pattern = "pingstats.corewaze.com", custom_domain = true }]

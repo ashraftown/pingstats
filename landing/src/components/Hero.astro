@@ -1,0 +1,115 @@
+---
+const macOS_DMG =
+  "https://github.com/ashraftown/pingstats/releases/latest/download/PingStats.dmg";
+const windows_ZIP =
+  "https://github.com/ashraftown/pingstats/releases/latest/download/PingStats-windows.zip";
+const GITHUB_REPO = "https://github.com/ashraftown/pingstats";
+---
+
+<header class="hero">
+  <div class="hero-content container">
+    <img src="/pingstats-logo.svg" alt="PingStats" class="hero-logo" width="80" height="80" />
+    <h1 class="hero-title">PingStats</h1>
+    <p class="hero-tagline">
+      Live network latency in your menu bar.
+    </p>
+    <p class="hero-description">
+      A lightweight desktop utility that continuously pings any host and displays
+      real-time round-trip time — right where you can see it.
+    </p>
+    <div class="hero-buttons">
+      <a href={macOS_DMG} class="btn btn-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        Download for macOS
+      </a>
+      <a href={windows_ZIP} class="btn btn-secondary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/><path d="M3 14h7v7H3z"/><path d="M14 14h7v7h-7z"/></svg>
+        Download for Windows
+      </a>
+    </div>
+    <p class="hero-version">
+      v1.0 &middot;
+      <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">GitHub</a>
+    </p>
+  </div>
+</header>
+
+<style>
+  .hero {
+    padding: 100px 0 60px;
+    text-align: center;
+  }
+
+  .hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-logo {
+    margin-bottom: 20px;
+  }
+
+  .hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #e8e8ed, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-tagline {
+    font-size: 1.4rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+
+  .hero-description {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    max-width: 580px;
+    margin-bottom: 36px;
+    line-height: 1.7;
+  }
+
+  .hero-buttons {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+
+  .hero-version {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .hero-version a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .hero-version a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 768px) {
+    .hero {
+      padding: 60px 0 40px;
+    }
+    .hero-title {
+      font-size: 2.4rem;
+    }
+    .hero-tagline {
+      font-size: 1.15rem;
+    }
+    .hero-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+</style>
