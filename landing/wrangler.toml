@@ -1,8 +1,7 @@
-name = "pingstats-landing"
+name = "pingstats"
 main = "dist/_worker.js/index.js"
 compatibility_date = "2025-07-01"
 compatibility_flags = ["nodejs_compat"]
 
 [assets]
 directory = "dist"
-not_found_handling = "404.html"
