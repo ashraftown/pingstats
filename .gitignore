@@ -48,6 +48,7 @@ src/windows/PingStats.Windows/obj/
 
 # Node.js / Astro landing page
 node_modules/
+.astro/
 
 # Env / secrets
 .env
