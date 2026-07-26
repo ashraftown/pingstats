@@ -1,5 +1,5 @@
 name = "pingstats"
-main = "dist/_worker.js/index.js"
+main = "src/worker.js"
 compatibility_date = "2025-07-01"
 compatibility_flags = ["nodejs_compat"]
 
