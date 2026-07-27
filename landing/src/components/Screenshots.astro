@@ -1,20 +1,23 @@
 ---
-
 ---
 
 <section class="section screenshots">
   <div class="container">
-    <h2 class="section-title">See it in action</h2>
-    <p class="section-subtitle">
-      Real-time latency stats right from your menu bar or system tray — color-coded, always visible.
-    </p>
+    <div class="section-head">
+      <h2>See it in action</h2>
+      <p>Real-time latency stats right from your menu bar or system tray — color-coded, always visible.</p>
+    </div>
     <div class="screenshots-grid">
-      <figure class="screenshot-card screenshot-card--icon">
-        <img src="/pingstats-icon.png" alt="PingStats menu bar icon" width="76" height="72" loading="lazy" />
+      <figure class="screenshot-card tile">
+        <div class="screenshot-img-wrap screenshot-img-wrap--icon">
+          <img src="/pingstats-icon.png" alt="PingStats menu bar icon showing live ping" width="76" height="72" loading="lazy" />
+        </div>
         <figcaption>Live ping in the menu bar / system tray</figcaption>
       </figure>
-      <figure class="screenshot-card screenshot-card--popup">
-        <img src="/pingstats-popup-ui.png" alt="PingStats popup UI showing live stats and bar graph" loading="lazy" />
+      <figure class="screenshot-card tile">
+        <div class="screenshot-img-wrap screenshot-img-wrap--popup">
+          <img src="/pingstats-popup-ui.png" alt="PingStats popup UI showing detailed stats and bar graph" loading="lazy" />
+        </div>
         <figcaption>Detailed stats and live bar graph</figcaption>
       </figure>
     </div>
@@ -22,8 +25,29 @@
 </section>
 
 <style>
-  .screenshots {
-    background: var(--bg-secondary);
+  section {
+    padding: 96px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .section-head {
+    margin-bottom: 56px;
+    max-width: 720px;
+  }
+
+  .section-head h2 {
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+    margin-bottom: 18px;
+  }
+
+  .section-head p {
+    color: var(--fg-muted);
+    font-size: 18px;
+    max-width: 620px;
+    letter-spacing: -0.005em;
   }
 
   .screenshots-grid {
@@ -36,38 +60,36 @@
   }
 
   .screenshot-card {
-    border-radius: var(--radius);
-    overflow: hidden;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-  }
-
-  .screenshot-card--icon {
     text-align: center;
-    padding: 20px;
   }
 
-  .screenshot-card--icon img {
+  .screenshot-img-wrap {
+    overflow: hidden;
+  }
+
+  .screenshot-img-wrap--icon {
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .screenshot-img-wrap--icon img {
     display: block;
-    margin: 0 auto;
     image-rendering: auto;
   }
 
-  .screenshot-card--popup {
-    max-width: 606px;
-  }
-
-  .screenshot-card--popup img {
+  .screenshot-img-wrap--popup img {
     width: 100%;
     height: auto;
     display: block;
   }
 
   .screenshot-card figcaption {
-    padding: 12px 16px;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    text-align: center;
+    padding: 14px 16px;
+    font-size: 14px;
+    color: var(--fg-muted);
+    border-top: 1px solid var(--border);
   }
 
   @media (max-width: 600px) {
@@ -75,9 +97,13 @@
       grid-template-columns: 1fr;
     }
 
-    .screenshot-card--icon {
+    .screenshot-img-wrap--icon {
       max-width: 160px;
       margin: 0 auto;
+    }
+
+    section {
+      padding: 64px 0;
     }
   }
 </style>

@@ -13,67 +13,88 @@ const features = [
     desc: "A rolling graph of the last 30 pings so you can spot trends instantly.",
   },
   {
-    title: "Configurable host & interval",
-    desc: "Ping any host you choose and set the interval from 1s to 30s.",
+    title: "Configurable host",
+    desc: "Ping any host you choose — not just the default. Customize to your needs.",
   },
   {
     title: "Pin to keep open",
-    desc: "Pin the popup so it stays visible while you work.",
+    desc: "Pin the popup so it stays visible while you work. No more clicking away.",
   },
   {
     title: "Open at Login",
-    desc: "Launch PingStats automatically when you start your computer.",
+    desc: "Launch PingStats automatically when you start your computer. Always on.",
   },
 ];
 ---
 
 <section class="section features">
   <div class="container">
-    <h2 class="section-title">Everything you need</h2>
-    <p class="section-subtitle">
-      Simple, focused, and built for developers who care about their network.
-    </p>
+    <div class="section-head">
+      <h2>Everything you need</h2>
+      <p>Simple, focused, and built for developers who care about their network.</p>
+    </div>
     <div class="features-grid">
-      {
-        features.map((f) => (
-          <div class="feature-card">
-            <h3>{f.title}</h3>
-            <p>{f.desc}</p>
-          </div>
-        ))
-      }
+      {features.map((f) => (
+        <div class="feature-card tile">
+          <h3>{f.title}</h3>
+          <p>{f.desc}</p>
+        </div>
+      ))}
     </div>
   </div>
 </section>
 
 <style>
+  section {
+    padding: 96px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .section-head {
+    margin-bottom: 56px;
+    max-width: 720px;
+  }
+
+  .section-head h2 {
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+    margin-bottom: 18px;
+  }
+
+  .section-head p {
+    color: var(--fg-muted);
+    font-size: 18px;
+    max-width: 620px;
+    letter-spacing: -0.005em;
+  }
+
   .features-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
+    gap: 20px;
   }
 
   .feature-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
     padding: 28px;
     transition: border-color 0.2s ease;
   }
 
   .feature-card:hover {
-    border-color: var(--accent);
+    border-color: var(--border-strong);
   }
 
   .feature-card h3 {
-    font-size: 1.1rem;
+    font-size: 17px;
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
   }
 
   .feature-card p {
-    font-size: 0.95rem;
-    color: var(--text-secondary);
+    font-size: 15px;
+    color: var(--fg-muted);
     line-height: 1.6;
   }
 
@@ -86,6 +107,10 @@ const features = [
   @media (max-width: 500px) {
     .features-grid {
       grid-template-columns: 1fr;
+    }
+
+    section {
+      padding: 64px 0;
     }
   }
 </style>
