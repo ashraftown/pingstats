@@ -1,7 +1,5 @@
 ---
-const macOS_DMG = "https://github.com/ashraftown/pingstats/releases/latest/download/PingStats.dmg";
-const windows_ZIP = "https://github.com/ashraftown/pingstats/releases/latest/download/PingStats-windows.zip";
-const GITHUB_REPO = "https://github.com/ashraftown/pingstats";
+import { GITHUB_REPO } from "../consts";
 ---
 
 <section class="section open-source">
@@ -18,7 +16,7 @@ const GITHUB_REPO = "https://github.com/ashraftown/pingstats";
           <span class="open-term-title">~/pingstats</span>
         </div>
         <div class="open-term-body">
-          <div><span class="prompt">$</span> git clone https://github.com/ashraftown/pingstats</div>
+          <div><span class="prompt">$</span> git clone {GITHUB_REPO}</div>
           <div class="dim">✓ Cloned into ./pingstats</div>
           <div><span class="prompt">$</span> open PingStats.xcodeproj</div>
           <div class="dim">▲ Xcode project loaded</div>
@@ -111,7 +109,7 @@ const GITHUB_REPO = "https://github.com/ashraftown/pingstats";
     background: rgba(255, 255, 255, 0.02);
   }
 
-  .open-term-head span {
+  .open-term-head span:not(.open-term-title) {
     width: 10px; height: 10px; border-radius: 999px;
     background: #2a2a30; display: block;
   }
@@ -137,10 +135,6 @@ const GITHUB_REPO = "https://github.com/ashraftown/pingstats";
 
   .open-term-body .dim {
     color: var(--fg-dim);
-  }
-
-  .open-term-body .accent {
-    color: var(--accent);
   }
 
   .cursor {

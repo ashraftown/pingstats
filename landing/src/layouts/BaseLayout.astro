@@ -1,7 +1,6 @@
 ---
 import "../styles/global.css";
-
-const GITHUB_REPO = "https://github.com/ashraftown/pingstats";
+import { GITHUB_REPO } from "../consts";
 ---
 
 <!doctype html>
@@ -13,6 +12,9 @@ const GITHUB_REPO = "https://github.com/ashraftown/pingstats";
     <meta property="og:title" content="PingStats" />
     <meta property="og:description" content="Live network latency in your menu bar." />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pingstats.corewaze.com" />
+    <meta property="og:image" content="/pingstats-popup-ui.png" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -28,7 +30,7 @@ const GITHUB_REPO = "https://github.com/ashraftown/pingstats";
             <span class="nav-brand-name">PingStats</span>
           </a>
           <div class="nav-right">
-            <a class="nav-stars" href={GITHUB_REPO} target="_blank" rel="noopener noreferrer" aria-label="Star PingStats on GitHub">
+            <a class="nav-stars" href={`${GITHUB_REPO}/stargazers`} target="_blank" rel="noopener noreferrer" aria-label="Star PingStats on GitHub">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 2.3l2.9 5.88 6.49.94-4.7 4.58 1.11 6.47L12 17.12l-5.8 3.05 1.11-6.47-4.7-4.58 6.49-.94L12 2.3z"/>
               </svg>
@@ -59,11 +61,7 @@ const GITHUB_REPO = "https://github.com/ashraftown/pingstats";
 
     <script>
       const nav = document.querySelector(".nav");
-      const onScroll = () => {
-        if (!nav) return;
-        if (window.scrollY > 12) nav.classList.add("is-scrolled");
-        else nav.classList.remove("is-scrolled");
-      };
+      const onScroll = () => { if (nav) nav.classList.toggle("is-scrolled", window.scrollY > 12); };
       window.addEventListener("scroll", onScroll, { passive: true });
       onScroll();
     </script>
@@ -73,6 +71,7 @@ const GITHUB_REPO = "https://github.com/ashraftown/pingstats";
 <style is:global>
   .page {
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     overflow-x: clip;
