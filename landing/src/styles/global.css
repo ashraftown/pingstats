@@ -175,18 +175,13 @@ img, svg {
   to { transform: rotate(360deg); }
 }
 
-@keyframes floatDrift {
+@keyframes float-drift {
   0%, 100% { translate: 0 0; }
   50%      { translate: 0 -10px; }
 }
 
 @keyframes blink {
   50% { opacity: 0; }
-}
-
-@keyframes pingPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%      { opacity: 0.5; transform: scale(0.85); }
 }
 
 @media (prefers-reduced-motion: reduce) {
