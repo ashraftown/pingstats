@@ -192,13 +192,20 @@ import { MACOS_DMG, WINDOWS_ZIP, GITHUB_REPO } from "../consts";
   .hero-float-chip:nth-child(2) { top: 10%;  right: 8%; animation-delay: -1.5s; transform: rotate(3deg); }
   .hero-float-chip:nth-child(3) { top: 34%;  left: 5%;  animation-delay: -3s;   transform: rotate(-2deg); }
   .hero-float-chip:nth-child(4) { top: 32%;  right: 5%; animation-delay: -4.5s; transform: rotate(2deg); }
-    .hero-float-chip:nth-child(5) { top: 54%;  left: 7%;  animation-delay: -6s;   transform: rotate(-3deg); }
-    .hero-float-chip:nth-child(6) { top: 50%;  right: 7%; animation-delay: -2s;   transform: rotate(1deg); }
+  .hero-float-chip:nth-child(5) { top: 54%;  left: 7%;  animation-delay: -6s;   transform: rotate(-3deg); }
+  .hero-float-chip:nth-child(6) { top: 50%;  right: 7%; animation-delay: -2s;   transform: rotate(1deg); }
 
-    @media (max-width: 1100px) {
-      .hero-float-chip:nth-child(3) { left: 3%; }
-      .hero-float-chip:nth-child(4) { right: 3%; }
-    }
+  @media (max-width: 1100px) {
+    .hero-float-chip:nth-child(3) { left: 3%; }
+    .hero-float-chip:nth-child(4) { right: 3%; }
+  }
+
+  @media (max-width: 1000px) {
+    .hero-float-chip:nth-child(3) { top: 20%; }
+    .hero-float-chip:nth-child(4) { top: 18%; }
+    .hero-float-chip:nth-child(5) { display: none; }
+    .hero-float-chip:nth-child(6) { display: none; }
+  }
 
   @media (max-width: 820px) {
     .hero {

@@ -144,6 +144,11 @@ img, svg {
   border-radius: 10px;
 }
 
+.section {
+  padding: 96px 0;
+  border-top: 1px solid var(--border);
+}
+
 .tile {
   position: relative;
   border: 1px solid var(--border);
@@ -198,5 +203,9 @@ img, svg {
 @media (max-width: 820px) {
   .container {
     padding: 0 20px;
+  }
+
+  .section {
+    padding: 64px 0;
   }
 }
