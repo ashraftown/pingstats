@@ -1,10 +1,11 @@
 {
-  "name": "pingstats-landing",
+  "name": "pingstats-web",
   "type": "module",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "astro dev",
+    "prebuild": "node scripts/sync-brand.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "deploy": "astro build && wrangler versions upload"

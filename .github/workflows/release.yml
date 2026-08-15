@@ -55,7 +55,7 @@ jobs:
         run: |
           set -euo pipefail
           xcodebuild \
-            -project src/macos/PingStats.xcodeproj \
+            -project apps/macos/PingStats.xcodeproj \
             -scheme PingStats \
             -configuration Release \
             -derivedDataPath .build \
@@ -122,11 +122,11 @@ jobs:
           dotnet-version: 8.x
 
       - name: Restore
-        run: dotnet restore src/windows/PingStats.Windows/PingStats.Windows.csproj -r win-x64
+        run: dotnet restore apps/windows/PingStats.Windows/PingStats.Windows.csproj -r win-x64
 
       - name: Publish Release
         run: |
-          dotnet publish src/windows/PingStats.Windows/PingStats.Windows.csproj `
+          dotnet publish apps/windows/PingStats.Windows/PingStats.Windows.csproj `
             -c Release `
             --no-restore `
             -r win-x64 `

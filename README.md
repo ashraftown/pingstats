@@ -62,7 +62,7 @@ Glanceable RTT in your menu bar (macOS) / system tray (Windows) · rolling min/a
 ```bash
 git clone <your-fork-or-repo-url>.git
 cd pingstats
-open src/macos/PingStats.xcodeproj
+open apps/macos/PingStats.xcodeproj
 ```
 
 In Xcode: scheme **PingStats**, configuration **Release**, then **Product → Build** (⌘B).
@@ -80,13 +80,13 @@ into `/Applications`.
 ```bash
 git clone <your-fork-or-repo-url>.git
 cd pingstats
-dotnet build src/windows/PingStats.Windows/PingStats.Windows.csproj -c Release
+dotnet build apps/windows/PingStats.Windows/PingStats.Windows.csproj -c Release
 ```
 
 The output binary will be at:
 
 ```text
-src/windows/PingStats.Windows/bin/Release/net8.0-windows/PingStats.exe
+apps/windows/PingStats.Windows/bin/Release/net8.0-windows/PingStats.exe
 ```
 
 Requires [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) and Windows 10+.
@@ -156,9 +156,10 @@ brew install create-dmg   # optional but prettier layout
 ```text
 pingstats/
 ├── .github/workflows/
-│   ├── ci.yml                      # Build and test workflow
+│   ├── ci.yml                      # Build + test workflow (macOS, Windows, web)
+│   ├── codeql.yml                  # CodeQL security analysis
 │   └── release.yml                 # Release workflow
-├── src/
+├── apps/
 │   ├── macos/
 │   │   ├── PingStats/              # macOS app sources
 │   │   │   ├── PingStatsApp.swift  # App, menu bar, popup UI, login item
@@ -167,24 +168,32 @@ pingstats/
 │   │   │   ├── Info.plist
 │   │   │   └── PingStats.entitlements
 │   │   └── PingStats.xcodeproj/
-│   └── windows/
-│       └── PingStats.Windows/      # Windows app sources
-│           ├── App.xaml(.cs)
-│           ├── TrayManager.cs
-│           ├── PingManager.cs
-│           ├── PopupWindow.xaml(.cs)
-│           └── PingStats.Windows.csproj
-├── assets/
-│   ├── dmg-background.png          # Finder window background (1x)
-│   └── dmg-background@2x.png       # Retina source
-│   └── screenshots/                # README images
-│       ├── pingstats-icon.png      # Menu bar icon screenshot
-│       └── pingstats-popup-ui.png  # Popup UI screenshot
+│   ├── windows/
+│   │   └── PingStats.Windows/      # Windows app sources
+│   │       ├── App.xaml(.cs)
+│   │       ├── TrayManager.cs
+│   │       ├── PingManager.cs
+│   │       ├── PopupWindow.xaml(.cs)
+│   │       └── PingStats.Windows.csproj
+│   └── web/                        # Astro landing (Cloudflare Workers)
+│       ├── public/                 # Brand files synced from assets/
+│       ├── scripts/sync-brand.mjs  # Copies brand files into public/
+│       └── src/
+├── assets/                    # Brand assets — single source of truth
+│   ├── logo.svg
+│   ├── favicon.svg
+│   ├── og-image.*
+│   ├── dmg-background.png     # Finder window background (1x)
+│   ├── dmg-background@2x.png  # Retina source
+│   └── screenshots/           # README images
+│       ├── pingstats-icon.png     # Menu bar icon screenshot
+│       └── pingstats-popup-ui.png # Popup UI screenshot
 ├── scripts/
 │   ├── create-dmg.sh               # DMG packager
 │   └── How to Open.html            # First-open guide (staged into DMG)
 ├── CONTRIBUTING.md
 ├── LICENSE
+├── package.json                    # npm workspace (apps/web)
 ├── README-INSTALL.md
 ├── README.md
 └── SECURITY.md
