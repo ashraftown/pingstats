@@ -1,4 +1,4 @@
-import { copyFileSync, readdirSync, statSync } from "node:fs";
+import { copyFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,25 +17,41 @@ const WEB_SERVED = [
 
 const SCREENSHOTS_DIR = "screenshots";
 
+const fail = (missing) => {
+  console.error(`sync-brand: required source missing: ${missing}`);
+  process.exit(1);
+};
+
 for (const entry of WEB_SERVED) {
   const src = join(BRAND_ROOT, entry);
-  const dest = join(PUBLIC_ROOT, entry);
-
   if (!statSync(src, { throwIfNoEntry: false })) {
-    console.warn(`sync-brand: missing ${src}, skipping`);
-    continue;
+    fail(src);
   }
-
-  copyFileSync(src, dest);
 }
 
 const screenshotsSrc = join(BRAND_ROOT, SCREENSHOTS_DIR);
-if (statSync(screenshotsSrc, { throwIfNoEntry: false })?.isDirectory()) {
-  for (const file of readdirSync(screenshotsSrc)) {
-    copyFileSync(join(screenshotsSrc, file), join(PUBLIC_ROOT, file));
+if (!statSync(screenshotsSrc, { throwIfNoEntry: false })?.isDirectory()) {
+  fail(screenshotsSrc);
+}
+const screenshots = readdirSync(screenshotsSrc);
+
+for (const entry of WEB_SERVED) {
+  copyFileSync(join(BRAND_ROOT, entry), join(PUBLIC_ROOT, entry));
+}
+
+for (const file of screenshots) {
+  copyFileSync(join(screenshotsSrc, file), join(PUBLIC_ROOT, file));
+}
+
+// Prune stale synced files so public/ mirrors assets/ exactly. site.webmanifest
+// is web-only and must be preserved; anything else in public/ that is not a
+// current brand source (e.g. a renamed or deleted screenshot) is removed so the
+// CI drift check sees it and the change is committed or caught.
+const expected = new Set([...WEB_SERVED, ...screenshots, "site.webmanifest"]);
+for (const name of readdirSync(PUBLIC_ROOT)) {
+  if (!expected.has(name)) {
+    rmSync(join(PUBLIC_ROOT, name));
   }
-} else {
-  console.warn(`sync-brand: missing ${SCREENSHOTS_DIR} dir, skipping`);
 }
 
 console.log(`sync-brand: copied ${WEB_SERVED.length} files + ${SCREENSHOTS_DIR} to ${PUBLIC_ROOT}`);
