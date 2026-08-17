@@ -1,0 +1,9 @@
+{
+  "name": "pingstats-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PingStats — live network latency on macOS, Windows, and the web.",
+  "workspaces": [
+    "apps/web"
+  ]
+}

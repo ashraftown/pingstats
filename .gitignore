@@ -39,16 +39,17 @@ Package.resolved
 *~
 
 # .NET / Windows
-src/windows/PingStats.Windows/bin/
-src/windows/PingStats.Windows/obj/
+apps/windows/PingStats.Windows/bin/
+apps/windows/PingStats.Windows/obj/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
 
-# Node.js / Astro landing page
+# Node.js / Astro web app
 node_modules/
-.astro/
+apps/web/.astro/
+apps/web/dist/
 
 # Env / secrets
 .env

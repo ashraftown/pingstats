@@ -29,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           xcodebuild \
-            -project src/macos/PingStats.xcodeproj \
+            -project apps/macos/PingStats.xcodeproj \
             -scheme PingStats \
             -configuration Release \
             -derivedDataPath .build \
@@ -60,7 +60,37 @@ jobs:
           dotnet-version: 8.x
 
       - name: Restore
-        run: dotnet restore src/windows/PingStats.Windows/PingStats.Windows.csproj
+        run: dotnet restore apps/windows/PingStats.Windows/PingStats.Windows.csproj
 
       - name: Build Release
-        run: dotnet build src/windows/PingStats.Windows/PingStats.Windows.csproj -c Release --no-restore
+        run: dotnet build apps/windows/PingStats.Windows/PingStats.Windows.csproj -c Release --no-restore
+
+  web:
+    name: Build web
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm ci
+
+      - name: Sync brand assets
+        run: |
+          npm run prebuild -w apps/web
+          if [[ -n "$(git status --porcelain apps/web/public)" ]]; then
+            echo "error: sync-brand left a diff in apps/web/public — run it and commit the result"
+            git diff --stat apps/web/public
+            exit 1
+          fi
+
+      - name: Build
+        run: npm run build -w apps/web
