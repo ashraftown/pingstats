@@ -139,21 +139,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         .environmentObject(popoverCoordinator)
     )
 
-    pingManager.$latestLatencyMs
-      .receive(on: DispatchQueue.main)
-      .sink { [weak self] _ in
-        self?.updateStatusBarIcon()
-      }
-      .store(in: &cancellables)
-
-    pingManager.$isConnected
-      .receive(on: DispatchQueue.main)
-      .sink { [weak self] _ in
-        self?.updateStatusBarIcon()
-      }
-      .store(in: &cancellables)
-
-    pingManager.$isRunning
+    pingManager.objectWillChange
       .receive(on: DispatchQueue.main)
       .sink { [weak self] _ in
         self?.updateStatusBarIcon()

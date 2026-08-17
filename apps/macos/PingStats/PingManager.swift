@@ -26,6 +26,10 @@ class PingManager: NSObject, ObservableObject {
     private static let oldIntervalKey = "PingMenuBar.intervalSeconds"
     private static let defaultHost = "8.8.8.8"
     private static let defaultInterval: Double = 1.0
+    private static let pingOutputRegex = try? NSRegularExpression(
+        pattern: "time=([0-9.]+)\\s*ms",
+        options: []
+    )
 
     override init() {
         let ud = UserDefaults.standard
@@ -221,7 +225,7 @@ class PingManager: NSObject, ObservableObject {
                 }
             } catch {
                 DispatchQueue.main.async {
-                    guard self.isRunning else { return }
+                    guard self.isRunning, self.host == host else { return }
                     self.statusMessage = "Error: \(error.localizedDescription)"
                     self.isConnected = false
                     self.latestLatency = "✗"
@@ -233,13 +237,11 @@ class PingManager: NSObject, ObservableObject {
 
     private func parsePingOutput(_ output: String) -> Double? {
         // Look for pattern like "time=25.123 ms"
-        let pattern = "time=([0-9.]+)\\s*ms"
-        if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
-            let range = NSRange(output.startIndex..., in: output)
-            if let match = regex.firstMatch(in: output, options: [], range: range),
-               let timeRange = Range(match.range(at: 1), in: output) {
-                return Double(output[timeRange])
-            }
+        guard let regex = Self.pingOutputRegex else { return nil }
+        let range = NSRange(output.startIndex..., in: output)
+        if let match = regex.firstMatch(in: output, options: [], range: range),
+           let timeRange = Range(match.range(at: 1), in: output) {
+            return Double(output[timeRange])
         }
         return nil
     }
