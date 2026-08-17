@@ -7,6 +7,7 @@ public partial class App : System.Windows.Application
 {
     private PingManager? _pingManager;
     private TrayManager? _trayManager;
+    private PopupWindow? _popupWindow;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -14,7 +15,7 @@ public partial class App : System.Windows.Application
 
         _pingManager = new PingManager();
         _trayManager = new TrayManager(_pingManager);
-        var _ = new PopupWindow(_pingManager, _trayManager);
+        _popupWindow = new PopupWindow(_pingManager, _trayManager);
 
         _pingManager.StartPinging();
     }
