@@ -26,7 +26,6 @@ xcuserdata/
 # Release artifacts (local)
 dist/
 *.dmg
-!docs/**/*.dmg
 
 # Swift Package Manager
 .swiftpm/
