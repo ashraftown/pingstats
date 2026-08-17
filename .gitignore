@@ -48,6 +48,7 @@ apps/windows/PingStats.Windows/obj/
 # Node.js / Astro web app
 node_modules/
 apps/web/.astro/
+apps/web/.wrangler/
 apps/web/dist/
 
 # Env / secrets

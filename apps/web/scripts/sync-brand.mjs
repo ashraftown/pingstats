@@ -44,10 +44,10 @@ for (const file of screenshots) {
 }
 
 // Prune stale synced files so public/ mirrors assets/ exactly. site.webmanifest
-// is web-only and must be preserved; anything else in public/ that is not a
-// current brand source (e.g. a renamed or deleted screenshot) is removed so the
-// CI drift check sees it and the change is committed or caught.
-const expected = new Set([...WEB_SERVED, ...screenshots, "site.webmanifest"]);
+// and _headers are web-only and must be preserved; anything else in public/ that
+// is not a current brand source (e.g. a renamed or deleted screenshot) is
+// removed so the CI drift check sees it and the change is committed or caught.
+const expected = new Set([...WEB_SERVED, ...screenshots, "site.webmanifest", "_headers"]);
 for (const name of readdirSync(PUBLIC_ROOT)) {
   if (!expected.has(name)) {
     rmSync(join(PUBLIC_ROOT, name));
