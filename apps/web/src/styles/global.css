@@ -111,15 +111,15 @@ img, svg {
 }
 
 .btn-ghost {
-  color: var(--fg-muted);
-  border: 1px solid var(--border);
-  background: transparent;
+  color: #d4d4d8;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #18181b;
 }
 
 .btn-ghost:hover {
   color: var(--fg);
-  border-color: var(--border-strong);
-  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: #1e1e21;
 }
 
 .btn-lg {
