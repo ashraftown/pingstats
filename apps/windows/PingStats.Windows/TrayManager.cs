@@ -133,9 +133,6 @@ public class TrayManager : IDisposable
             return Color.Red;
         }
 
-        if (_pingManager.LatestLatency == "\u2717")
-            return Color.Gray;
-
         return Color.Gray;
     }
 

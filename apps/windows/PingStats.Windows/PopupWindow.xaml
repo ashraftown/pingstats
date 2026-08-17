@@ -157,7 +157,7 @@
                 x:Name="PinButton"
                 Style="{StaticResource ActionButton}"
                 Click="OnPinToggle"
-                ToolTip="Pin \u2014 keep open when clicking outside">
+                ToolTip="Pin &#x2014; keep open when clicking outside">
           <Viewbox Width="14" Height="14">
             <Canvas Width="24" Height="24">
               <Path x:Name="PinIcon"

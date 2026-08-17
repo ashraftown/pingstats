@@ -115,7 +115,7 @@ Requires [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) an
 
 ### Windows
 
-- Shells out to `ping -n 1` and parses `time<…ms` (same numbers as Command Prompt)
+- Uses the .NET `Ping` API (`System.Net.NetworkInformation.Ping`) to probe the host and measures round-trip time
 - System tray icon shows the **latest** sample; popup keeps **min/avg/max** over the last 30 successes
 - No sandbox restrictions
 
@@ -194,7 +194,6 @@ pingstats/
 ├── CONTRIBUTING.md
 ├── LICENSE
 ├── package.json                    # npm workspace (apps/web)
-├── README-INSTALL.md
 ├── README.md
 └── SECURITY.md
 ```
