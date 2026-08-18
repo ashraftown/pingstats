@@ -679,8 +679,8 @@ struct ContentView: View {
   @ViewBuilder
   private var resolveNote: some View {
     if !pingManager.resolvedIP.isEmpty {
-      (Text("resolves to ") + Text(pingManager.resolvedIP).monospaced())
-        .font(.system(size: 10))
+      (Text("resolves to ") + Text(pingManager.resolvedIP))
+        .font(.system(size: 10, design: .monospaced))
         .foregroundStyle(Color(hex: 0x9AA0A8))
     } else if state == .resolving {
       Text("resolving…")
@@ -1010,7 +1010,7 @@ struct PingChartView: View {
 
   private func dashedLine(y: CGFloat, width: CGFloat, opacity: Double) -> some View {
     Path { path in
-      path.move(to: CGPoint(x: marginLeft, y: y))
+      path.move(to: CGPoint(x: Self.marginLeft, y: y))
       path.addLine(to: CGPoint(x: width, y: y))
     }
     .stroke(Color.white.opacity(opacity), style: StrokeStyle(lineWidth: 1, dash: [2, 3]))
