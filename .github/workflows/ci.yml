@@ -35,14 +35,15 @@ jobs:
             -derivedDataPath .build \
             -destination "platform=macOS,arch=arm64" \
             CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
             build
 
           APP_PATH=".build/Build/Products/Release/PingStats.app"
           test -d "${APP_PATH}"
           test -f "${APP_PATH}/Contents/Resources/AppIcon.icns" \
             || ls -la "${APP_PATH}/Contents/Resources/"
+
+          codesign --verify --deep --strict "${APP_PATH}"
+          codesign -dv "${APP_PATH}" 2>&1 | grep "Signature=adhoc"
 
       - name: Package app
         run: |
