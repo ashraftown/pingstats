@@ -127,9 +127,8 @@ public class TrayManager : IDisposable
         if (_pingManager.LatestLatencyMs.HasValue)
         {
             var ms = _pingManager.LatestLatencyMs.Value;
-            if (ms < 50) return Color.LimeGreen;
-            if (ms < 100) return Color.Yellow;
-            if (ms < 200) return Color.Orange;
+            if (ms < 60) return Color.LimeGreen;
+            if (ms <= 120) return Color.Gold;
             return Color.Red;
         }
 

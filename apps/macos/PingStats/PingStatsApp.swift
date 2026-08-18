@@ -127,17 +127,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     popover = NSPopover()
-    popover?.contentSize = NSSize(width: 320, height: 360)
     popover?.behavior = .applicationDefined
     popover?.delegate = self
     popover?.animates = true
     // Hide NSPopover arrow (private key; widely used for menu bar apps)
     popover?.setValue(true, forKeyPath: "shouldHideAnchor")
-    popover?.contentViewController = NSHostingController(
+
+    let hostingController = NSHostingController(
       rootView: ContentView()
         .environmentObject(pingManager)
         .environmentObject(popoverCoordinator)
     )
+    // Dark-first popup design; keep the popover chrome dark regardless of system theme.
+    hostingController.view.appearance = NSAppearance(named: .darkAqua)
+    popover?.contentViewController = hostingController
+    let fittingSize = hostingController.view.fittingSize
+    popover?.contentSize = fittingSize.width > 0 && fittingSize.height > 0
+      ? fittingSize
+      : NSSize(width: 340, height: 620)
 
     pingManager.objectWillChange
       .receive(on: DispatchQueue.main)
@@ -286,13 +293,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
       displayText = "--"
     } else if let ms = pingManager.latestLatencyMs {
       displayText = "\(Int(ms.rounded()))"
-      if ms < 50 {
+      switch LatencyTier.tier(ms) {
+      case .green:
         color = NSColor.systemGreen
-      } else if ms < 100 {
+      case .yellow:
         color = NSColor.systemYellow
-      } else if ms < 200 {
-        color = NSColor.systemOrange
-      } else {
+      case .red:
         color = NSColor.systemRed
       }
     } else if pingManager.latestLatency == "✗" {
@@ -338,161 +344,141 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
   }
 }
 
+// MARK: - Design tokens
+
+extension Color {
+  init(hex: UInt32) {
+    self.init(
+      .sRGB,
+      red: Double((hex >> 16) & 0xFF) / 255,
+      green: Double((hex >> 8) & 0xFF) / 255,
+      blue: Double(hex & 0xFF) / 255,
+      opacity: 1
+    )
+  }
+}
+
+enum LatencyTier {
+  case green
+  case yellow
+  case red
+
+  static func tier(_ ms: Double) -> LatencyTier {
+    if ms < 60 { return .green }
+    if ms <= 120 { return .yellow }
+    return .red
+  }
+
+  var color: Color {
+    switch self {
+    case .green: return Color(hex: 0x34D399)
+    case .yellow: return Color(hex: 0xF5A623)
+    case .red: return Color(hex: 0xF0625F)
+    }
+  }
+}
+
+enum PopupState: Equatable {
+  case stopped
+  case resolving
+  case connected
+  case timeout
+
+  var pillText: String {
+    switch self {
+    case .stopped: return "stopped"
+    case .resolving: return "resolving"
+    case .connected: return "connected"
+    case .timeout: return "timeout"
+    }
+  }
+
+  var pillFg: Color {
+    switch self {
+    case .connected: return Color(hex: 0x34D399)
+    case .timeout: return Color(hex: 0xF0958F)
+    case .stopped, .resolving: return Color(hex: 0xB8BABF)
+    }
+  }
+
+  var pillBg: Color {
+    switch self {
+    case .connected: return Color(hex: 0x34D399).opacity(0.12)
+    case .timeout: return Color(hex: 0xF0625F).opacity(0.12)
+    case .stopped, .resolving: return Color.white.opacity(0.06)
+    }
+  }
+
+  var dotColor: Color {
+    switch self {
+    case .connected: return Color(hex: 0x34D399)
+    case .timeout: return Color(hex: 0xF0625F)
+    case .stopped, .resolving: return Color(hex: 0x71757D)
+    }
+  }
+
+  var dotPulses: Bool { self == .connected }
+
+  var heroCaption: String {
+    switch self {
+    case .connected: return "latest ping"
+    case .resolving: return "resolving…"
+    case .stopped: return "not monitoring"
+    case .timeout: return "timeout"
+    }
+  }
+
+  var heroFallbackNumber: String {
+    switch self {
+    case .stopped, .resolving: return "--"
+    case .timeout: return "✗"
+    case .connected: return "--"
+    }
+  }
+}
+
 // MARK: - Popup UI
 
 struct ContentView: View {
   @EnvironmentObject var pingManager: PingManager
   @EnvironmentObject var popoverCoordinator: PopoverCoordinator
   @StateObject private var loginItems = LoginItemManager()
-  @State private var hostField: String = ""
-  private let intervalOptions: [Double] = [1, 2, 5, 10, 30]
+  @State private var hostField = ""
+  @State private var showQuitConfirm = false
+  private let intervalOptions: [Double] = [1, 5, 10, 30]
+
+  private var state: PopupState {
+    if !pingManager.isRunning { return .stopped }
+    if pingManager.isConnected { return .connected }
+    if pingManager.latestLatency == "✗" { return .timeout }
+    return .resolving
+  }
+
+  private var hostEmpty: Bool {
+    hostField.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      HStack {
-        Text("PingStats")
-          .font(.headline)
-        Spacer()
-        Button {
-          popoverCoordinator.togglePin()
-        } label: {
-          Image(systemName: popoverCoordinator.isPinned ? "pin.fill" : "pin")
-            .font(.system(size: 12, weight: .semibold))
-            .frame(minWidth: 16, minHeight: 16)
-            .padding(.horizontal, 5)
-            .padding(.vertical, 3)
-        }
-        .buttonStyle(.bordered)
-        .controlSize(.regular)
-        .tint(popoverCoordinator.isPinned ? Color.accentColor : Color.secondary)
-        .help(
-          popoverCoordinator.isPinned
-            ? "Unpin — close when clicking outside"
-            : "Pin — keep open when clicking outside"
-        )
-        .accessibilityLabel(popoverCoordinator.isPinned ? "Unpin popup" : "Pin popup")
-      }
-
-      HStack {
-        Text("Host:")
-          .frame(width: 56, alignment: .leading)
-        TextField("hostname or IP", text: $hostField)
-          .textFieldStyle(.roundedBorder)
-          .disabled(pingManager.isRunning)
-          .onSubmit {
-            guard !pingManager.isRunning else { return }
-            startWithField()
-          }
-      }
-
-      HStack {
-        Text("Every:")
-          .frame(width: 56, alignment: .leading)
-        Picker("", selection: intervalBinding) {
-          ForEach(intervalOptions, id: \.self) { seconds in
-            Text(intervalLabel(seconds)).tag(seconds)
-          }
-        }
-        .labelsHidden()
-        .pickerStyle(.menu)
-        .frame(maxWidth: .infinity, alignment: .leading)
-
-        Text(pingManager.isRunning ? "pinging…" : "paused")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-      }
-
-      HStack(spacing: 8) {
-        Button(action: toggleRunning) {
-          Text(pingManager.isRunning ? "Stop" : "Start")
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(pingManager.isRunning ? .red : Color.accentColor)
-        .disabled(
-          !pingManager.isRunning
-            && hostField.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        )
-      }
-
-      Divider()
-
-      VStack(alignment: .leading, spacing: 6) {
-        HStack {
-          Text("Latest:")
-          Text(pingManager.latestLatency)
-            .fontWeight(.semibold)
-            .foregroundStyle(latestColor)
-        }
-
-        HStack {
-          Text("Min/Avg/Max:")
-          Text(pingManager.statsString)
-            .fontWeight(.semibold)
-            .foregroundStyle(.secondary)
-        }
-
-        if !pingManager.resolvedIP.isEmpty {
-          HStack {
-            Text("IP:")
-            Text(pingManager.resolvedIP)
-              .fontWeight(.semibold)
-              .foregroundStyle(.secondary)
-          }
-        }
-
-        HStack {
-          Text("Status:")
-          Text(pingManager.statusMessage)
-            .fontWeight(.semibold)
-            .foregroundStyle(pingManager.isConnected ? .green : .red)
-        }
-      }
-      .font(.system(.body, design: .monospaced))
-
-      Divider()
-
-      PingGraphView(pingResults: pingManager.pingResults)
-        .frame(height: 80)
-
-      Divider()
-
-      VStack(alignment: .leading, spacing: 6) {
-        HStack(alignment: .center) {
-          Toggle("Open at Login", isOn: openAtLoginBinding)
-            .toggleStyle(.checkbox)
-            .controlSize(.small)
-            .help("Start PingStats automatically when you log in")
-
-          if loginItems.needsApproval {
-            Button("Allow…") {
-              loginItems.openLoginItemsSettings()
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.mini)
-            .help("macOS needs permission in System Settings → Login Items")
-          }
-
-          Spacer()
-
-          Button("Quit PingStats") {
-            NSApp.terminate(nil)
-          }
-          .buttonStyle(.bordered)
-          .controlSize(.small)
-          .tint(.secondary)
-        }
-
-        if let hint = loginItems.statusHint {
-          Text(hint)
-            .font(.caption2)
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-      }
+    VStack(alignment: .leading, spacing: 14) {
+      headerRow
+      hero
+      PingChartView(pingResults: pingManager.pingResults, strokeColor: chartColor)
+      statsRow
+      statusRow
+      hostBlock
+      intervalBlock
+      toggleButton
+      footerOrConfirm
+        .animation(.easeInOut(duration: 0.15), value: showQuitConfirm)
     }
-    .padding()
-    .frame(width: 300)
+    .padding(20)
+    .frame(width: 340)
+    .background(Color(hex: 0x0B0C0F))
+    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    .overlay(
+      RoundedRectangle(cornerRadius: 16, style: .continuous)
+        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+    )
     .onAppear {
       if hostField.isEmpty {
         hostField = pingManager.host
@@ -500,6 +486,343 @@ struct ContentView: View {
       loginItems.refresh()
     }
   }
+
+  // MARK: Header
+
+  private var headerRow: some View {
+    HStack {
+      HStack(spacing: 8) {
+        PulsingDot(color: state.dotColor, isPulsing: state.dotPulses)
+          .frame(width: 8, height: 8)
+        Text("PingStats")
+          .font(.system(size: 14, weight: .medium))
+          .foregroundStyle(Color(hex: 0xF5F6F7))
+      }
+      Spacer()
+      Button {
+        popoverCoordinator.togglePin()
+      } label: {
+        Image(systemName: "pin")
+          .font(.system(size: 14))
+          .foregroundStyle(
+            popoverCoordinator.isPinned ? Color(hex: 0x0B0C0F) : Color(hex: 0x4C8DFF)
+          )
+          .rotationEffect(.degrees(popoverCoordinator.isPinned ? 0 : 35))
+          .frame(width: 26, height: 26)
+          .background(
+            popoverCoordinator.isPinned ? Color(hex: 0x4C8DFF) : Color(hex: 0x4C8DFF).opacity(0.12)
+          )
+          .clipShape(RoundedRectangle(cornerRadius: 7))
+          .overlay(
+            RoundedRectangle(cornerRadius: 7)
+              .stroke(
+                Color(hex: 0x4C8DFF).opacity(popoverCoordinator.isPinned ? 1 : 0.28),
+                lineWidth: 1
+              )
+          )
+      }
+      .buttonStyle(.plain)
+      .animation(.easeOut(duration: 0.2), value: popoverCoordinator.isPinned)
+      .help(
+        popoverCoordinator.isPinned
+          ? "Unpin — close when clicking outside"
+          : "Pin — keep open when clicking outside"
+      )
+      .accessibilityLabel(popoverCoordinator.isPinned ? "Unpin popup" : "Pin popup")
+    }
+  }
+
+  // MARK: Hero
+
+  private var hero: some View {
+    VStack(spacing: 6) {
+      HStack(alignment: .firstTextBaseline, spacing: 2) {
+        Text(heroNumber)
+          .font(.system(size: 38, weight: .medium, design: .monospaced))
+          .foregroundStyle(heroColor)
+        if state == .connected {
+          Text("ms")
+            .font(.system(size: 16, weight: .regular, design: .monospaced))
+            .foregroundStyle(Color(hex: 0x71757D))
+        }
+      }
+      Text(state.heroCaption)
+        .font(.system(size: 12))
+        .foregroundStyle(Color(hex: 0x71757D))
+    }
+    .frame(maxWidth: .infinity)
+    .padding(.top, 2)
+  }
+
+  private var heroNumber: String {
+    if state == .connected, let ms = pingManager.latestLatencyMs {
+      return "\(Int(ms.rounded()))"
+    }
+    return state.heroFallbackNumber
+  }
+
+  private var heroColor: Color {
+    switch state {
+    case .connected:
+      if let ms = pingManager.latestLatencyMs {
+        return LatencyTier.tier(ms).color
+      }
+      return Color(hex: 0x34D399)
+    case .timeout:
+      return Color(hex: 0xF0625F)
+    case .stopped, .resolving:
+      return Color(hex: 0x71757D)
+    }
+  }
+
+  private var chartColor: Color {
+    switch state {
+    case .connected:
+      if let ms = pingManager.latestLatencyMs {
+        return LatencyTier.tier(ms).color
+      }
+      return Color(hex: 0x34D399)
+    case .stopped, .resolving, .timeout:
+      return Color(hex: 0x71757D)
+    }
+  }
+
+  // MARK: Stats
+
+  private var statsRow: some View {
+    VStack(spacing: 0) {
+      Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1)
+      HStack(spacing: 0) {
+        statCell(statsValues.min, "min")
+        statDivider
+        statCell(statsValues.avg, "avg")
+        statDivider
+        statCell(statsValues.max, "max")
+      }
+      .padding(.vertical, 12)
+      Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1)
+    }
+  }
+
+  private var statDivider: some View {
+    Rectangle().fill(Color.white.opacity(0.08)).frame(width: 1)
+  }
+
+  private func statCell(_ value: String, _ label: String) -> some View {
+    VStack(spacing: 3) {
+      Text(value)
+        .font(.system(size: 15, weight: .medium, design: .monospaced))
+        .foregroundStyle(Color(hex: 0xF5F6F7))
+      Text(label)
+        .font(.system(size: 10))
+        .foregroundStyle(Color(hex: 0x71757D))
+    }
+    .frame(maxWidth: .infinity)
+  }
+
+  private var statsValues: (min: String, avg: String, max: String) {
+    let results = pingManager.pingResults
+    guard !results.isEmpty else { return ("--", "--", "--") }
+    let min = results.min() ?? 0
+    let max = results.max() ?? 0
+    let avg = results.reduce(0, +) / Double(results.count)
+    return ("\(Int(min.rounded()))", "\(Int(avg.rounded()))", "\(Int(max.rounded()))")
+  }
+
+  // MARK: Status pill
+
+  private var statusRow: some View {
+    HStack {
+      Text("status")
+        .font(.system(size: 12))
+        .foregroundStyle(Color(hex: 0x71757D))
+      Spacer()
+      HStack(spacing: 5) {
+        Circle().fill(state.dotColor).frame(width: 5, height: 5)
+        Text(state.pillText)
+          .font(.system(size: 11, weight: .medium))
+      }
+      .foregroundStyle(state.pillFg)
+      .padding(.horizontal, 9)
+      .padding(.vertical, 3)
+      .background(state.pillBg)
+      .clipShape(Capsule())
+      .animation(.easeOut(duration: 0.2), value: state.pillText)
+    }
+  }
+
+  // MARK: Host
+
+  private var hostBlock: some View {
+    VStack(alignment: .leading, spacing: 4) {
+      Text("host")
+        .font(.system(size: 11))
+        .foregroundStyle(Color(hex: 0x71757D))
+      TextField("hostname or IP", text: $hostField)
+        .textFieldStyle(.plain)
+        .font(.system(size: 13, design: .monospaced))
+        .foregroundStyle(Color(hex: 0xF5F6F7))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color.white.opacity(0.04))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .disabled(pingManager.isRunning)
+        .onSubmit {
+          guard !pingManager.isRunning else { return }
+          startWithField()
+        }
+      resolveNote
+    }
+  }
+
+  @ViewBuilder
+  private var resolveNote: some View {
+    if !pingManager.resolvedIP.isEmpty {
+      (Text("resolves to ") + Text(pingManager.resolvedIP).monospaced())
+        .font(.system(size: 10))
+        .foregroundStyle(Color(hex: 0x9AA0A8))
+    } else if state == .resolving {
+      Text("resolving…")
+        .font(.system(size: 10))
+        .foregroundStyle(Color(hex: 0x71757D))
+    }
+  }
+
+  // MARK: Interval
+
+  private var intervalBlock: some View {
+    VStack(alignment: .leading, spacing: 4) {
+      Text("check every")
+        .font(.system(size: 11))
+        .foregroundStyle(Color(hex: 0x71757D))
+      Picker("", selection: intervalBinding) {
+        ForEach(intervalOptions, id: \.self) { seconds in
+          Text(intervalLabel(seconds)).tag(seconds)
+        }
+      }
+      .labelsHidden()
+      .pickerStyle(.menu)
+      .font(.system(size: 13))
+      .foregroundStyle(Color(hex: 0xF5F6F7))
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(.horizontal, 10)
+      .padding(.vertical, 8)
+      .background(Color.white.opacity(0.04))
+      .clipShape(RoundedRectangle(cornerRadius: 8))
+      .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.08), lineWidth: 1))
+    }
+  }
+
+  // MARK: Toggle
+
+  private var toggleButton: some View {
+    Button(action: toggleRunning) {
+      HStack(spacing: 6) {
+        Image(systemName: pingManager.isRunning ? "stop.fill" : "play.fill")
+          .font(.system(size: 14))
+        Text(pingManager.isRunning ? "stop monitoring" : "start monitoring")
+          .font(.system(size: 13, weight: .medium))
+      }
+      .foregroundStyle(toggleFg)
+      .frame(maxWidth: .infinity)
+      .padding(.vertical, 11)
+      .background(toggleBg)
+      .clipShape(RoundedRectangle(cornerRadius: 10))
+      .overlay(RoundedRectangle(cornerRadius: 10).stroke(toggleBorder, lineWidth: 1))
+    }
+    .buttonStyle(.plain)
+    .disabled(!pingManager.isRunning && hostEmpty)
+    .opacity(!pingManager.isRunning && hostEmpty ? 0.4 : 1)
+    .animation(.easeOut(duration: 0.2), value: pingManager.isRunning)
+  }
+
+  private var toggleFg: Color {
+    pingManager.isRunning ? Color(hex: 0xF0958F) : Color(hex: 0x34D399)
+  }
+
+  private var toggleBg: Color {
+    pingManager.isRunning
+      ? Color(hex: 0xF0625F).opacity(0.12)
+      : Color(hex: 0x34D399).opacity(0.12)
+  }
+
+  private var toggleBorder: Color {
+    pingManager.isRunning
+      ? Color(hex: 0xF0625F).opacity(0.28)
+      : Color(hex: 0x34D399).opacity(0.28)
+  }
+
+  // MARK: Footer / quit confirm
+
+  @ViewBuilder
+  private var footerOrConfirm: some View {
+    if showQuitConfirm {
+      HStack {
+        Text("quit pingstats?")
+          .font(.system(size: 12))
+          .foregroundStyle(Color(hex: 0xB8BABF))
+        Spacer()
+        Button("cancel") {
+          showQuitConfirm = false
+        }
+        .buttonStyle(FooterButtonStyle())
+        Button("quit") {
+          NSApp.terminate(nil)
+        }
+        .buttonStyle(
+          FooterButtonStyle(
+            fg: Color(hex: 0xF0958F),
+            bg: Color(hex: 0xF0625F).opacity(0.12),
+            border: Color(hex: 0xF0625F).opacity(0.28)
+          )
+        )
+      }
+      .transition(.opacity)
+    } else {
+      VStack(alignment: .leading, spacing: 6) {
+        HStack {
+          Toggle("open at login", isOn: openAtLoginBinding)
+            .toggleStyle(.checkbox)
+            .controlSize(.small)
+            .font(.system(size: 12))
+            .foregroundStyle(Color(hex: 0xB8BABF))
+          Spacer()
+          Button {
+            showQuitConfirm = true
+          } label: {
+            HStack(spacing: 5) {
+              Image(systemName: "power")
+                .font(.system(size: 13))
+              Text("quit")
+                .font(.system(size: 12))
+            }
+          }
+          .buttonStyle(FooterButtonStyle())
+        }
+
+        if loginItems.needsApproval {
+          HStack {
+            Button("Allow…") {
+              loginItems.openLoginItemsSettings()
+            }
+            .buttonStyle(FooterButtonStyle())
+            if let hint = loginItems.statusHint {
+              Text(hint)
+                .font(.system(size: 10))
+                .foregroundStyle(Color(hex: 0x71757D))
+            }
+          }
+        } else if let hint = loginItems.statusHint {
+          Text(hint)
+            .font(.system(size: 10))
+            .foregroundStyle(Color(hex: 0x71757D))
+        }
+      }
+    }
+  }
+
+  // MARK: Bindings / actions
 
   private var openAtLoginBinding: Binding<Bool> {
     Binding(
@@ -513,16 +836,6 @@ struct ContentView: View {
       get: { pingManager.intervalSeconds },
       set: { pingManager.setInterval($0) }
     )
-  }
-
-  private var latestColor: Color {
-    if pingManager.latestLatency == "--" {
-      return .gray
-    }
-    if pingManager.latestLatency == "✗" {
-      return .red
-    }
-    return .green
   }
 
   private func intervalLabel(_ seconds: Double) -> String {
@@ -547,67 +860,234 @@ struct ContentView: View {
   }
 }
 
-struct PingGraphView: View {
-  let pingResults: [Double]
+struct FooterButtonStyle: ButtonStyle {
+  var fg: Color = Color(hex: 0xB8BABF)
+  var bg: Color = .clear
+  var border: Color = Color.white.opacity(0.1)
+
+  func makeBody(configuration: Configuration) -> some View {
+    configuration.label
+      .font(.system(size: 12))
+      .foregroundStyle(fg)
+      .padding(.horizontal, 12)
+      .padding(.vertical, 6)
+      .background(bg)
+      .clipShape(RoundedRectangle(cornerRadius: 8))
+      .overlay(RoundedRectangle(cornerRadius: 8).stroke(border, lineWidth: 1))
+      .opacity(configuration.isPressed ? 0.85 : 1)
+  }
+}
+
+struct PulsingDot: View {
+  let color: Color
+  let isPulsing: Bool
 
   var body: some View {
-    HStack(spacing: 4) {
-      VStack(alignment: .trailing, spacing: 0) {
-        Text("\(Int(maxLatency))ms")
-          .font(.system(size: 8))
-          .foregroundColor(.secondary)
-        Spacer()
-        Text("\(Int(maxLatency / 2))ms")
-          .font(.system(size: 8))
-          .foregroundColor(.secondary)
-        Spacer()
-        Text("0ms")
-          .font(.system(size: 8))
-          .foregroundColor(.secondary)
-      }
-      .frame(width: 30)
+    TimelineView(.animation(minimumInterval: 0.05, paused: !isPulsing)) { context in
+      Circle()
+        .fill(color)
+        .opacity(isPulsing ? pulseOpacity(context.date) : 1)
+    }
+  }
 
-      GeometryReader { geometry in
-        HStack(alignment: .bottom, spacing: 2) {
-          ForEach(Array(pingResults.enumerated()), id: \.offset) { _, latency in
-            Rectangle()
-              .fill(colorForLatency(latency))
-              .frame(
-                width: max(
-                  1,
-                  (geometry.size.width - CGFloat(pingResults.count - 1) * 2)
-                    / CGFloat(max(pingResults.count, 1))
+  private func pulseOpacity(_ date: Date) -> Double {
+    let phase = date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 2)
+    return 0.35 + 0.65 * abs(cos(.pi * phase))
+  }
+}
+
+// MARK: - Ping chart
+
+/// Live line/area chart of the last 30 samples with a dynamic Y axis and a
+/// 550ms slide-in on each new sample. Coordinate math mirrors the mock.
+struct PingChartView: View {
+  let pingResults: [Double]
+  let strokeColor: Color
+
+  @State private var settled: [Double] = []
+  @State private var display: [Double] = []
+  @State private var slideProgress: CGFloat = 0
+
+  private let slideDuration = 0.55
+  private static let marginLeft: CGFloat = 28
+
+  var body: some View {
+    GeometryReader { geo in
+      let plotWidth = geo.size.width - Self.marginLeft
+      let count = max(settled.count, 2)
+      let stepX = plotWidth / CGFloat(count - 1)
+      let chart = display.isEmpty ? settled : display
+      let axisMax = Self.axisMax(chart)
+      let baselineY = geo.size.height * (40 / 54)
+      let topY = geo.size.height * (2 / 54)
+
+      ZStack(alignment: .topLeading) {
+        gridlines(width: geo.size.width, topY: topY, baselineY: baselineY)
+        axisLabels(axisMax: axisMax, topY: topY, baselineY: baselineY)
+
+        ZStack(alignment: .topLeading) {
+          Self.areaPath(
+            chart,
+            stepX: stepX,
+            axisMax: axisMax,
+            topY: topY,
+            baselineY: baselineY,
+            bottomY: geo.size.height
+          )
+          .fill(strokeColor.opacity(0.12))
+
+          Self.linePath(chart, stepX: stepX, axisMax: axisMax, topY: topY, baselineY: baselineY)
+            .stroke(
+              strokeColor,
+              style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
+            )
+
+          ForEach(Array(chart.enumerated()), id: \.offset) { index, value in
+            if value > 120 {
+              Circle()
+                .fill(Color(hex: 0xF0625F))
+                .frame(width: 6, height: 6)
+                .overlay(Circle().stroke(Color(hex: 0x0B0C0F), lineWidth: 2))
+                .position(
+                  x: Self.marginLeft + CGFloat(index) * stepX,
+                  y: Self.y(value, axisMax: axisMax, topY: topY, baselineY: baselineY)
                 )
-              )
-              .frame(height: heightForLatency(latency, maxHeight: geometry.size.height))
+            }
           }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .offset(x: -slideProgress * stepX)
       }
-      .background(Color.gray.opacity(0.1))
-      .cornerRadius(4)
+    }
+    .frame(height: 64)
+    .onChange(of: pingResults) { newValues in
+      sync(newValues)
     }
   }
 
-  private var maxLatency: Double {
-    pingResults.max() ?? 100
-  }
-
-  private func colorForLatency(_ ms: Double) -> Color {
-    if ms < 50 {
-      return .green
-    } else if ms < 100 {
-      return .yellow
-    } else if ms < 200 {
-      return .orange
-    } else {
-      return .red
+  private func sync(_ newValues: [Double]) {
+    if newValues == settled { return }
+    if newValues.isEmpty {
+      settled = []
+      display = []
+      slideProgress = 0
+      return
+    }
+    // Steady-state slide only once the 30-sample window is full and a new
+    // sample has shifted in (count stays 30 because the manager drops the head).
+    let shiftedIn =
+      settled.count == 30
+      && newValues.count == 30
+      && newValues.dropLast() == settled.dropFirst()
+    guard shiftedIn, let last = newValues.last else {
+      settled = newValues
+      display = []
+      slideProgress = 0
+      return
+    }
+    let extended = settled + [last]
+    display = extended
+    slideProgress = 0
+    withAnimation(.easeOut(duration: slideDuration)) {
+      slideProgress = 1
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + slideDuration + 0.05) {
+      settled = newValues
+      display = []
+      slideProgress = 0
     }
   }
 
-  private func heightForLatency(_ latency: Double, maxHeight: CGFloat) -> CGFloat {
-    guard maxLatency > 0 else { return 0 }
-    let ratio = latency / maxLatency
-    return max(2, ratio * maxHeight)
+  private func gridlines(width: CGFloat, topY: CGFloat, baselineY: CGFloat) -> some View {
+    ZStack(alignment: .topLeading) {
+      dashedLine(y: topY, width: width, opacity: 0.05)
+      dashedLine(y: (topY + baselineY) / 2, width: width, opacity: 0.05)
+      Rectangle()
+        .fill(Color.white.opacity(0.08))
+        .frame(width: width - Self.marginLeft, height: 1)
+        .offset(x: Self.marginLeft, y: baselineY)
+    }
+  }
+
+  private func dashedLine(y: CGFloat, width: CGFloat, opacity: Double) -> some View {
+    Path { path in
+      path.move(to: CGPoint(x: marginLeft, y: y))
+      path.addLine(to: CGPoint(x: width, y: y))
+    }
+    .stroke(Color.white.opacity(opacity), style: StrokeStyle(lineWidth: 1, dash: [2, 3]))
+  }
+
+  private func axisLabels(axisMax: Double, topY: CGFloat, baselineY: CGFloat) -> some View {
+    let midY = (topY + baselineY) / 2
+    return ZStack(alignment: .topLeading) {
+      Text("\(Int(axisMax))")
+        .font(.system(size: 8.5, design: .monospaced))
+        .foregroundStyle(Color(hex: 0x5B5F66))
+        .position(x: 22, y: topY + 5)
+      Text("\(Int(axisMax / 2))")
+        .font(.system(size: 8.5, design: .monospaced))
+        .foregroundStyle(Color(hex: 0x5B5F66))
+        .position(x: 22, y: midY + 5)
+      Text("0")
+        .font(.system(size: 8.5, design: .monospaced))
+        .foregroundStyle(Color(hex: 0x5B5F66))
+        .position(x: 22, y: baselineY + 5)
+    }
+  }
+
+  private static func axisMax(_ values: [Double]) -> Double {
+    guard let maxValue = values.max(), maxValue > 0 else { return 100 }
+    return max(100, ceil(maxValue / 50) * 50)
+  }
+
+  private static func y(_ value: Double, axisMax: Double, topY: CGFloat, baselineY: CGFloat) -> CGFloat {
+    let fraction = min(1, max(0, value / axisMax))
+    return baselineY - CGFloat(fraction) * (baselineY - topY)
+  }
+
+  private static func linePath(
+    _ values: [Double],
+    stepX: CGFloat,
+    axisMax: Double,
+    topY: CGFloat,
+    baselineY: CGFloat
+  ) -> Path {
+    Path { path in
+      for (index, value) in values.enumerated() {
+        let point = CGPoint(
+          x: marginLeft + CGFloat(index) * stepX,
+          y: y(value, axisMax: axisMax, topY: topY, baselineY: baselineY)
+        )
+        if index == 0 {
+          path.move(to: point)
+        } else {
+          path.addLine(to: point)
+        }
+      }
+    }
+  }
+
+  private static func areaPath(
+    _ values: [Double],
+    stepX: CGFloat,
+    axisMax: Double,
+    topY: CGFloat,
+    baselineY: CGFloat,
+    bottomY: CGFloat
+  ) -> Path {
+    Path { path in
+      let lastIndex = values.count - 1
+      guard lastIndex >= 0 else { return }
+      path.move(to: CGPoint(x: marginLeft, y: bottomY))
+      for (index, value) in values.enumerated() {
+        path.addLine(
+          to: CGPoint(
+            x: marginLeft + CGFloat(index) * stepX,
+            y: y(value, axisMax: axisMax, topY: topY, baselineY: baselineY)
+          )
+        )
+      }
+      path.addLine(to: CGPoint(x: marginLeft + CGFloat(lastIndex) * stepX, y: bottomY))
+      path.closeSubpath()
+    }
   }
 }
