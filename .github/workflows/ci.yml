@@ -44,6 +44,20 @@ jobs:
           test -f "${APP_PATH}/Contents/Resources/AppIcon.icns" \
             || ls -la "${APP_PATH}/Contents/Resources/"
 
+      - name: Package app
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${GITHUB_SHA::7}"
+          ditto -c -k --keepParent ".build/Build/Products/Release/PingStats.app" \
+            "PingStats-${SHORT_SHA}-macos.zip"
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: PingStats-macos
+          path: PingStats-*.zip
+          if-no-files-found: error
+
   windows:
     name: Build Windows
     runs-on: windows-latest
@@ -64,6 +78,26 @@ jobs:
 
       - name: Build Release
         run: dotnet build apps/windows/PingStats.Windows/PingStats.Windows.csproj -c Release --no-restore
+
+      - name: Publish single-file
+        run: |
+          dotnet publish apps/windows/PingStats.Windows/PingStats.Windows.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:PublishSingleFile=true `
+            -p:DebugType=None -p:DebugSymbols=false `
+            -o publish/PingStats
+          $short = $env:GITHUB_SHA.Substring(0, 7)
+          Compress-Archive -Path publish/PingStats/* -DestinationPath "PingStats-$short-windows.zip"
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: PingStats-windows
+          path: PingStats-*.zip
+          if-no-files-found: error
 
   web:
     name: Build web
