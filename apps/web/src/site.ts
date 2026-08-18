@@ -8,7 +8,8 @@ export const siteDescription =
 export const siteLocale = "en_US";
 
 export const siteIcon = {
-  path: "/favicon.svg",
+  // v=2: cache-bust after the 2026-08 logo refresh (rings + signal dot mark).
+  path: "/favicon.svg?v=2",
   type: "image/svg+xml",
 } as const;
 
@@ -53,5 +54,5 @@ export const siteLogo = {
 export const brandColors = {
   background: "#09090b",
   foreground: "#fafafa",
-  accent: "#3b82f6",
+  accent: "#3E8EF7",
 } as const;
