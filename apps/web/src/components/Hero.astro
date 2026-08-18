@@ -15,7 +15,7 @@ import { MACOS_DMG, WINDOWS_ZIP } from "../consts";
   </div>
 
   <div class="container hero-inner">
-    <img src="/logo.svg" alt="" class="hero-logo" width="64" height="64" />
+    <p class="hero-badge">Free &amp; open source</p>
 
     <h1 class="hero-title display">
       Live network latency<br />in your menu bar or system tray.
@@ -36,10 +36,6 @@ import { MACOS_DMG, WINDOWS_ZIP } from "../consts";
         Download for Windows
       </a>
     </div>
-
-    <p class="hero-version">
-      Free &amp; open source
-    </p>
 
     <div class="hero-preview">
       <figure class="hero-screenshot-frame">
@@ -73,8 +69,17 @@ import { MACOS_DMG, WINDOWS_ZIP } from "../consts";
     position: relative;
   }
 
-  .hero-logo {
-    margin: 0 auto 24px;
+  .hero-badge {
+    display: inline-flex;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    color: var(--fg-muted);
+    padding: 6px 14px;
+    margin: 0 auto 20px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.02);
   }
 
   .hero-title {
@@ -98,12 +103,6 @@ import { MACOS_DMG, WINDOWS_ZIP } from "../consts";
     align-items: center;
     justify-content: center;
     gap: 16px;
-    margin-bottom: 20px;
-  }
-
-  .hero-version {
-    font-size: 14px;
-    color: var(--fg-dim);
     margin-bottom: 48px;
   }
 
@@ -209,7 +208,7 @@ import { MACOS_DMG, WINDOWS_ZIP } from "../consts";
     .hero-actions {
       flex-direction: column;
       align-items: stretch;
-      margin-bottom: 16px;
+      margin-bottom: 40px;
     }
 
     .hero-actions .btn {
