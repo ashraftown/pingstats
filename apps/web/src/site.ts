@@ -14,20 +14,20 @@ export const siteIcon = {
 } as const;
 
 export const siteFaviconPng = {
-  path: "/favicon-32x32.png",
+  path: "/favicon-32x32.png?v=2",
   width: 32,
   height: 32,
   type: "image/png",
 } as const;
 
 export const siteFaviconIco = {
-  path: "/favicon.ico",
+  path: "/favicon.ico?v=2",
   sizes: "16x16 32x32",
   type: "image/x-icon",
 } as const;
 
 export const siteAppleIcon = {
-  path: "/apple-touch-icon.png",
+  path: "/apple-touch-icon.png?v=2",
   width: 180,
   height: 180,
   type: "image/png",
