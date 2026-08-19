@@ -12,7 +12,7 @@ permissions:
 jobs:
   macos:
     name: Build macOS
-    runs-on: macos-14
+    runs-on: macos-26
 
     steps:
       - name: Checkout
@@ -24,6 +24,7 @@ jobs:
         run: |
           sudo xcode-select -s /Applications/Xcode.app
           xcodebuild -version
+          test "$(xcodebuild -version | awk 'NR==1 { print ($2+0 >= 26) ? 1 : 0 }')" = "1"
 
       - name: Build Release
         run: |
