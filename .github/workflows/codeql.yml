@@ -8,6 +8,12 @@ on:
   schedule:
     - cron: "0 0 * * 0"
 
+# Cancel any in-flight analysis when a newer commit lands on the same ref so
+# rapid pushes don't queue up stale runs.
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   actions: read
   contents: read
@@ -31,9 +37,9 @@ jobs:
             build-mode: autobuild
             timeout: 360
           - language: swift
-            os: macos-latest
-            build-mode: autobuild
-            timeout: 120
+            os: macos-26
+            build-mode: manual
+            timeout: 30
 
     steps:
       - name: Checkout repository
@@ -42,12 +48,29 @@ jobs:
           persist-credentials: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@c4dd10e44af883a891fe31ced449bcb4a6728b9b
+        uses: github/codeql-action/init@faaa5d804fc648d0fdb28822a8e36cf7d0a6132c
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
 
+      # Swift needs a build to extract the database. Build only the app target
+      # single-arch, mirroring the CI release build, instead of CodeQL's generic
+      # autobuild which compiled the whole project and dominated the ~25min runs.
+      - name: Build Swift
+        if: matrix.language == 'swift'
+        run: |
+          set -euo pipefail
+          sudo xcode-select -s /Applications/Xcode.app
+          xcodebuild \
+            -project apps/macos/PingStats.xcodeproj \
+            -scheme PingStats \
+            -configuration Release \
+            -derivedDataPath .build \
+            -destination "platform=macOS,arch=arm64" \
+            CODE_SIGN_IDENTITY="-" \
+            build
+
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@c4dd10e44af883a891fe31ced449bcb4a6728b9b
+        uses: github/codeql-action/analyze@faaa5d804fc648d0fdb28822a8e36cf7d0a6132c
         with:
           category: "/language:${{ matrix.language }}"
