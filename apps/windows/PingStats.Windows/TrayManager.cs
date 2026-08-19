@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace PingStats;
 
@@ -12,6 +13,8 @@ public class TrayManager : IDisposable
     private static extern bool DestroyIcon(IntPtr handle);
     private readonly NotifyIcon _notifyIcon;
     private readonly PingManager _pingManager;
+    private bool _isDarkTheme;
+    private SolidBrush _textBrush = new(Color.White);
 
     private const int IconWidth = 64;
     private const int IconHeight = 64;
@@ -24,6 +27,10 @@ public class TrayManager : IDisposable
     public TrayManager(PingManager pingManager)
     {
         _pingManager = pingManager;
+        _isDarkTheme = IsSystemDarkTheme();
+        _textBrush.Dispose();
+        _textBrush = _isDarkTheme ? new SolidBrush(Color.White) : new SolidBrush(Color.FromArgb(0xFF, 0x1A, 0x1A, 0x1A));
+        SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
 
         _notifyIcon = new NotifyIcon
         {
@@ -60,6 +67,28 @@ public class TrayManager : IDisposable
         _notifyIcon.ContextMenuStrip = contextMenu;
 
         _pingManager.StateChanged += OnStateChanged;
+    }
+
+    private void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
+    {
+        if (e.Category != UserPreferenceCategory.General) return;
+        _isDarkTheme = IsSystemDarkTheme();
+        _textBrush.Dispose();
+        _textBrush = _isDarkTheme ? new SolidBrush(Color.White) : new SolidBrush(Color.FromArgb(0xFF, 0x1A, 0x1A, 0x1A));
+        System.Windows.Application.Current.Dispatcher.BeginInvoke(UpdateIcon);
+    }
+
+    private static bool IsSystemDarkTheme()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            if (key?.GetValue("AppsUseLightTheme") is int value)
+                return value == 0;
+        }
+        catch { }
+        return false;
     }
 
     private void OnStateChanged()
@@ -102,7 +131,7 @@ public class TrayManager : IDisposable
         var textX = (IconWidth - textSize.Width) / 2;
         var textY = DotY + DotSize;
 
-        g.DrawString(displayText, font, Brushes.White, textX, textY, StringFormat);
+        g.DrawString(displayText, font, _textBrush, textX, textY, StringFormat);
 
         var hIcon = bitmap.GetHicon();
         try
@@ -154,7 +183,9 @@ public class TrayManager : IDisposable
 
     public void Dispose()
     {
+        SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
         _pingManager.StateChanged -= OnStateChanged;
+        _textBrush.Dispose();
         _notifyIcon.Visible = false;
         _notifyIcon.Icon = null;
         _notifyIcon.Dispose();

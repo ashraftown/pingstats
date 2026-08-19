@@ -204,37 +204,9 @@
             <ControlTemplate.Triggers>
               <Trigger Property="IsChecked" Value="True">
                 <Setter TargetName="Track" Property="Background" Value="{DynamicResource ToggleTrackOn}"/>
-                <Trigger.EnterActions>
-                  <BeginStoryboard>
-                    <Storyboard>
-                      <DoubleAnimation Storyboard.TargetName="KnobTranslate"
-                                       Storyboard.TargetProperty="X"
-                                       To="12"
-                                       Duration="0:0:0.15">
-                        <DoubleAnimation.EasingFunction>
-                          <CubicEase EasingMode="EaseOut"/>
-                        </DoubleAnimation.EasingFunction>
-                      </DoubleAnimation>
-                    </Storyboard>
-                  </BeginStoryboard>
-                </Trigger.EnterActions>
               </Trigger>
               <Trigger Property="IsChecked" Value="False">
                 <Setter TargetName="Track" Property="Background" Value="{DynamicResource ToggleTrackOff}"/>
-                <Trigger.EnterActions>
-                  <BeginStoryboard>
-                    <Storyboard>
-                      <DoubleAnimation Storyboard.TargetName="KnobTranslate"
-                                       Storyboard.TargetProperty="X"
-                                       To="0"
-                                       Duration="0:0:0.15">
-                        <DoubleAnimation.EasingFunction>
-                          <CubicEase EasingMode="EaseOut"/>
-                        </DoubleAnimation.EasingFunction>
-                      </DoubleAnimation>
-                    </Storyboard>
-                  </BeginStoryboard>
-                </Trigger.EnterActions>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -277,7 +249,7 @@
             </Viewbox.RenderTransform>
             <Canvas Width="24" Height="24">
               <Path x:Name="PinIcon"
-                    Data="M12,2 C10.9,2 10,2.9 10,4 L10,9 L6,18 L18,18 L14,9 L14,4 C14,2.9 13.1,2 12,2 Z"
+                    Data="M20,3.5 L12.8,18.8 A4.2,4.2 0 1,1 6.5,13.6 Z"
                     Fill="Transparent"
                     StrokeThickness="1.5"
                     StrokeLineJoin="Round"/>
@@ -369,7 +341,8 @@
           <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <TextBlock x:Name="StatusLabel" Grid.Column="0" Text="status" FontSize="12" VerticalAlignment="Center"/>
-        <Border Grid.Column="1" x:Name="StatusPill" CornerRadius="20" Padding="9,3" BorderThickness="1">
+        <Border Grid.Column="1" x:Name="StatusPill" CornerRadius="999" Padding="9,3"
+                BorderThickness="1" VerticalAlignment="Center">
           <StackPanel Orientation="Horizontal">
             <Ellipse x:Name="StatusDot" Width="5" Height="5" VerticalAlignment="Center"/>
             <TextBlock x:Name="StatusText" FontSize="11" FontWeight="Medium" Margin="5,0,0,0"
@@ -396,6 +369,7 @@
                   Style="{StaticResource ThemedComboBoxStyle}"
                   SelectedIndex="1"
                   HorizontalAlignment="Stretch"
+                  BorderThickness="1"
                   FontFamily="Consolas"
                   FontSize="13">
           <ComboBox.ItemTemplate>
@@ -430,8 +404,9 @@
               Click="OnStartStopToggle"
               Margin="0,0,0,14">
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-          <TextBlock x:Name="ToggleIcon" FontFamily="Segoe MDL2 Assets" FontSize="13"
-                     VerticalAlignment="Center"/>
+          <Path x:Name="ToggleGlyph" Width="13" Height="13" Stretch="Uniform"
+                VerticalAlignment="Center"
+                Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
           <TextBlock x:Name="ToggleLabel" FontSize="13" FontWeight="SemiBold"
                      Margin="6,0,0,0" VerticalAlignment="Center"/>
         </StackPanel>

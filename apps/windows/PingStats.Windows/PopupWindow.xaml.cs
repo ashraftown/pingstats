@@ -23,6 +23,11 @@ public partial class PopupWindow : Window
     private static readonly double[] IntervalOptions = { 1, 5, 10, 30 };
     private static readonly string[] IntervalLabels = { "1 second", "5 seconds", "10 seconds", "30 seconds" };
 
+    private static readonly Geometry PlayGlyph = Geometry.Parse(
+        "M8,5.14v13.72c0,0.93 1.04,1.5 1.81,1l10.4,-6.86c0.73,-0.48 0.73,-1.55 0,-2.03L9.81,4.14C9.04,3.64 8,4.21 8,5.14Z");
+    private static readonly Geometry StopGlyph = Geometry.Parse(
+        "M4,2h10a2,2 0 0,1 2,2v10a2,2 0 0,1 -2,2H4a2,2 0 0,1 -2,-2V4a2,2 0 0,1 2,-2Z");
+
     private List<double> _settledChart = new();
     private bool _chartAnimating;
     private Color _chartColor;
@@ -125,6 +130,11 @@ public partial class PopupWindow : Window
             SetIntervalSelection(_pingManager.IntervalSeconds);
             ApplyTheme();
             UpdateUI();
+            if (LoginCheckBox.Template?.FindName("KnobTranslate", LoginCheckBox) is TranslateTransform knob)
+            {
+                knob.BeginAnimation(TranslateTransform.XProperty, null);
+                knob.X = LoginCheckBox.IsChecked == true ? 12 : 0;
+            }
         };
 
         IntervalCombo.ItemsSource = IntervalLabels;
@@ -380,7 +390,7 @@ public partial class PopupWindow : Window
             ToggleButton.Background = Brush(Tint(_pal.Red, 31));
             ToggleButton.BorderBrush = Brush(Tint(_pal.Red, 71));
             ToggleButton.Foreground = Brush(_pal.RedLabel);
-            ToggleIcon.Text = "\uE71A";
+            ToggleGlyph.Data = StopGlyph;
             ToggleLabel.Text = "stop monitoring";
         }
         else
@@ -388,7 +398,7 @@ public partial class PopupWindow : Window
             ToggleButton.Background = Brush(Tint(_pal.Green, 31));
             ToggleButton.BorderBrush = Brush(Tint(_pal.Green, 71));
             ToggleButton.Foreground = Brush(_pal.Green);
-            ToggleIcon.Text = "\uE768";
+            ToggleGlyph.Data = PlayGlyph;
             ToggleLabel.Text = "start monitoring";
         }
         ToggleButton.IsEnabled = running || !string.IsNullOrWhiteSpace(HostTextBox.Text);
@@ -624,22 +634,20 @@ public partial class PopupWindow : Window
     private void UpdatePinIcon()
     {
         var accent = _pal.Accent;
+        PinIcon.Stroke = Brushes.Transparent;
+        PinIcon.StrokeThickness = 0;
         if (_isPinned)
         {
             PinButton.Background = Brush(accent);
             PinButton.BorderBrush = Brush(accent);
             PinIcon.Fill = Brush(_pal.Background);
-            PinIcon.Stroke = Brushes.Transparent;
-            PinIcon.StrokeThickness = 0;
             PinIconRotate.Angle = 0;
         }
         else
         {
             PinButton.Background = Brush(Tint(accent, 31));
             PinButton.BorderBrush = Brush(Tint(accent, 71));
-            PinIcon.Fill = Brushes.Transparent;
-            PinIcon.Stroke = Brush(accent);
-            PinIcon.StrokeThickness = 1.5;
+            PinIcon.Fill = Brush(accent);
             PinIconRotate.Angle = 35;
         }
         PinButton.ToolTip = _isPinned
@@ -714,6 +722,20 @@ public partial class PopupWindow : Window
     private void OnLoginCheckChanged(object sender, RoutedEventArgs e)
     {
         SetStartupWithWindows(LoginCheckBox.IsChecked == true);
+        AnimateLoginToggle();
+    }
+
+    private void AnimateLoginToggle()
+    {
+        if (LoginCheckBox.Template?.FindName("KnobTranslate", LoginCheckBox) is not TranslateTransform knob)
+            return;
+        knob.BeginAnimation(TranslateTransform.XProperty, null);
+        var anim = new DoubleAnimation(LoginCheckBox.IsChecked == true ? 12 : 0,
+            new Duration(TimeSpan.FromMilliseconds(150)))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+        };
+        knob.BeginAnimation(TranslateTransform.XProperty, anim);
     }
 
     private static void SetStartupWithWindows(bool enable)
