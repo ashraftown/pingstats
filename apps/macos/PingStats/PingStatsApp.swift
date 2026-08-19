@@ -688,21 +688,38 @@ struct ContentView: View {
       Text("check every")
         .font(.system(size: 11))
         .foregroundStyle(Color(hex: 0x71757D))
-      Picker("", selection: intervalBinding) {
+      Menu {
         ForEach(intervalOptions, id: \.self) { seconds in
-          Text(intervalLabel(seconds)).tag(seconds)
+          Button {
+            pingManager.setInterval(seconds)
+          } label: {
+            if seconds == pingManager.intervalSeconds {
+              Label(intervalLabel(seconds), systemImage: "checkmark")
+            } else {
+              Text(intervalLabel(seconds))
+            }
+          }
         }
+      } label: {
+        HStack(spacing: 8) {
+          Text(intervalLabel(pingManager.intervalSeconds))
+            .font(.system(size: 13, design: .monospaced))
+          Spacer()
+          Image(systemName: "chevron.up.chevron.down")
+            .font(.system(size: 11))
+            .foregroundStyle(Color.secondary)
+        }
+        .foregroundStyle(Color.primary)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color.primary.opacity(0.05))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.12), lineWidth: 1))
+        .contentShape(Rectangle())
       }
-      .labelsHidden()
-      .pickerStyle(.menu)
-      .font(.system(size: 13))
-      .foregroundStyle(Color.primary)
+      .menuStyle(.borderlessButton)
+      .menuIndicator(.hidden)
       .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(.horizontal, 10)
-      .padding(.vertical, 8)
-      .background(Color.primary.opacity(0.05))
-      .clipShape(RoundedRectangle(cornerRadius: 8))
-      .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.12), lineWidth: 1))
     }
   }
 
@@ -820,13 +837,6 @@ struct ContentView: View {
     Binding(
       get: { loginItems.isEnabled || loginItems.needsApproval },
       set: { loginItems.setEnabled($0) }
-    )
-  }
-
-  private var intervalBinding: Binding<Double> {
-    Binding(
-      get: { pingManager.intervalSeconds },
-      set: { pingManager.setInterval($0) }
     )
   }
 
