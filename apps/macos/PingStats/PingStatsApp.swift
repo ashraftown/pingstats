@@ -780,12 +780,16 @@ struct ContentView: View {
     } else {
       VStack(alignment: .leading, spacing: 6) {
         HStack {
+          HStack(spacing: 7) {
           Toggle("open at login", isOn: openAtLoginBinding)
             .toggleStyle(.switch)
             .controlSize(.small)
+            .labelsHidden()
+          Text("open at login")
             .font(.system(size: 12))
             .foregroundStyle(Color.secondary)
-          Spacer()
+        }
+        Spacer()
           Button {
             showQuitConfirm = true
           } label: {
