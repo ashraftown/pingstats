@@ -20,7 +20,6 @@
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="Foreground" Value="#F5F6F7"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
@@ -31,6 +30,11 @@
                     Padding="{TemplateBinding Padding}">
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="border" Property="Opacity" Value="0.85"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
@@ -93,6 +97,7 @@
                         BorderThickness="1"
                         CornerRadius="8"
                         MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                        Width="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
                         MinWidth="3">
                   <ScrollViewer>
                     <ItemsPresenter/>
@@ -118,9 +123,15 @@
                     BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="{TemplateBinding BorderThickness}"
                     CornerRadius="8"
+                    x:Name="border"
                     Padding="12,6">
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="border" Property="Opacity" Value="0.85"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
@@ -136,10 +147,16 @@
             <Border Background="{TemplateBinding Background}"
                     BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="{TemplateBinding BorderThickness}"
+                    x:Name="border"
                     CornerRadius="10"
                     Padding="{TemplateBinding Padding}">
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="border" Property="Opacity" Value="0.4"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
@@ -224,7 +241,8 @@
       <DropShadowEffect Color="Black" Opacity="0.4" BlurRadius="20" ShadowDepth="4"/>
     </Border.Effect>
 
-    <StackPanel>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel>
       <!-- Header -->
       <Grid Margin="0,0,0,14">
         <Grid.ColumnDefinitions>
@@ -361,6 +379,7 @@
                  Style="{StaticResource ThemedTextBoxStyle}"
                  FontFamily="Consolas"
                  FontSize="13"
+                 AutomationProperties.LabeledBy="{Binding ElementName=HostLabel}"
                  BorderThickness="1" KeyDown="OnHostKeyDown"/>
         <TextBlock x:Name="ResolveNote" FontSize="10" Margin="0,5,0,0" MinHeight="15"/>
       </StackPanel>
@@ -373,6 +392,7 @@
                   SelectedIndex="1"
                   HorizontalAlignment="Stretch"
                   BorderThickness="1"
+                  AutomationProperties.LabeledBy="{Binding ElementName=IntervalLabel}"
                   FontFamily="Consolas"
                   FontSize="13">
           <ComboBox.ItemTemplate>
@@ -462,6 +482,7 @@
                 Margin="6,0,0,0"
                 Click="OnQuitConfirm"/>
       </Grid>
-    </StackPanel>
+      </StackPanel>
+    </ScrollViewer>
   </Border>
 </Window>

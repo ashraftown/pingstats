@@ -34,7 +34,7 @@ Glanceable RTT in your menu bar (macOS) / system tray (Windows) · rolling min/a
 | **macOS menu bar** / **Windows tray** | Latest ping (ms) with color: green &lt;50 · yellow &lt;100 · orange &lt;200 · red ≥200 |
 | **Popup** | Latest, min/avg/max, resolved IP, live bar graph |
 | **Host** | Any IP or hostname (default `8.8.8.8`) |
-| **Interval** | 1s / 2s / 5s / 10s / 30s (persisted) |
+| **Interval** | 1s / 5s / 10s / 30s / 1 minute (persisted) |
 | **Pin** | Keep the popup open while you work elsewhere |
 | **Open at Login** | System Login Items (macOS) / Registry Run key (Windows) |
 | **Quiet** | No Dock icon (macOS) / system-tray-only (Windows) |

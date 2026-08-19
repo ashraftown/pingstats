@@ -26,6 +26,7 @@ class PingManager: NSObject, ObservableObject {
     private static let oldIntervalKey = "PingMenuBar.intervalSeconds"
     private static let defaultHost = "8.8.8.8"
     private static let defaultInterval: Double = 1.0
+    private static let supportedIntervals: [Double] = [1, 5, 10, 30, 60]
     private static let pingOutputRegex = try? NSRegularExpression(
         pattern: "time=([0-9.]+)\\s*ms",
         options: []
@@ -49,12 +50,21 @@ class PingManager: NSObject, ObservableObject {
         let savedHost = ud.string(forKey: Self.hostKey) ?? Self.defaultHost
         let savedInterval = ud.object(forKey: Self.intervalKey) as? Double
         self.host = savedHost.isEmpty ? Self.defaultHost : savedHost
-        self.intervalSeconds = Self.clampedInterval(savedInterval ?? Self.defaultInterval)
+        let normalizedInterval = Self.normalizedInterval(savedInterval ?? Self.defaultInterval)
+        self.intervalSeconds = normalizedInterval
         super.init()
+        if savedInterval != normalizedInterval {
+            ud.set(normalizedInterval, forKey: Self.intervalKey)
+        }
     }
 
     static func clampedInterval(_ value: Double) -> Double {
         min(60, max(1, value.rounded()))
+    }
+
+    static func normalizedInterval(_ value: Double) -> Double {
+        let clamped = clampedInterval(value)
+        return supportedIntervals.min { abs($0 - clamped) < abs($1 - clamped) } ?? defaultInterval
     }
 
     /// Start (or restart) continuous pings. Uses `host` and `intervalSeconds`.
@@ -94,9 +104,9 @@ class PingManager: NSObject, ObservableObject {
 
     /// Update interval; persists and reschedules if currently running.
     func setInterval(_ seconds: Double) {
-        let clamped = Self.clampedInterval(seconds)
-        intervalSeconds = clamped
-        UserDefaults.standard.set(clamped, forKey: Self.intervalKey)
+        let normalized = Self.normalizedInterval(seconds)
+        intervalSeconds = normalized
+        UserDefaults.standard.set(normalized, forKey: Self.intervalKey)
 
         guard isRunning else { return }
         scheduleTimer(for: host)

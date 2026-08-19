@@ -30,6 +30,7 @@ public class PingManager : IDisposable
 
     private const string DefaultHost = "8.8.8.8";
     private const double DefaultInterval = 1.0;
+    private static readonly double[] SupportedIntervals = { 1, 5, 10, 30, 60 };
 
     private static readonly string SettingsDir =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PingStats");
@@ -41,7 +42,10 @@ public class PingManager : IDisposable
     {
         var (savedHost, savedInterval) = LoadSettings();
         Host = string.IsNullOrEmpty(savedHost) ? DefaultHost : savedHost;
-        IntervalSeconds = ClampedInterval(savedInterval > 0 ? savedInterval : DefaultInterval);
+        var loadedInterval = savedInterval > 0 ? savedInterval : DefaultInterval;
+        IntervalSeconds = NormalizedInterval(loadedInterval);
+        if (Math.Abs(IntervalSeconds - loadedInterval) > 0.1)
+            SaveSettings();
     }
 
     private static (string? host, double interval) LoadSettings()
@@ -72,6 +76,12 @@ public class PingManager : IDisposable
 
     private static double ClampedInterval(double value) =>
         Math.Min(60, Math.Max(1, Math.Round(value)));
+
+    private static double NormalizedInterval(double value)
+    {
+        var clamped = ClampedInterval(value);
+        return SupportedIntervals.MinBy(option => Math.Abs(option - clamped));
+    }
 
     public void StartPinging(string? newHost = null)
     {
@@ -120,8 +130,7 @@ public class PingManager : IDisposable
     {
         lock (_lock)
         {
-            var clamped = ClampedInterval(seconds);
-            IntervalSeconds = clamped;
+            IntervalSeconds = NormalizedInterval(seconds);
             SaveSettings();
 
             if (IsRunning)

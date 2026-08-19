@@ -138,6 +138,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         .environmentObject(pingManager)
         .environmentObject(popoverCoordinator)
     )
+    hostingController.sizingOptions = [.preferredContentSize]
     popover?.contentViewController = hostingController
     let fittingSize = hostingController.view.fittingSize
     popover?.contentSize = fittingSize.width > 0 && fittingSize.height > 0
@@ -451,8 +452,8 @@ struct ContentView: View {
   @StateObject private var loginItems = LoginItemManager()
   @State private var hostField = ""
   @State private var showQuitConfirm = false
-  @State private var intervalMenuTarget = IntervalMenuTarget()
-  private let intervalOptions: [Double] = [1, 5, 10, 30]
+  private let intervalMenuTarget = IntervalMenuTarget()
+  private let intervalOptions: [Double] = [1, 5, 10, 30, 60]
 
   private var state: PopupState {
     if !pingManager.isRunning { return .stopped }
@@ -565,10 +566,7 @@ struct ContentView: View {
   private var heroColor: Color {
     switch state {
     case .connected:
-      if let ms = pingManager.latestLatencyMs {
-        return LatencyTier.tier(ms).color
-      }
-      return Color(hex: 0x34D399)
+      return connectedLatencyColor
     case .timeout:
       return Color(hex: 0xF0625F)
     case .stopped, .resolving:
@@ -579,13 +577,17 @@ struct ContentView: View {
   private var chartColor: Color {
     switch state {
     case .connected:
-      if let ms = pingManager.latestLatencyMs {
-        return LatencyTier.tier(ms).color
-      }
-      return Color(hex: 0x34D399)
+      return connectedLatencyColor
     case .stopped, .resolving, .timeout:
       return Color.secondary
     }
+  }
+
+  private var connectedLatencyColor: Color {
+    if let ms = pingManager.latestLatencyMs {
+      return LatencyTier.tier(ms).color
+    }
+    return Color(hex: 0x34D399)
   }
 
   // MARK: Stats
@@ -624,10 +626,10 @@ struct ContentView: View {
   private var statsValues: (min: String, avg: String, max: String) {
     let results = pingManager.pingResults
     guard !results.isEmpty else { return ("--", "--", "--") }
-    let min = results.min() ?? 0
-    let max = results.max() ?? 0
+    let minValue = results.min() ?? 0
+    let maxValue = results.max() ?? 0
     let avg = results.reduce(0, +) / Double(results.count)
-    return ("\(Int(min.rounded()))", "\(Int(avg.rounded()))", "\(Int(max.rounded()))")
+    return ("\(Int(minValue.rounded()))", "\(Int(avg.rounded()))", "\(Int(maxValue.rounded()))")
   }
 
   // MARK: Status pill
@@ -795,15 +797,14 @@ struct ContentView: View {
     } else {
       VStack(alignment: .leading, spacing: 6) {
         HStack {
-          HStack(spacing: 7) {
-          Toggle("open at login", isOn: openAtLoginBinding)
+          Toggle(isOn: openAtLoginBinding) {
+            Text("open at login")
+              .font(.system(size: 12))
+              .foregroundStyle(Color.secondary)
+          }
             .toggleStyle(.switch)
             .controlSize(.small)
-            .labelsHidden()
-          Text("open at login")
-            .font(.system(size: 12))
-            .foregroundStyle(Color.secondary)
-        }
+          }
         Spacer()
           Button {
             showQuitConfirm = true
@@ -851,6 +852,9 @@ struct ContentView: View {
   private func intervalLabel(_ seconds: Double) -> String {
     if seconds == 1 {
       return "1 second"
+    }
+    if seconds == 60 {
+      return "1 minute"
     }
     return "\(Int(seconds)) seconds"
   }
@@ -951,6 +955,7 @@ struct PingChartView: View {
   @State private var settled: [Double] = []
   @State private var display: [Double] = []
   @State private var slideProgress: CGFloat = 0
+  @State private var syncGeneration = 0
 
   private let slideDuration = 0.55
   private static let marginLeft: CGFloat = 36
@@ -997,7 +1002,7 @@ struct PingChartView: View {
               Circle()
                 .fill(LatencyTier.tier(value).color)
                 .frame(width: 6, height: 6)
-                .overlay(Circle().stroke(Color(nsColor: .windowBackgroundColor), lineWidth: 2))
+                .overlay(Circle().stroke(Color(nsColor: .controlBackgroundColor), lineWidth: 2))
                 .position(
                   x: Self.marginLeft + CGFloat(index) * stepX,
                   y: Self.y(value, axisMax: axisMax, topY: topY, baselineY: baselineY)
@@ -1010,12 +1015,17 @@ struct PingChartView: View {
       }
     }
     .frame(height: 64)
+    .onAppear {
+      sync(pingResults)
+    }
     .onChange(of: pingResults) { newValues in
       sync(newValues)
     }
   }
 
   private func sync(_ newValues: [Double]) {
+    syncGeneration += 1
+    let generation = syncGeneration
     if newValues == settled { return }
     if newValues.isEmpty {
       settled = []
@@ -1042,6 +1052,7 @@ struct PingChartView: View {
       slideProgress = 1
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + slideDuration + 0.05) {
+      guard generation == syncGeneration else { return }
       settled = newValues
       display = []
       slideProgress = 0

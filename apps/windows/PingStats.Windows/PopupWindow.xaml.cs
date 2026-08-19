@@ -20,8 +20,8 @@ public partial class PopupWindow : Window
     private bool _isDarkTheme;
     private Palette _pal = DarkPalette();
 
-    private static readonly double[] IntervalOptions = { 1, 5, 10, 30 };
-    private static readonly string[] IntervalLabels = { "1 second", "5 seconds", "10 seconds", "30 seconds" };
+    private static readonly double[] IntervalOptions = { 1, 5, 10, 30, 60 };
+    private static readonly string[] IntervalLabels = { "1 second", "5 seconds", "10 seconds", "30 seconds", "1 minute" };
 
     private static readonly Geometry PlayGlyph = Geometry.Parse(
         "M8,5.14v13.72c0,0.93 1.04,1.5 1.81,1l10.4,-6.86c0.73,-0.48 0.73,-1.55 0,-2.03L9.81,4.14C9.04,3.64 8,4.21 8,5.14Z");
@@ -31,6 +31,7 @@ public partial class PopupWindow : Window
     private List<double> _settledChart = new();
     private bool _chartAnimating;
     private Color _chartColor;
+    private bool _headerDotPulsing;
 
     private sealed class Palette
     {
@@ -53,6 +54,9 @@ public partial class PopupWindow : Window
         public Color PillNeutralBg;
         public Color StatsBorder;
         public Color StatDivider;
+        public Color ComboHover;
+        public Color ToggleTrackOff;
+        public Color ToggleTrackOn;
     }
 
     private static Palette DarkPalette() => new()
@@ -76,6 +80,9 @@ public partial class PopupWindow : Window
         PillNeutralBg = Color.FromArgb(15, 255, 255, 255),
         StatsBorder = Color.FromArgb(15, 255, 255, 255),
         StatDivider = Color.FromArgb(20, 255, 255, 255),
+        ComboHover = Hex(0x2A2B2F),
+        ToggleTrackOff = Hex(0x4A4E55),
+        ToggleTrackOn = Hex(0x4C8DFF),
     };
 
     private static Palette LightPalette() => new()
@@ -99,6 +106,9 @@ public partial class PopupWindow : Window
         PillNeutralBg = Hex(0xF0F0F0),
         StatsBorder = Hex(0xEFEFEF),
         StatDivider = Hex(0xE8E8E8),
+        ComboHover = Hex(0xE9E9E9),
+        ToggleTrackOff = Hex(0xE0E0E0),
+        ToggleTrackOn = Hex(0x3B7BDB),
     };
 
     private static Color Hex(uint value) =>
@@ -230,20 +240,20 @@ public partial class PopupWindow : Window
 
         var hoverTrigger = new Trigger { Property = ComboBoxItem.IsMouseOverProperty, Value = true };
         hoverTrigger.Setters.Add(new Setter(ComboBoxItem.BackgroundProperty,
-            Brush(_isDarkTheme ? Hex(0x2A2B2F) : Hex(0xE9E9E9))));
+            Brush(_pal.ComboHover)));
         comboItemStyle.Triggers.Add(hoverTrigger);
 
         var selectedTrigger = new Trigger { Property = ComboBoxItem.IsSelectedProperty, Value = true };
         selectedTrigger.Setters.Add(new Setter(ComboBoxItem.BackgroundProperty,
-            Brush(_isDarkTheme ? Hex(0x2A2B2F) : Hex(0xE9E9E9))));
+            Brush(_pal.ComboHover)));
         selectedTrigger.Setters.Add(new Setter(ComboBoxItem.ForegroundProperty, Brush(_pal.Text)));
         comboItemStyle.Triggers.Add(selectedTrigger);
 
         IntervalCombo.ItemContainerStyle = comboItemStyle;
 
         LoginCheckBox.Foreground = Brush(_pal.Footer);
-        Resources["ToggleTrackOff"] = Brush(_isDarkTheme ? Hex(0x4A4E55) : Hex(0xE0E0E0));
-        Resources["ToggleTrackOn"] = Brush(_pal.Accent);
+        Resources["ToggleTrackOff"] = Brush(_pal.ToggleTrackOff);
+        Resources["ToggleTrackOn"] = Brush(_pal.ToggleTrackOn);
         Resources["ToggleKnob"] = Brushes.White;
         QuitButton.Background = Brushes.Transparent;
         QuitButton.BorderBrush = Brush(_pal.Border);
@@ -452,9 +462,15 @@ public partial class PopupWindow : Window
 
     private void UpdateHeaderDotPulse(bool pulse)
     {
-        HeaderDot.BeginAnimation(OpacityProperty, null);
-        HeaderDot.Opacity = 1;
-        if (!pulse) return;
+        if (_headerDotPulsing == pulse) return;
+        _headerDotPulsing = pulse;
+
+        if (!pulse)
+        {
+            HeaderDot.BeginAnimation(OpacityProperty, null);
+            HeaderDot.Opacity = 1;
+            return;
+        }
 
         var anim = new DoubleAnimation(1, 0.35, new Duration(TimeSpan.FromSeconds(1)))
         {
@@ -503,7 +519,7 @@ public partial class PopupWindow : Window
             }
 
             var extended = _settledChart.Concat(new[] { arr[^1] }).ToList();
-            DrawChart(extended);
+            DrawChart(extended, stepX);
             _chartAnimating = true;
 
             var anim = new DoubleAnimation(0, -stepX, new Duration(TimeSpan.FromMilliseconds(550)))
@@ -529,7 +545,7 @@ public partial class PopupWindow : Window
 
     private Color _lastDrawnColor;
 
-    private void DrawChart(IList<double> values)
+    private void DrawChart(IList<double> values, double? stepOverride = null)
     {
         ChartCanvas.Children.Clear();
 
@@ -554,12 +570,15 @@ public partial class PopupWindow : Window
         }
 
         var linePoints = new PointCollection();
+        double step = stepOverride ?? (width / Math.Max(values.Count - 1, 1));
         for (int i = 0; i < values.Count; i++)
-            linePoints.Add(new Point(i * (width / Math.Max(values.Count - 1, 1)), YFor(values[i])));
+            linePoints.Add(new Point(i * step, YFor(values[i])));
+
+        double lastX = linePoints.Count > 0 ? linePoints[^1].X : width;
 
         var areaPoints = new PointCollection(linePoints)
         {
-            new Point(width, height),
+            new Point(lastX, height),
             new Point(0, height),
         };
 
@@ -570,7 +589,6 @@ public partial class PopupWindow : Window
         };
         ChartCanvas.Children.Add(area);
 
-        double step = width / Math.Max(values.Count - 1, 1);
         for (int i = 1; i < values.Count; i++)
         {
             var segment = new Line
@@ -710,6 +728,7 @@ public partial class PopupWindow : Window
     {
         if (!_isPinned && !_suppressClose && IsVisible)
         {
+            HideQuitConfirm();
             Hide();
         }
     }

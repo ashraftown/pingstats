@@ -15,6 +15,7 @@ public class TrayManager : IDisposable
     private readonly PingManager _pingManager;
     private bool _isDarkTheme;
     private SolidBrush _textBrush = new(Color.White);
+    private bool _disposed;
 
     private const int IconWidth = 64;
     private const int IconHeight = 64;
@@ -72,10 +73,16 @@ public class TrayManager : IDisposable
     private void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
     {
         if (e.Category != UserPreferenceCategory.General) return;
-        _isDarkTheme = IsSystemDarkTheme();
-        _textBrush.Dispose();
-        _textBrush = _isDarkTheme ? new SolidBrush(Color.White) : new SolidBrush(Color.FromArgb(0xFF, 0x1A, 0x1A, 0x1A));
-        System.Windows.Application.Current.Dispatcher.BeginInvoke(UpdateIcon);
+        System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+        {
+            if (_disposed) return;
+            _isDarkTheme = IsSystemDarkTheme();
+            _textBrush.Dispose();
+            _textBrush = _isDarkTheme
+                ? new SolidBrush(Color.White)
+                : new SolidBrush(Color.FromArgb(0xFF, 0x1A, 0x1A, 0x1A));
+            UpdateIcon();
+        });
     }
 
     private static bool IsSystemDarkTheme()
@@ -110,6 +117,7 @@ public class TrayManager : IDisposable
 
     private void UpdateIcon()
     {
+        if (_disposed) return;
         var color = GetColor();
         var displayText = GetDisplayText();
 
@@ -183,11 +191,15 @@ public class TrayManager : IDisposable
 
     public void Dispose()
     {
+        _disposed = true;
         SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
         _pingManager.StateChanged -= OnStateChanged;
-        _textBrush.Dispose();
-        _notifyIcon.Visible = false;
-        _notifyIcon.Icon = null;
-        _notifyIcon.Dispose();
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            _textBrush.Dispose();
+            _notifyIcon.Visible = false;
+            _notifyIcon.Icon = null;
+            _notifyIcon.Dispose();
+        });
     }
 }
