@@ -962,7 +962,7 @@ struct PingChartView: View {
       let stepX = plotWidth / CGFloat(count - 1)
       let chart = display.isEmpty ? settled : display
       let axisMax = Self.axisMax(chart)
-      let baselineY = geo.size.height * (45 / 54)
+      let baselineY = geo.size.height * (49 / 54)
       let topY = geo.size.height * (2 / 54)
 
       ZStack(alignment: .topLeading) {
@@ -1086,7 +1086,7 @@ struct PingChartView: View {
         .font(.system(size: 8.5, design: .monospaced))
         .foregroundStyle(Color.secondary)
         .frame(width: 26, alignment: .trailing)
-        .position(x: labelX, y: baselineY + 5)
+        .position(x: labelX, y: baselineY)
     }
   }
 
