@@ -138,6 +138,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         .environmentObject(pingManager)
         .environmentObject(popoverCoordinator)
     )
+    // Dark-first popup design; keep the popover chrome dark regardless of system theme.
+    hostingController.view.appearance = NSAppearance(named: .darkAqua)
     popover?.contentViewController = hostingController
     let fittingSize = hostingController.view.fittingSize
     popover?.contentSize = fittingSize.width > 0 && fittingSize.height > 0
@@ -344,6 +346,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
 // MARK: - Design tokens
 
+extension Color {
+  init(hex: UInt32) {
+    self.init(
+      .sRGB,
+      red: Double((hex >> 16) & 0xFF) / 255,
+      green: Double((hex >> 8) & 0xFF) / 255,
+      blue: Double(hex & 0xFF) / 255,
+      opacity: 1
+    )
+  }
+}
+
 enum LatencyTier {
   case green
   case yellow
@@ -357,9 +371,9 @@ enum LatencyTier {
 
   var color: Color {
     switch self {
-    case .green: return .green
-    case .yellow: return .yellow
-    case .red: return .red
+    case .green: return Color(hex: 0x34D399)
+    case .yellow: return Color(hex: 0xF5A623)
+    case .red: return Color(hex: 0xF0625F)
     }
   }
 }
@@ -381,25 +395,25 @@ enum PopupState: Equatable {
 
   var pillFg: Color {
     switch self {
-    case .connected: return .green
-    case .timeout: return .red
-    case .stopped, .resolving: return .secondary
+    case .connected: return Color(hex: 0x34D399)
+    case .timeout: return Color(hex: 0xF0958F)
+    case .stopped, .resolving: return Color(hex: 0xB8BABF)
     }
   }
 
   var pillBg: Color {
     switch self {
-    case .connected: return Color.green.opacity(0.15)
-    case .timeout: return Color.red.opacity(0.15)
-    case .stopped, .resolving: return Color.gray.opacity(0.15)
+    case .connected: return Color(hex: 0x34D399).opacity(0.12)
+    case .timeout: return Color(hex: 0xF0625F).opacity(0.12)
+    case .stopped, .resolving: return Color.white.opacity(0.06)
     }
   }
 
   var dotColor: Color {
     switch self {
-    case .connected: return .green
-    case .timeout: return .red
-    case .stopped, .resolving: return .secondary
+    case .connected: return Color(hex: 0x34D399)
+    case .timeout: return Color(hex: 0xF0625F)
+    case .stopped, .resolving: return Color(hex: 0x71757D)
     }
   }
 
@@ -457,8 +471,14 @@ struct ContentView: View {
       footerOrConfirm
         .animation(.easeInOut(duration: 0.15), value: showQuitConfirm)
     }
-    .padding(16)
+    .padding(20)
     .frame(width: 340)
+    .background(Color(hex: 0x0B0C0F))
+    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    .overlay(
+      RoundedRectangle(cornerRadius: 16, style: .continuous)
+        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+    )
     .onAppear {
       if hostField.isEmpty {
         hostField = pingManager.host
@@ -476,20 +496,32 @@ struct ContentView: View {
           .frame(width: 8, height: 8)
         Text("PingStats")
           .font(.system(size: 14, weight: .medium))
+          .foregroundStyle(Color(hex: 0xF5F6F7))
       }
       Spacer()
       Button {
         popoverCoordinator.togglePin()
       } label: {
-        Image(systemName: popoverCoordinator.isPinned ? "pin.fill" : "pin")
-          .font(.system(size: 12, weight: .semibold))
-          .frame(minWidth: 16, minHeight: 16)
-          .padding(.horizontal, 5)
-          .padding(.vertical, 3)
+        Image(systemName: "pin")
+          .font(.system(size: 14))
+          .foregroundStyle(
+            popoverCoordinator.isPinned ? Color(hex: 0x0B0C0F) : Color(hex: 0x4C8DFF)
+          )
+          .rotationEffect(.degrees(popoverCoordinator.isPinned ? 0 : 35))
+          .frame(width: 26, height: 26)
+          .background(
+            popoverCoordinator.isPinned ? Color(hex: 0x4C8DFF) : Color(hex: 0x4C8DFF).opacity(0.12)
+          )
+          .clipShape(RoundedRectangle(cornerRadius: 7))
+          .overlay(
+            RoundedRectangle(cornerRadius: 7)
+              .stroke(
+                Color(hex: 0x4C8DFF).opacity(popoverCoordinator.isPinned ? 1 : 0.28),
+                lineWidth: 1
+              )
+          )
       }
-      .buttonStyle(.bordered)
-      .controlSize(.regular)
-      .tint(popoverCoordinator.isPinned ? Color.accentColor : Color.secondary)
+      .buttonStyle(.plain)
       .animation(.easeOut(duration: 0.2), value: popoverCoordinator.isPinned)
       .help(
         popoverCoordinator.isPinned
@@ -511,12 +543,12 @@ struct ContentView: View {
         if state == .connected {
           Text("ms")
             .font(.system(size: 16, weight: .regular, design: .monospaced))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Color(hex: 0x71757D))
         }
       }
       Text(state.heroCaption)
         .font(.system(size: 12))
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Color(hex: 0x71757D))
     }
     .frame(maxWidth: .infinity)
     .padding(.top, 2)
@@ -535,11 +567,11 @@ struct ContentView: View {
       if let ms = pingManager.latestLatencyMs {
         return LatencyTier.tier(ms).color
       }
-      return .green
+      return Color(hex: 0x34D399)
     case .timeout:
-      return .red
+      return Color(hex: 0xF0625F)
     case .stopped, .resolving:
-      return .secondary
+      return Color(hex: 0x71757D)
     }
   }
 
@@ -549,9 +581,9 @@ struct ContentView: View {
       if let ms = pingManager.latestLatencyMs {
         return LatencyTier.tier(ms).color
       }
-      return .green
+      return Color(hex: 0x34D399)
     case .stopped, .resolving, .timeout:
-      return .secondary
+      return Color(hex: 0x71757D)
     }
   }
 
@@ -559,7 +591,7 @@ struct ContentView: View {
 
   private var statsRow: some View {
     VStack(spacing: 0) {
-      Divider()
+      Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1)
       HStack(spacing: 0) {
         statCell(statsValues.min, "min")
         statDivider
@@ -568,23 +600,22 @@ struct ContentView: View {
         statCell(statsValues.max, "max")
       }
       .padding(.vertical, 12)
-      Divider()
+      Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1)
     }
   }
 
   private var statDivider: some View {
-    Rectangle()
-      .fill(Color.primary.opacity(0.12))
-      .frame(width: 1)
+    Rectangle().fill(Color.white.opacity(0.08)).frame(width: 1)
   }
 
   private func statCell(_ value: String, _ label: String) -> some View {
     VStack(spacing: 3) {
       Text(value)
         .font(.system(size: 15, weight: .medium, design: .monospaced))
+        .foregroundStyle(Color(hex: 0xF5F6F7))
       Text(label)
         .font(.system(size: 10))
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Color(hex: 0x71757D))
     }
     .frame(maxWidth: .infinity)
   }
@@ -604,7 +635,7 @@ struct ContentView: View {
     HStack {
       Text("status")
         .font(.system(size: 12))
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Color(hex: 0x71757D))
       Spacer()
       HStack(spacing: 5) {
         Circle().fill(state.dotColor).frame(width: 5, height: 5)
@@ -626,10 +657,16 @@ struct ContentView: View {
     VStack(alignment: .leading, spacing: 4) {
       Text("host")
         .font(.system(size: 11))
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Color(hex: 0x71757D))
       TextField("hostname or IP", text: $hostField)
-        .textFieldStyle(.roundedBorder)
+        .textFieldStyle(.plain)
         .font(.system(size: 13, design: .monospaced))
+        .foregroundStyle(Color(hex: 0xF5F6F7))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color.white.opacity(0.04))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.08), lineWidth: 1))
         .disabled(pingManager.isRunning)
         .onSubmit {
           guard !pingManager.isRunning else { return }
@@ -644,11 +681,11 @@ struct ContentView: View {
     if !pingManager.resolvedIP.isEmpty {
       (Text("resolves to ") + Text(pingManager.resolvedIP))
         .font(.system(size: 10, design: .monospaced))
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Color(hex: 0x9AA0A8))
     } else if state == .resolving {
       Text("resolving…")
         .font(.system(size: 10))
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Color(hex: 0x71757D))
     }
   }
 
@@ -658,7 +695,7 @@ struct ContentView: View {
     VStack(alignment: .leading, spacing: 4) {
       Text("check every")
         .font(.system(size: 11))
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Color(hex: 0x71757D))
       Picker("", selection: intervalBinding) {
         ForEach(intervalOptions, id: \.self) { seconds in
           Text(intervalLabel(seconds)).tag(seconds)
@@ -667,7 +704,13 @@ struct ContentView: View {
       .labelsHidden()
       .pickerStyle(.menu)
       .font(.system(size: 13))
+      .foregroundStyle(Color(hex: 0xF5F6F7))
       .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(.horizontal, 10)
+      .padding(.vertical, 8)
+      .background(Color.white.opacity(0.04))
+      .clipShape(RoundedRectangle(cornerRadius: 8))
+      .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.08), lineWidth: 1))
     }
   }
 
@@ -681,13 +724,33 @@ struct ContentView: View {
         Text(pingManager.isRunning ? "stop monitoring" : "start monitoring")
           .font(.system(size: 13, weight: .medium))
       }
+      .foregroundStyle(toggleFg)
       .frame(maxWidth: .infinity)
+      .padding(.vertical, 11)
+      .background(toggleBg)
+      .clipShape(RoundedRectangle(cornerRadius: 10))
+      .overlay(RoundedRectangle(cornerRadius: 10).stroke(toggleBorder, lineWidth: 1))
     }
-    .buttonStyle(.borderedProminent)
-    .tint(pingManager.isRunning ? .red : .green)
+    .buttonStyle(.plain)
     .disabled(!pingManager.isRunning && hostEmpty)
     .opacity(!pingManager.isRunning && hostEmpty ? 0.4 : 1)
     .animation(.easeOut(duration: 0.2), value: pingManager.isRunning)
+  }
+
+  private var toggleFg: Color {
+    pingManager.isRunning ? Color(hex: 0xF0958F) : Color(hex: 0x34D399)
+  }
+
+  private var toggleBg: Color {
+    pingManager.isRunning
+      ? Color(hex: 0xF0625F).opacity(0.12)
+      : Color(hex: 0x34D399).opacity(0.12)
+  }
+
+  private var toggleBorder: Color {
+    pingManager.isRunning
+      ? Color(hex: 0xF0625F).opacity(0.28)
+      : Color(hex: 0x34D399).opacity(0.28)
   }
 
   // MARK: Footer / quit confirm
@@ -698,19 +761,22 @@ struct ContentView: View {
       HStack {
         Text("quit pingstats?")
           .font(.system(size: 12))
-          .foregroundStyle(.secondary)
+          .foregroundStyle(Color(hex: 0xB8BABF))
         Spacer()
         Button("cancel") {
           showQuitConfirm = false
         }
-        .buttonStyle(.bordered)
-        .controlSize(.small)
+        .buttonStyle(FooterButtonStyle())
         Button("quit") {
           NSApp.terminate(nil)
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.small)
-        .tint(.red)
+        .buttonStyle(
+          FooterButtonStyle(
+            fg: Color(hex: 0xF0958F),
+            bg: Color(hex: 0xF0625F).opacity(0.12),
+            border: Color(hex: 0xF0625F).opacity(0.28)
+          )
+        )
       }
       .transition(.opacity)
     } else {
@@ -720,7 +786,7 @@ struct ContentView: View {
             .toggleStyle(.checkbox)
             .controlSize(.small)
             .font(.system(size: 12))
-            .help("Start PingStats automatically when you log in")
+            .foregroundStyle(Color(hex: 0xB8BABF))
           Spacer()
           Button {
             showQuitConfirm = true
@@ -732,8 +798,7 @@ struct ContentView: View {
                 .font(.system(size: 12))
             }
           }
-          .buttonStyle(.bordered)
-          .controlSize(.small)
+          .buttonStyle(FooterButtonStyle())
         }
 
         if loginItems.needsApproval {
@@ -741,19 +806,17 @@ struct ContentView: View {
             Button("Allow…") {
               loginItems.openLoginItemsSettings()
             }
-            .buttonStyle(.bordered)
-            .controlSize(.mini)
-            .help("macOS needs permission in System Settings → Login Items")
+            .buttonStyle(FooterButtonStyle())
             if let hint = loginItems.statusHint {
               Text(hint)
                 .font(.system(size: 10))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color(hex: 0x71757D))
             }
           }
         } else if let hint = loginItems.statusHint {
           Text(hint)
             .font(.system(size: 10))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Color(hex: 0x71757D))
         }
       }
     }
@@ -794,6 +857,24 @@ struct ContentView: View {
     let trimmed = hostField.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
     pingManager.startPinging(host: trimmed)
+  }
+}
+
+struct FooterButtonStyle: ButtonStyle {
+  var fg: Color = Color(hex: 0xB8BABF)
+  var bg: Color = .clear
+  var border: Color = Color.white.opacity(0.1)
+
+  func makeBody(configuration: Configuration) -> some View {
+    configuration.label
+      .font(.system(size: 12))
+      .foregroundStyle(fg)
+      .padding(.horizontal, 12)
+      .padding(.vertical, 6)
+      .background(bg)
+      .clipShape(RoundedRectangle(cornerRadius: 8))
+      .overlay(RoundedRectangle(cornerRadius: 8).stroke(border, lineWidth: 1))
+      .opacity(configuration.isPressed ? 0.85 : 1)
   }
 }
 
@@ -864,9 +945,9 @@ struct PingChartView: View {
           ForEach(Array(chart.enumerated()), id: \.offset) { index, value in
             if value > 120 {
               Circle()
-                .fill(Color.red)
+                .fill(Color(hex: 0xF0625F))
                 .frame(width: 6, height: 6)
-                .overlay(Circle().stroke(Color(nsColor: .windowBackgroundColor), lineWidth: 2))
+                .overlay(Circle().stroke(Color(hex: 0x0B0C0F), lineWidth: 2))
                 .position(
                   x: Self.marginLeft + CGFloat(index) * stepX,
                   y: Self.y(value, axisMax: axisMax, topY: topY, baselineY: baselineY)
@@ -921,7 +1002,7 @@ struct PingChartView: View {
       dashedLine(y: topY, width: width, opacity: 0.05)
       dashedLine(y: (topY + baselineY) / 2, width: width, opacity: 0.05)
       Rectangle()
-        .fill(Color.primary.opacity(0.12))
+        .fill(Color.white.opacity(0.08))
         .frame(width: width - Self.marginLeft, height: 1)
         .offset(x: Self.marginLeft, y: baselineY)
     }
@@ -932,7 +1013,7 @@ struct PingChartView: View {
       path.move(to: CGPoint(x: Self.marginLeft, y: y))
       path.addLine(to: CGPoint(x: width, y: y))
     }
-    .stroke(Color.primary.opacity(opacity), style: StrokeStyle(lineWidth: 1, dash: [2, 3]))
+    .stroke(Color.white.opacity(opacity), style: StrokeStyle(lineWidth: 1, dash: [2, 3]))
   }
 
   private func axisLabels(axisMax: Double, topY: CGFloat, baselineY: CGFloat) -> some View {
@@ -940,15 +1021,15 @@ struct PingChartView: View {
     return ZStack(alignment: .topLeading) {
       Text("\(Int(axisMax))")
         .font(.system(size: 8.5, design: .monospaced))
-        .foregroundStyle(Color.primary.opacity(0.35))
+        .foregroundStyle(Color(hex: 0x5B5F66))
         .position(x: 22, y: topY + 5)
       Text("\(Int(axisMax / 2))")
         .font(.system(size: 8.5, design: .monospaced))
-        .foregroundStyle(Color.primary.opacity(0.35))
+        .foregroundStyle(Color(hex: 0x5B5F66))
         .position(x: 22, y: midY + 5)
       Text("0")
         .font(.system(size: 8.5, design: .monospaced))
-        .foregroundStyle(Color.primary.opacity(0.35))
+        .foregroundStyle(Color(hex: 0x5B5F66))
         .position(x: 22, y: baselineY + 5)
     }
   }
