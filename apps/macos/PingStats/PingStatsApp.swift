@@ -669,17 +669,23 @@ struct ContentView: View {
     }
   }
 
-  @ViewBuilder
   private var resolveNote: some View {
+    let text: Text
+    let color: Color
     if !pingManager.resolvedIP.isEmpty {
-      (Text("resolves to ") + Text(pingManager.resolvedIP))
-        .font(.system(size: 10, design: .monospaced))
-        .foregroundStyle(Color(hex: 0x9AA0A8))
+      text = Text("resolves to ") + Text(pingManager.resolvedIP)
+      color = Color(hex: 0x9AA0A8)
     } else if state == .resolving {
-      Text("resolving…")
-        .font(.system(size: 10))
-        .foregroundStyle(Color(hex: 0x71757D))
+      text = Text("resolving…")
+      color = Color(hex: 0x71757D)
+    } else {
+      text = Text(" ")
+      color = Color(hex: 0x9AA0A8)
     }
+    return text
+      .font(.system(size: 10, design: .monospaced))
+      .foregroundStyle(color)
+      .opacity(!pingManager.resolvedIP.isEmpty || state == .resolving ? 1 : 0)
   }
 
   // MARK: Interval
