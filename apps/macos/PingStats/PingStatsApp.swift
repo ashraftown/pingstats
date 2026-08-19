@@ -395,7 +395,7 @@ enum PopupState: Equatable {
     switch self {
     case .connected: return Color(hex: 0x34D399)
     case .timeout: return Color(hex: 0xF0958F)
-    case .stopped, .resolving: return Color(hex: 0xB8BABF)
+    case .stopped, .resolving: return Color.secondary
     }
   }
 
@@ -411,7 +411,7 @@ enum PopupState: Equatable {
     switch self {
     case .connected: return Color(hex: 0x34D399)
     case .timeout: return Color(hex: 0xF0625F)
-    case .stopped, .resolving: return Color(hex: 0x71757D)
+    case .stopped, .resolving: return Color.secondary
     }
   }
 
@@ -536,12 +536,12 @@ struct ContentView: View {
         if state == .connected {
           Text("ms")
             .font(.system(size: 16, weight: .regular, design: .monospaced))
-            .foregroundStyle(Color(hex: 0x71757D))
+            .foregroundStyle(Color.secondary)
         }
       }
       Text(state.heroCaption)
         .font(.system(size: 12))
-        .foregroundStyle(Color(hex: 0x71757D))
+        .foregroundStyle(Color.secondary)
     }
     .frame(maxWidth: .infinity)
     .padding(.top, 2)
@@ -564,7 +564,7 @@ struct ContentView: View {
     case .timeout:
       return Color(hex: 0xF0625F)
     case .stopped, .resolving:
-      return Color(hex: 0x71757D)
+      return Color.secondary
     }
   }
 
@@ -576,7 +576,7 @@ struct ContentView: View {
       }
       return Color(hex: 0x34D399)
     case .stopped, .resolving, .timeout:
-      return Color(hex: 0x71757D)
+      return Color.secondary
     }
   }
 
@@ -608,7 +608,7 @@ struct ContentView: View {
         .foregroundStyle(Color.primary)
       Text(label)
         .font(.system(size: 10))
-        .foregroundStyle(Color(hex: 0x71757D))
+        .foregroundStyle(Color.secondary)
     }
     .frame(maxWidth: .infinity)
   }
@@ -628,7 +628,7 @@ struct ContentView: View {
     HStack {
       Text("status")
         .font(.system(size: 12))
-        .foregroundStyle(Color(hex: 0x71757D))
+        .foregroundStyle(Color.secondary)
       Spacer()
       HStack(spacing: 5) {
         Circle().fill(state.dotColor).frame(width: 5, height: 5)
@@ -650,7 +650,7 @@ struct ContentView: View {
     VStack(alignment: .leading, spacing: 4) {
       Text("host")
         .font(.system(size: 11))
-        .foregroundStyle(Color(hex: 0x71757D))
+        .foregroundStyle(Color.secondary)
       TextField("hostname or IP", text: $hostField)
         .textFieldStyle(.plain)
         .font(.system(size: 13, design: .monospaced))
@@ -674,13 +674,13 @@ struct ContentView: View {
     let color: Color
     if !pingManager.resolvedIP.isEmpty {
       text = Text("resolves to ") + Text(pingManager.resolvedIP)
-      color = Color(hex: 0x9AA0A8)
+      color = Color.secondary
     } else if state == .resolving {
       text = Text("resolving…")
-      color = Color(hex: 0x71757D)
+      color = Color.secondary
     } else {
       text = Text(" ")
-      color = Color(hex: 0x9AA0A8)
+      color = Color.secondary
     }
     return text
       .font(.system(size: 10, design: .monospaced))
@@ -694,7 +694,7 @@ struct ContentView: View {
     VStack(alignment: .leading, spacing: 4) {
       Text("check every")
         .font(.system(size: 11))
-        .foregroundStyle(Color(hex: 0x71757D))
+        .foregroundStyle(Color.secondary)
       Button(action: presentIntervalMenu) {
         HStack(spacing: 8) {
           Text(intervalLabel(pingManager.intervalSeconds))
@@ -818,13 +818,13 @@ struct ContentView: View {
             if let hint = loginItems.statusHint {
               Text(hint)
                 .font(.system(size: 10))
-                .foregroundStyle(Color(hex: 0x71757D))
+                .foregroundStyle(Color.secondary)
             }
           }
         } else if let hint = loginItems.statusHint {
           Text(hint)
             .font(.system(size: 10))
-            .foregroundStyle(Color(hex: 0x71757D))
+            .foregroundStyle(Color.secondary)
         }
       }
     }
@@ -1057,15 +1057,15 @@ struct PingChartView: View {
     return ZStack(alignment: .topLeading) {
       Text("\(Int(axisMax))")
         .font(.system(size: 8.5, design: .monospaced))
-        .foregroundStyle(Color(hex: 0x5B5F66))
+        .foregroundStyle(Color.secondary)
         .position(x: 22, y: topY + 5)
       Text("\(Int(axisMax / 2))")
         .font(.system(size: 8.5, design: .monospaced))
-        .foregroundStyle(Color(hex: 0x5B5F66))
+        .foregroundStyle(Color.secondary)
         .position(x: 22, y: midY + 5)
       Text("0")
         .font(.system(size: 8.5, design: .monospaced))
-        .foregroundStyle(Color(hex: 0x5B5F66))
+        .foregroundStyle(Color.secondary)
         .position(x: 22, y: baselineY + 5)
     }
   }
