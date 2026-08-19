@@ -221,9 +221,10 @@ public partial class PopupWindow : Window
         IntervalCombo.Background = Brush(_pal.InputBg);
         IntervalCombo.Foreground = Brush(_pal.Text);
         IntervalCombo.BorderBrush = Brush(_pal.InputBorder);
+        Resources["DropdownBg"] = Brush(_pal.Background);
 
         var comboItemStyle = new Style(typeof(ComboBoxItem));
-        comboItemStyle.Setters.Add(new Setter(ComboBoxItem.BackgroundProperty, Brush(_pal.InputBg)));
+        comboItemStyle.Setters.Add(new Setter(ComboBoxItem.BackgroundProperty, Brush(_pal.Background)));
         comboItemStyle.Setters.Add(new Setter(ComboBoxItem.ForegroundProperty, Brush(_pal.Text)));
         comboItemStyle.Setters.Add(new Setter(ComboBoxItem.BorderThicknessProperty, new Thickness(0)));
 

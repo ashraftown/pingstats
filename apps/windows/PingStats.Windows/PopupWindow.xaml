@@ -88,7 +88,7 @@
                      AllowsTransparency="True"
                      Focusable="False"
                      PopupAnimation="Slide">
-                <Border Background="{TemplateBinding Background}"
+                <Border Background="{DynamicResource DropdownBg}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="1"
                         CornerRadius="8"
@@ -171,6 +171,7 @@
     <SolidColorBrush x:Key="ToggleTrackOff" Color="#4A4E55"/>
     <SolidColorBrush x:Key="ToggleTrackOn" Color="#4C8DFF"/>
     <SolidColorBrush x:Key="ToggleKnob" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="DropdownBg" Color="#0B0C0F"/>
 
     <Style TargetType="CheckBox" x:Key="PillToggleStyle">
       <Setter Property="Cursor" Value="Hand"/>
@@ -243,7 +244,7 @@
                 Style="{StaticResource ActionButton}"
                 Click="OnPinToggle"
                 ToolTip="Pin &#x2014; keep open when clicking outside">
-          <Viewbox Width="14" Height="14">
+          <Viewbox Width="14" Height="14" RenderTransformOrigin="0.5,0.5">
             <Viewbox.RenderTransform>
               <RotateTransform x:Name="PinIconRotate" Angle="35"/>
             </Viewbox.RenderTransform>
