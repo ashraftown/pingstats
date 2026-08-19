@@ -1106,7 +1106,7 @@ struct PingChartView: View {
 
   private static func axisMax(_ values: [Double]) -> Double {
     guard let maxValue = values.max(), maxValue > 0 else { return 50 }
-    return max(50, ceil(maxValue / 25) * 25)
+    return max(50, ceil(maxValue / 50) * 50)
   }
 
   private static func y(_ value: Double, axisMax: Double, topY: CGFloat, baselineY: CGFloat) -> CGFloat {
