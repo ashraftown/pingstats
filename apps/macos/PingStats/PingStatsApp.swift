@@ -781,7 +781,7 @@ struct ContentView: View {
       VStack(alignment: .leading, spacing: 6) {
         HStack {
           Toggle("open at login", isOn: openAtLoginBinding)
-            .toggleStyle(.checkbox)
+            .toggleStyle(.switch)
             .controlSize(.small)
             .font(.system(size: 12))
             .foregroundStyle(Color.secondary)
