@@ -138,8 +138,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         .environmentObject(pingManager)
         .environmentObject(popoverCoordinator)
     )
-    // Dark-first popup design; keep the popover chrome dark regardless of system theme.
-    hostingController.view.appearance = NSAppearance(named: .darkAqua)
     popover?.contentViewController = hostingController
     let fittingSize = hostingController.view.fittingSize
     popover?.contentSize = fittingSize.width > 0 && fittingSize.height > 0
@@ -405,7 +403,7 @@ enum PopupState: Equatable {
     switch self {
     case .connected: return Color(hex: 0x34D399).opacity(0.12)
     case .timeout: return Color(hex: 0xF0625F).opacity(0.12)
-    case .stopped, .resolving: return Color.white.opacity(0.06)
+    case .stopped, .resolving: return Color.primary.opacity(0.1)
     }
   }
 
@@ -473,12 +471,6 @@ struct ContentView: View {
     }
     .padding(20)
     .frame(width: 340)
-    .background(Color(hex: 0x0B0C0F))
-    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-    .overlay(
-      RoundedRectangle(cornerRadius: 16, style: .continuous)
-        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-    )
     .onAppear {
       if hostField.isEmpty {
         hostField = pingManager.host
@@ -496,7 +488,7 @@ struct ContentView: View {
           .frame(width: 8, height: 8)
         Text("PingStats")
           .font(.system(size: 14, weight: .medium))
-          .foregroundStyle(Color(hex: 0xF5F6F7))
+          .foregroundStyle(Color.primary)
       }
       Spacer()
       Button {
@@ -591,7 +583,7 @@ struct ContentView: View {
 
   private var statsRow: some View {
     VStack(spacing: 0) {
-      Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1)
+      Rectangle().fill(Color.primary.opacity(0.1)).frame(height: 1)
       HStack(spacing: 0) {
         statCell(statsValues.min, "min")
         statDivider
@@ -600,19 +592,19 @@ struct ContentView: View {
         statCell(statsValues.max, "max")
       }
       .padding(.vertical, 12)
-      Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1)
+      Rectangle().fill(Color.primary.opacity(0.1)).frame(height: 1)
     }
   }
 
   private var statDivider: some View {
-    Rectangle().fill(Color.white.opacity(0.08)).frame(width: 1)
+    Rectangle().fill(Color.primary.opacity(0.12)).frame(width: 1)
   }
 
   private func statCell(_ value: String, _ label: String) -> some View {
     VStack(spacing: 3) {
       Text(value)
         .font(.system(size: 15, weight: .medium, design: .monospaced))
-        .foregroundStyle(Color(hex: 0xF5F6F7))
+        .foregroundStyle(Color.primary)
       Text(label)
         .font(.system(size: 10))
         .foregroundStyle(Color(hex: 0x71757D))
@@ -661,12 +653,12 @@ struct ContentView: View {
       TextField("hostname or IP", text: $hostField)
         .textFieldStyle(.plain)
         .font(.system(size: 13, design: .monospaced))
-        .foregroundStyle(Color(hex: 0xF5F6F7))
+        .foregroundStyle(Color.primary)
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        .background(Color.white.opacity(0.04))
+        .background(Color.primary.opacity(0.05))
         .clipShape(RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.12), lineWidth: 1))
         .disabled(pingManager.isRunning)
         .onSubmit {
           guard !pingManager.isRunning else { return }
@@ -704,13 +696,13 @@ struct ContentView: View {
       .labelsHidden()
       .pickerStyle(.menu)
       .font(.system(size: 13))
-      .foregroundStyle(Color(hex: 0xF5F6F7))
+      .foregroundStyle(Color.primary)
       .frame(maxWidth: .infinity, alignment: .leading)
       .padding(.horizontal, 10)
       .padding(.vertical, 8)
-      .background(Color.white.opacity(0.04))
+      .background(Color.primary.opacity(0.05))
       .clipShape(RoundedRectangle(cornerRadius: 8))
-      .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.08), lineWidth: 1))
+      .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.12), lineWidth: 1))
     }
   }
 
@@ -761,7 +753,7 @@ struct ContentView: View {
       HStack {
         Text("quit pingstats?")
           .font(.system(size: 12))
-          .foregroundStyle(Color(hex: 0xB8BABF))
+          .foregroundStyle(Color.secondary)
         Spacer()
         Button("cancel") {
           showQuitConfirm = false
@@ -786,7 +778,7 @@ struct ContentView: View {
             .toggleStyle(.checkbox)
             .controlSize(.small)
             .font(.system(size: 12))
-            .foregroundStyle(Color(hex: 0xB8BABF))
+            .foregroundStyle(Color.secondary)
           Spacer()
           Button {
             showQuitConfirm = true
@@ -861,9 +853,9 @@ struct ContentView: View {
 }
 
 struct FooterButtonStyle: ButtonStyle {
-  var fg: Color = Color(hex: 0xB8BABF)
+  var fg: Color = .secondary
   var bg: Color = .clear
-  var border: Color = Color.white.opacity(0.1)
+  var border: Color = Color.primary.opacity(0.12)
 
   func makeBody(configuration: Configuration) -> some View {
     configuration.label
@@ -947,7 +939,7 @@ struct PingChartView: View {
               Circle()
                 .fill(Color(hex: 0xF0625F))
                 .frame(width: 6, height: 6)
-                .overlay(Circle().stroke(Color(hex: 0x0B0C0F), lineWidth: 2))
+                .overlay(Circle().stroke(Color(nsColor: .windowBackgroundColor), lineWidth: 2))
                 .position(
                   x: Self.marginLeft + CGFloat(index) * stepX,
                   y: Self.y(value, axisMax: axisMax, topY: topY, baselineY: baselineY)
@@ -999,10 +991,10 @@ struct PingChartView: View {
 
   private func gridlines(width: CGFloat, topY: CGFloat, baselineY: CGFloat) -> some View {
     ZStack(alignment: .topLeading) {
-      dashedLine(y: topY, width: width, opacity: 0.05)
-      dashedLine(y: (topY + baselineY) / 2, width: width, opacity: 0.05)
+      dashedLine(y: topY, width: width, opacity: 0.08)
+      dashedLine(y: (topY + baselineY) / 2, width: width, opacity: 0.08)
       Rectangle()
-        .fill(Color.white.opacity(0.08))
+        .fill(Color.primary.opacity(0.12))
         .frame(width: width - Self.marginLeft, height: 1)
         .offset(x: Self.marginLeft, y: baselineY)
     }
@@ -1013,7 +1005,7 @@ struct PingChartView: View {
       path.move(to: CGPoint(x: Self.marginLeft, y: y))
       path.addLine(to: CGPoint(x: width, y: y))
     }
-    .stroke(Color.white.opacity(opacity), style: StrokeStyle(lineWidth: 1, dash: [2, 3]))
+    .stroke(Color.primary.opacity(opacity), style: StrokeStyle(lineWidth: 1, dash: [2, 3]))
   }
 
   private func axisLabels(axisMax: Double, topY: CGFloat, baselineY: CGFloat) -> some View {
