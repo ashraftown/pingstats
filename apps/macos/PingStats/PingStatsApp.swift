@@ -645,7 +645,7 @@ struct ContentView: View {
       }
       .foregroundStyle(state.pillFg)
       .padding(.horizontal, 9)
-      .padding(.vertical, 3)
+      .padding(.vertical, 2)
       .background(state.pillBg)
       .clipShape(Capsule())
       .overlay(Capsule().stroke(state.pillBorder, lineWidth: 1))
