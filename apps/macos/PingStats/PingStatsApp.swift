@@ -407,6 +407,14 @@ enum PopupState: Equatable {
     }
   }
 
+  var pillBorder: Color {
+    switch self {
+    case .connected: return Color(hex: 0x34D399).opacity(0.28)
+    case .timeout: return Color(hex: 0xF0625F).opacity(0.28)
+    case .stopped, .resolving: return Color.primary.opacity(0.12)
+    }
+  }
+
   var dotColor: Color {
     switch self {
     case .connected: return Color(hex: 0x34D399)
@@ -640,6 +648,7 @@ struct ContentView: View {
       .padding(.vertical, 3)
       .background(state.pillBg)
       .clipShape(Capsule())
+      .overlay(Capsule().stroke(state.pillBorder, lineWidth: 1))
       .animation(.easeOut(duration: 0.2), value: state.pillText)
     }
   }
