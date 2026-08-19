@@ -600,7 +600,7 @@ struct ContentView: View {
         statDivider
         statCell(statsValues.max, "max")
       }
-      .padding(.vertical, 12)
+      .padding(.vertical, 8)
       Rectangle().fill(Color.primary.opacity(0.1)).frame(height: 1)
     }
   }
@@ -645,7 +645,7 @@ struct ContentView: View {
       }
       .foregroundStyle(state.pillFg)
       .padding(.horizontal, 9)
-      .padding(.vertical, 2)
+      .padding(.vertical, 3)
       .background(state.pillBg)
       .clipShape(Capsule())
       .overlay(Capsule().stroke(state.pillBorder, lineWidth: 1))
