@@ -58,7 +58,7 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="8"
-                            Padding="10,0,0,0"
+                            Padding="10,8"
                             SnapsToDevicePixels="True">
                       <Grid>
                         <Grid.ColumnDefinitions>
@@ -67,8 +67,7 @@
                         </Grid.ColumnDefinitions>
                         <ContentPresenter Grid.Column="0"
                                           Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                          VerticalAlignment="Center"
-                                          Margin="0,2,0,2"/>
+                                          VerticalAlignment="Center"/>
                         <TextBlock Grid.Column="1"
                                    x:Name="Arrow"
                                    Text="&#xE70D;"
@@ -145,10 +144,107 @@
         </Setter.Value>
       </Setter>
     </Style>
+
+    <Style TargetType="TextBox" x:Key="ThemedTextBoxStyle">
+      <Setter Property="OverridesDefaultStyle" Value="True"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TextBox">
+            <Border x:Name="Border"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="8"
+                    SnapsToDevicePixels="True">
+              <ScrollViewer x:Name="PART_ContentHost" Margin="10,8"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Border" Property="Opacity" Value="0.55"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <SolidColorBrush x:Key="ToggleTrackOff" Color="#4A4E55"/>
+    <SolidColorBrush x:Key="ToggleTrackOn" Color="#4C8DFF"/>
+    <SolidColorBrush x:Key="ToggleKnob" Color="#FFFFFF"/>
+
+    <Style TargetType="CheckBox" x:Key="PillToggleStyle">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <StackPanel Orientation="Horizontal" Background="Transparent">
+              <Border x:Name="Track"
+                      Width="30"
+                      Height="18"
+                      CornerRadius="9"
+                      Background="{DynamicResource ToggleTrackOff}"
+                      VerticalAlignment="Center">
+                <Ellipse x:Name="Knob"
+                         Width="14"
+                         Height="14"
+                         Fill="{DynamicResource ToggleKnob}"
+                         HorizontalAlignment="Left"
+                         Margin="2,0,0,0">
+                  <Ellipse.RenderTransform>
+                    <TranslateTransform x:Name="KnobTranslate"/>
+                  </Ellipse.RenderTransform>
+                </Ellipse>
+              </Border>
+              <ContentPresenter Margin="8,0,0,0"
+                                VerticalAlignment="Center"
+                                RecognizesAccessKey="True"
+                                TextElement.Foreground="{TemplateBinding Foreground}"/>
+            </StackPanel>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Track" Property="Background" Value="{DynamicResource ToggleTrackOn}"/>
+                <Trigger.EnterActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="KnobTranslate"
+                                       Storyboard.TargetProperty="X"
+                                       To="12"
+                                       Duration="0:0:0.15">
+                        <DoubleAnimation.EasingFunction>
+                          <CubicEase EasingMode="EaseOut"/>
+                        </DoubleAnimation.EasingFunction>
+                      </DoubleAnimation>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.EnterActions>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="False">
+                <Setter TargetName="Track" Property="Background" Value="{DynamicResource ToggleTrackOff}"/>
+                <Trigger.EnterActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="KnobTranslate"
+                                       Storyboard.TargetProperty="X"
+                                       To="0"
+                                       Duration="0:0:0.15">
+                        <DoubleAnimation.EasingFunction>
+                          <CubicEase EasingMode="EaseOut"/>
+                        </DoubleAnimation.EasingFunction>
+                      </DoubleAnimation>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.EnterActions>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
   </Window.Resources>
 
   <Border x:Name="PopupBorder"
-          CornerRadius="16"
+          CornerRadius="10"
           BorderThickness="1"
           Padding="20">
     <Border.Effect>
@@ -285,8 +381,11 @@
       <!-- Host -->
       <StackPanel Margin="0,0,0,12">
         <TextBlock x:Name="HostLabel" Text="host" FontSize="11" Margin="0,0,0,4"/>
-        <TextBox x:Name="HostTextBox" FontFamily="Consolas" FontSize="13"
-                 Padding="10,8" BorderThickness="1" KeyDown="OnHostKeyDown"/>
+        <TextBox x:Name="HostTextBox"
+                 Style="{StaticResource ThemedTextBoxStyle}"
+                 FontFamily="Consolas"
+                 FontSize="13"
+                 BorderThickness="1" KeyDown="OnHostKeyDown"/>
         <TextBlock x:Name="ResolveNote" FontSize="10" Margin="0,5,0,0" MinHeight="15"/>
       </StackPanel>
 
@@ -346,6 +445,7 @@
         </Grid.ColumnDefinitions>
         <CheckBox Grid.Column="0"
                   x:Name="LoginCheckBox"
+                  Style="{StaticResource PillToggleStyle}"
                   Content="open at login"
                   FontSize="12"
                   VerticalAlignment="Center"

@@ -118,6 +118,8 @@ public partial class PopupWindow : Window
 
         Loaded += (_, _) =>
         {
+            _isDarkTheme = IsSystemDarkTheme();
+            _pal = _isDarkTheme ? DarkPalette() : LightPalette();
             HostTextBox.Text = _pingManager.Host;
             HostTextBox.TextChanged += (_, _) => UpdateUI();
             SetIntervalSelection(_pingManager.IntervalSeconds);
@@ -229,6 +231,9 @@ public partial class PopupWindow : Window
         IntervalCombo.ItemContainerStyle = comboItemStyle;
 
         LoginCheckBox.Foreground = Brush(_pal.Footer);
+        Resources["ToggleTrackOff"] = Brush(_isDarkTheme ? Hex(0x4A4E55) : Hex(0xE0E0E0));
+        Resources["ToggleTrackOn"] = Brush(_pal.Accent);
+        Resources["ToggleKnob"] = Brushes.White;
         QuitButton.Background = Brushes.Transparent;
         QuitButton.BorderBrush = Brush(_pal.Border);
         QuitButton.Foreground = Brush(_pal.Footer);
