@@ -727,6 +727,7 @@ struct ContentView: View {
       .background(toggleBg)
       .clipShape(RoundedRectangle(cornerRadius: 10))
       .overlay(RoundedRectangle(cornerRadius: 10).stroke(toggleBorder, lineWidth: 1))
+      .contentShape(RoundedRectangle(cornerRadius: 10))
     }
     .buttonStyle(.plain)
     .disabled(!pingManager.isRunning && hostEmpty)
@@ -885,6 +886,7 @@ struct FooterButtonStyle: ButtonStyle {
       .background(bg)
       .clipShape(RoundedRectangle(cornerRadius: 8))
       .overlay(RoundedRectangle(cornerRadius: 8).stroke(border, lineWidth: 1))
+      .contentShape(RoundedRectangle(cornerRadius: 8))
       .opacity(configuration.isPressed ? 0.85 : 1)
   }
 }
