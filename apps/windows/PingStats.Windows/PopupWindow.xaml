@@ -247,12 +247,14 @@
             <Viewbox.RenderTransform>
               <RotateTransform x:Name="PinIconRotate" Angle="35"/>
             </Viewbox.RenderTransform>
-            <Canvas Width="24" Height="24">
+            <Canvas Width="41.98" Height="63.92">
               <Path x:Name="PinIcon"
-                    Data="M20,3.5 L12.8,18.8 A4.2,4.2 0 1,1 6.5,13.6 Z"
-                    Fill="Transparent"
-                    StrokeThickness="1.5"
-                    StrokeLineJoin="Round"/>
+                    Data="M10.72,41.92Q10.72,44.88 12.21,47.73Q13.71,50.57 16.47,52.89Q19.23,55.21 23.03,56.59L23.93,69.44Q22.09,70.49 20.42,71.66Q18.76,72.83 17.47,73.97Q16.18,75.11 15.47,76.08Q14.95,76.74 14.71,77.39Q14.46,78.03 14.46,78.61Q14.46,79.79 15.29,80.57Q16.11,81.34 17.49,81.34L45.96,81.34Q47.31,81.34 48.14,80.57Q48.96,79.79 48.96,78.61Q48.96,78.03 48.72,77.39Q48.47,76.74 47.97,76.08Q47.24,75.11 45.96,73.98Q44.67,72.85 43,71.68Q41.34,70.51 39.49,69.44L40.39,56.59Q44.21,55.21 46.98,52.89Q49.74,50.57 51.22,47.73Q52.7,44.88 52.7,41.92Q52.7,40.33 51.68,39.35Q50.66,38.37 48.94,38.37L33.86,38.37L33.86,24.34Q33.86,22.95 33.62,21.69Q33.39,20.43 33.02,19.48Q32.66,18.52 32.3,17.97Q31.95,17.42 31.71,17.42Q31.47,17.42 31.12,17.97Q30.77,18.52 30.41,19.48Q30.06,20.43 29.81,21.69Q29.56,22.95 29.56,24.34L29.56,38.37L14.5,38.37Q12.76,38.37 11.74,39.35Q10.72,40.33 10.72,41.92Z"
+                    Fill="Transparent">
+                <Path.RenderTransform>
+                  <MatrixTransform Matrix="1,0,0,-1,-10.72,81.34"/>
+                </Path.RenderTransform>
+              </Path>
             </Canvas>
           </Viewbox>
         </Button>
@@ -341,8 +343,8 @@
           <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <TextBlock x:Name="StatusLabel" Grid.Column="0" Text="status" FontSize="12" VerticalAlignment="Center"/>
-        <Border Grid.Column="1" x:Name="StatusPill" CornerRadius="999" Padding="9,3"
-                BorderThickness="1" VerticalAlignment="Center">
+        <Border Grid.Column="1" x:Name="StatusPill" CornerRadius="12" Padding="9,0"
+                BorderThickness="1" VerticalAlignment="Center" Height="24">
           <StackPanel Orientation="Horizontal">
             <Ellipse x:Name="StatusDot" Width="5" Height="5" VerticalAlignment="Center"/>
             <TextBlock x:Name="StatusText" FontSize="11" FontWeight="Medium" Margin="5,0,0,0"
