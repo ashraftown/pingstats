@@ -127,13 +127,16 @@ public class TrayManager : IDisposable
         if (_pingManager.LatestLatencyMs.HasValue)
         {
             var ms = _pingManager.LatestLatencyMs.Value;
-            if (ms < 60) return Color.LimeGreen;
-            if (ms <= 120) return Color.Gold;
-            return Color.Red;
+            if (ms < 60) return Hex(0x34D399);
+            if (ms <= 120) return Hex(0xF5A623);
+            return Hex(0xF0625F);
         }
 
         return Color.Gray;
     }
+
+    private static Color Hex(uint value) =>
+        Color.FromArgb((int)(value >> 16), (int)((value >> 8) & 0xFF), (int)(value & 0xFF));
 
     private string GetDisplayText()
     {

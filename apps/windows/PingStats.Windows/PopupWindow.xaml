@@ -203,23 +203,23 @@
       <!-- Chart -->
       <Grid Height="64" Margin="0,0,0,14">
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="22"/>
+          <ColumnDefinition Width="36"/>
           <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid Grid.Column="0">
           <TextBlock x:Name="AxisTopLabel" HorizontalAlignment="Right" VerticalAlignment="Top"
-                     FontFamily="Consolas" FontSize="8.5"/>
+                     FontFamily="Consolas" FontSize="8.5" Margin="0,0,6,0"/>
           <TextBlock x:Name="AxisMidLabel" HorizontalAlignment="Right" VerticalAlignment="Center"
-                     FontFamily="Consolas" FontSize="8.5"/>
+                     FontFamily="Consolas" FontSize="8.5" Margin="0,0,6,0"/>
           <TextBlock x:Name="AxisBottomLabel" Text="0" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                     FontFamily="Consolas" FontSize="8.5"/>
+                     FontFamily="Consolas" FontSize="8.5" Margin="0,0,6,0"/>
         </Grid>
         <Grid Grid.Column="1" ClipToBounds="True">
           <Line x:Name="GridTop" X1="0" Y1="0.037" X2="1" Y2="0.037" Stretch="Fill"
                 StrokeDashArray="2 3" StrokeThickness="1"/>
-          <Line x:Name="GridMid" X1="0" Y1="0.389" X2="1" Y2="0.389" Stretch="Fill"
+          <Line x:Name="GridMid" X1="0" Y1="0.472" X2="1" Y2="0.472" Stretch="Fill"
                 StrokeDashArray="2 3" StrokeThickness="1"/>
-          <Line x:Name="GridBottom" X1="0" Y1="0.741" X2="1" Y2="0.741" Stretch="Fill"
+          <Line x:Name="GridBottom" X1="0" Y1="0.907" X2="1" Y2="0.907" Stretch="Fill"
                 StrokeThickness="1"/>
           <Canvas x:Name="ChartCanvas" ClipToBounds="True" SizeChanged="OnGraphSizeChanged">
             <Canvas.RenderTransform>
@@ -245,19 +245,19 @@
             <ColumnDefinition Width="1"/>
             <ColumnDefinition Width="*"/>
           </Grid.ColumnDefinitions>
-          <StackPanel Grid.Column="0" Margin="0,12,0,12">
+          <StackPanel Grid.Column="0" Margin="0,8,0,8">
             <TextBlock x:Name="StatMinText" FontFamily="Consolas" FontSize="15" FontWeight="Medium"
                        HorizontalAlignment="Center"/>
             <TextBlock x:Name="StatMinLabel" Text="min" FontSize="10" HorizontalAlignment="Center" Margin="0,3,0,0"/>
           </StackPanel>
           <Rectangle Grid.Column="1" x:Name="StatDivider1" Width="1" Fill="#15FFFFFF"/>
-          <StackPanel Grid.Column="2" Margin="0,12,0,12">
+          <StackPanel Grid.Column="2" Margin="0,8,0,8">
             <TextBlock x:Name="StatAvgText" FontFamily="Consolas" FontSize="15" FontWeight="Medium"
                        HorizontalAlignment="Center"/>
             <TextBlock x:Name="StatAvgLabel" Text="avg" FontSize="10" HorizontalAlignment="Center" Margin="0,3,0,0"/>
           </StackPanel>
           <Rectangle Grid.Column="3" x:Name="StatDivider2" Width="1" Fill="#15FFFFFF"/>
-          <StackPanel Grid.Column="4" Margin="0,12,0,12">
+          <StackPanel Grid.Column="4" Margin="0,8,0,8">
             <TextBlock x:Name="StatMaxText" FontFamily="Consolas" FontSize="15" FontWeight="Medium"
                        HorizontalAlignment="Center"/>
             <TextBlock x:Name="StatMaxLabel" Text="max" FontSize="10" HorizontalAlignment="Center" Margin="0,3,0,0"/>
@@ -273,7 +273,7 @@
           <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <TextBlock x:Name="StatusLabel" Grid.Column="0" Text="status" FontSize="12" VerticalAlignment="Center"/>
-        <Border Grid.Column="1" x:Name="StatusPill" CornerRadius="20" Padding="9,3">
+        <Border Grid.Column="1" x:Name="StatusPill" CornerRadius="20" Padding="9,3" BorderThickness="1">
           <StackPanel Orientation="Horizontal">
             <Ellipse x:Name="StatusDot" Width="5" Height="5" VerticalAlignment="Center"/>
             <TextBlock x:Name="StatusText" FontSize="11" FontWeight="Medium" Margin="5,0,0,0"
@@ -287,7 +287,7 @@
         <TextBlock x:Name="HostLabel" Text="host" FontSize="11" Margin="0,0,0,4"/>
         <TextBox x:Name="HostTextBox" FontFamily="Consolas" FontSize="13"
                  Padding="10,8" BorderThickness="1" KeyDown="OnHostKeyDown"/>
-        <TextBlock x:Name="ResolveNote" FontSize="10" Margin="0,5,0,0"/>
+        <TextBlock x:Name="ResolveNote" FontSize="10" Margin="0,5,0,0" MinHeight="15"/>
       </StackPanel>
 
       <!-- Interval -->

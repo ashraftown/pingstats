@@ -284,6 +284,7 @@ public partial class PopupWindow : Window
         Color pillBg;
         Color pillFg;
         Color pillDot;
+        Color pillBorder;
         string pillText;
         string heroCaption;
         string heroNumber;
@@ -296,6 +297,7 @@ public partial class PopupWindow : Window
             pillBg = Tint(_pal.Green, 31);
             pillFg = _pal.Green;
             pillDot = _pal.Green;
+            pillBorder = Tint(_pal.Green, 71);
             pillText = "connected";
             heroCaption = "latest ping";
             heroHasUnit = true;
@@ -316,6 +318,7 @@ public partial class PopupWindow : Window
             pillBg = Tint(_pal.Red, 31);
             pillFg = _pal.RedLabel;
             pillDot = _pal.Red;
+            pillBorder = Tint(_pal.Red, 71);
             pillText = "timeout";
             heroCaption = "timeout";
             heroNumber = "\u2717";
@@ -328,6 +331,7 @@ public partial class PopupWindow : Window
             pillBg = _pal.PillNeutralBg;
             pillFg = _pal.Footer;
             pillDot = _pal.Muted;
+            pillBorder = Tint(_pal.Text, 31);
             pillText = "resolving";
             heroCaption = "resolving\u2026";
             heroNumber = "--";
@@ -340,6 +344,7 @@ public partial class PopupWindow : Window
             pillBg = _pal.PillNeutralBg;
             pillFg = _pal.Footer;
             pillDot = _pal.Muted;
+            pillBorder = Tint(_pal.Text, 31);
             pillText = "stopped";
             heroCaption = "not monitoring";
             heroNumber = "--";
@@ -349,6 +354,7 @@ public partial class PopupWindow : Window
 
         HeaderDot.Fill = Brush(headerDot);
         StatusPill.Background = Brush(pillBg);
+        StatusPill.BorderBrush = Brush(pillBorder);
         StatusText.Foreground = Brush(pillFg);
         StatusDot.Fill = Brush(pillDot);
         StatusText.Text = pillText;
@@ -378,22 +384,21 @@ public partial class PopupWindow : Window
         }
         ToggleButton.IsEnabled = running || !string.IsNullOrWhiteSpace(HostTextBox.Text);
 
-        // Resolve note
+        // Resolve note (always kept in layout so the popup doesn't jump)
         if (!string.IsNullOrEmpty(_pingManager.ResolvedIP))
         {
             ResolveNote.Text = "resolves to " + _pingManager.ResolvedIP;
             ResolveNote.Foreground = Brush(_pal.Muted2);
-            ResolveNote.Visibility = Visibility.Visible;
         }
         else if (resolving)
         {
             ResolveNote.Text = "resolving\u2026";
             ResolveNote.Foreground = Brush(_pal.Muted);
-            ResolveNote.Visibility = Visibility.Visible;
         }
         else
         {
-            ResolveNote.Visibility = Visibility.Collapsed;
+            ResolveNote.Text = " ";
+            ResolveNote.Foreground = Brush(_pal.Muted2);
         }
 
         // Stats
@@ -515,12 +520,12 @@ public partial class PopupWindow : Window
         _lastDrawnColor = _chartColor;
         var color = _chartColor;
 
-        var axisMax = Math.Max(100, Math.Ceiling(values.DefaultIfEmpty(0).Max() / 50) * 50);
+        var axisMax = Math.Max(50, Math.Ceiling(values.DefaultIfEmpty(0).Max() / 50) * 50);
         AxisTopLabel.Text = ((int)axisMax).ToString();
         AxisMidLabel.Text = ((int)(axisMax / 2)).ToString();
 
         double topY = height * 2 / 54.0;
-        double baselineY = height * 40 / 54.0;
+        double baselineY = height * 49 / 54.0;
 
         double YFor(double v)
         {
@@ -545,30 +550,37 @@ public partial class PopupWindow : Window
         };
         ChartCanvas.Children.Add(area);
 
-        var line = new Polyline
+        double step = width / Math.Max(values.Count - 1, 1);
+        for (int i = 1; i < values.Count; i++)
         {
-            Points = linePoints,
-            Stroke = Brush(color),
-            StrokeThickness = 2,
-            StrokeLineJoin = PenLineJoin.Round,
-            StrokeStartLineCap = PenLineCap.Round,
-            StrokeEndLineCap = PenLineCap.Round,
-        };
-        ChartCanvas.Children.Add(line);
+            var segment = new Line
+            {
+                X1 = (i - 1) * step,
+                Y1 = YFor(values[i - 1]),
+                X2 = i * step,
+                Y2 = YFor(values[i]),
+                Stroke = Brush(TierColor(Math.Max(values[i - 1], values[i]))),
+                StrokeThickness = 2,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+            };
+            ChartCanvas.Children.Add(segment);
+        }
 
         for (int i = 0; i < values.Count; i++)
         {
-            if (values[i] > 120)
+            var tierColor = TierColor(values[i]);
+            if (tierColor != _pal.Green)
             {
                 var marker = new Ellipse
                 {
                     Width = 6,
                     Height = 6,
-                    Fill = Brush(_pal.Red),
+                    Fill = Brush(tierColor),
                     Stroke = Brush(_pal.Background),
                     StrokeThickness = 2,
                 };
-                double mx = i * (width / Math.Max(values.Count - 1, 1));
+                double mx = i * step;
                 Canvas.SetLeft(marker, mx - 3);
                 Canvas.SetTop(marker, YFor(values[i]) - 3);
                 ChartCanvas.Children.Add(marker);
