@@ -984,6 +984,7 @@ struct PingChartView: View {
             }
           }
         }
+        .clipShape(PlotClip(marginLeft: Self.marginLeft))
         .offset(x: -slideProgress * stepX)
       }
     }
@@ -1060,6 +1061,20 @@ struct PingChartView: View {
         .font(.system(size: 8.5, design: .monospaced))
         .foregroundStyle(Color(hex: 0x5B5F66))
         .position(x: 22, y: baselineY + 5)
+    }
+  }
+
+  /// Clips the sliding chart layer to the plot area (right of the Y-axis
+  /// labels) so the line never overflows the card while animating.
+  private struct PlotClip: Shape {
+    var marginLeft: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+      var path = Path()
+      path.addRect(
+        CGRect(x: marginLeft, y: 0, width: max(0, rect.width - marginLeft), height: rect.height)
+      )
+      return path
     }
   }
 
