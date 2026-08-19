@@ -980,16 +980,22 @@ struct PingChartView: View {
           )
           .fill(strokeColor.opacity(0.12))
 
-          Self.linePath(chart, stepX: stepX, axisMax: axisMax, topY: topY, baselineY: baselineY)
-            .stroke(
-              strokeColor,
-              style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
-            )
+          ForEach(Array(chart.enumerated()), id: \.offset) { index, value in
+            if index > 0 {
+              let previous = chart[index - 1]
+              let tier = LatencyTier.tier(max(value, previous))
+              Path { path in
+                path.move(to: Self.point(index - 1, value: previous, stepX: stepX, axisMax: axisMax, topY: topY, baselineY: baselineY))
+                path.addLine(to: Self.point(index, value: value, stepX: stepX, axisMax: axisMax, topY: topY, baselineY: baselineY))
+              }
+              .stroke(tier.color, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+            }
+          }
 
           ForEach(Array(chart.enumerated()), id: \.offset) { index, value in
-            if value > 120 {
+            if LatencyTier.tier(value) != .green {
               Circle()
-                .fill(Color(hex: 0xF0625F))
+                .fill(LatencyTier.tier(value).color)
                 .frame(width: 6, height: 6)
                 .overlay(Circle().stroke(Color(nsColor: .windowBackgroundColor), lineWidth: 2))
                 .position(
@@ -1108,26 +1114,18 @@ struct PingChartView: View {
     return baselineY - CGFloat(fraction) * (baselineY - topY)
   }
 
-  private static func linePath(
-    _ values: [Double],
+  private static func point(
+    _ index: Int,
+    value: Double,
     stepX: CGFloat,
     axisMax: Double,
     topY: CGFloat,
     baselineY: CGFloat
-  ) -> Path {
-    Path { path in
-      for (index, value) in values.enumerated() {
-        let point = CGPoint(
-          x: marginLeft + CGFloat(index) * stepX,
-          y: y(value, axisMax: axisMax, topY: topY, baselineY: baselineY)
-        )
-        if index == 0 {
-          path.move(to: point)
-        } else {
-          path.addLine(to: point)
-        }
-      }
-    }
+  ) -> CGPoint {
+    CGPoint(
+      x: marginLeft + CGFloat(index) * stepX,
+      y: y(value, axisMax: axisMax, topY: topY, baselineY: baselineY)
+    )
   }
 
   private static func areaPath(
