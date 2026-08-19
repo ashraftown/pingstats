@@ -443,7 +443,6 @@ struct ContentView: View {
   @StateObject private var loginItems = LoginItemManager()
   @State private var hostField = ""
   @State private var showQuitConfirm = false
-  @State private var intervalAnchor: NSView?
   @State private var intervalMenuTarget = IntervalMenuTarget()
   private let intervalOptions: [Double] = [1, 5, 10, 30]
 
@@ -709,7 +708,6 @@ struct ContentView: View {
       }
       .buttonStyle(.plain)
       .frame(maxWidth: .infinity)
-      .background(ViewAnchor { view in intervalAnchor = view })
     }
   }
 
@@ -838,7 +836,6 @@ struct ContentView: View {
   }
 
   private func presentIntervalMenu() {
-    guard let anchor = intervalAnchor else { return }
     intervalMenuTarget.onSelect = { [pingManager] seconds in
       pingManager.setInterval(seconds)
     }
@@ -854,8 +851,9 @@ struct ContentView: View {
       item.state = seconds == pingManager.intervalSeconds ? .on : .off
       menu.addItem(item)
     }
-    let point = NSPoint(x: 0, y: anchor.bounds.height + 6)
-    menu.popUp(positioning: nil, at: point, in: anchor)
+    let mouse = NSEvent.mouseLocation
+    let point = NSPoint(x: mouse.x, y: mouse.y - 12)
+    menu.popUp(positioning: nil, at: point, in: nil)
   }
 
   private func toggleRunning() {
@@ -910,20 +908,6 @@ struct PulsingDot: View {
 }
 
 // MARK: - Interval field helpers
-
-/// Captures the button's backing NSView so the interval menu can be anchored
-/// to it when it pops up.
-private struct ViewAnchor: NSViewRepresentable {
-  var onMount: (NSView) -> Void
-
-  func makeNSView(context: Context) -> NSView {
-    NSView(frame: .zero)
-  }
-
-  func updateNSView(_ nsView: NSView, context: Context) {
-    onMount(nsView)
-  }
-}
 
 /// NSObject target for the interval menu items; keeps a strong reference to
 /// the selection closure.
