@@ -999,8 +999,8 @@ struct PingChartView: View {
             }
           }
         }
-        .clipShape(PlotClip(marginLeft: Self.marginLeft))
         .offset(x: -slideProgress * stepX)
+        .clipShape(PlotClip(marginLeft: Self.marginLeft))
       }
     }
     .frame(height: 64)
