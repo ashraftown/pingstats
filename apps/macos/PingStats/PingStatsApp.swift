@@ -953,7 +953,7 @@ struct PingChartView: View {
   @State private var slideProgress: CGFloat = 0
 
   private let slideDuration = 0.55
-  private static let marginLeft: CGFloat = 28
+  private static let marginLeft: CGFloat = 36
 
   var body: some View {
     GeometryReader { geo in
@@ -962,7 +962,7 @@ struct PingChartView: View {
       let stepX = plotWidth / CGFloat(count - 1)
       let chart = display.isEmpty ? settled : display
       let axisMax = Self.axisMax(chart)
-      let baselineY = geo.size.height * (40 / 54)
+      let baselineY = geo.size.height * (45 / 54)
       let topY = geo.size.height * (2 / 54)
 
       ZStack(alignment: .topLeading) {
@@ -1063,19 +1063,24 @@ struct PingChartView: View {
 
   private func axisLabels(axisMax: Double, topY: CGFloat, baselineY: CGFloat) -> some View {
     let midY = (topY + baselineY) / 2
+    let labelRight = Self.marginLeft - 6
+    let labelX = labelRight - 13
     return ZStack(alignment: .topLeading) {
       Text("\(Int(axisMax))")
         .font(.system(size: 8.5, design: .monospaced))
         .foregroundStyle(Color.secondary)
-        .position(x: 22, y: topY + 5)
+        .frame(width: 26, alignment: .trailing)
+        .position(x: labelX, y: topY + 5)
       Text("\(Int(axisMax / 2))")
         .font(.system(size: 8.5, design: .monospaced))
         .foregroundStyle(Color.secondary)
-        .position(x: 22, y: midY + 5)
+        .frame(width: 26, alignment: .trailing)
+        .position(x: labelX, y: midY + 5)
       Text("0")
         .font(.system(size: 8.5, design: .monospaced))
         .foregroundStyle(Color.secondary)
-        .position(x: 22, y: baselineY + 5)
+        .frame(width: 26, alignment: .trailing)
+        .position(x: labelX, y: baselineY + 5)
     }
   }
 
