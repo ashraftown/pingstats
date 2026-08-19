@@ -35,7 +35,6 @@ jobs:
             -derivedDataPath .build \
             -destination "platform=macOS,arch=arm64" \
             CODE_SIGN_IDENTITY="-" \
-            ENABLE_HARDENED_RUNTIME=NO \
             build
 
           APP_PATH=".build/Build/Products/Release/PingStats.app"
