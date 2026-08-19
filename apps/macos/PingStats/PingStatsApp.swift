@@ -443,6 +443,8 @@ struct ContentView: View {
   @StateObject private var loginItems = LoginItemManager()
   @State private var hostField = ""
   @State private var showQuitConfirm = false
+  @State private var intervalAnchor: NSView?
+  @State private var intervalMenuTarget = IntervalMenuTarget()
   private let intervalOptions: [Double] = [1, 5, 10, 30]
 
   private var state: PopupState {
@@ -688,19 +690,7 @@ struct ContentView: View {
       Text("check every")
         .font(.system(size: 11))
         .foregroundStyle(Color(hex: 0x71757D))
-      Menu {
-        ForEach(intervalOptions, id: \.self) { seconds in
-          Button {
-            pingManager.setInterval(seconds)
-          } label: {
-            if seconds == pingManager.intervalSeconds {
-              Label(intervalLabel(seconds), systemImage: "checkmark")
-            } else {
-              Text(intervalLabel(seconds))
-            }
-          }
-        }
-      } label: {
+      Button(action: presentIntervalMenu) {
         HStack(spacing: 8) {
           Text(intervalLabel(pingManager.intervalSeconds))
             .font(.system(size: 13, design: .monospaced))
@@ -717,9 +707,9 @@ struct ContentView: View {
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.12), lineWidth: 1))
         .contentShape(Rectangle())
       }
-      .menuStyle(.borderlessButton)
-      .menuIndicator(.hidden)
-      .frame(maxWidth: .infinity, alignment: .leading)
+      .buttonStyle(.plain)
+      .frame(maxWidth: .infinity)
+      .background(ViewAnchor { view in intervalAnchor = view })
     }
   }
 
@@ -847,6 +837,27 @@ struct ContentView: View {
     return "\(Int(seconds)) seconds"
   }
 
+  private func presentIntervalMenu() {
+    guard let anchor = intervalAnchor else { return }
+    intervalMenuTarget.onSelect = { [pingManager] seconds in
+      pingManager.setInterval(seconds)
+    }
+    let menu = NSMenu()
+    for seconds in intervalOptions {
+      let item = NSMenuItem(
+        title: intervalLabel(seconds),
+        action: #selector(IntervalMenuTarget.select(_:)),
+        keyEquivalent: ""
+      )
+      item.target = intervalMenuTarget
+      item.tag = Int(seconds)
+      item.state = seconds == pingManager.intervalSeconds ? .on : .off
+      menu.addItem(item)
+    }
+    let point = NSPoint(x: 0, y: anchor.bounds.height + 6)
+    menu.popUp(positioning: nil, at: point, in: anchor)
+  }
+
   private func toggleRunning() {
     if pingManager.isRunning {
       pingManager.stopPinging()
@@ -895,6 +906,32 @@ struct PulsingDot: View {
   private func pulseOpacity(_ date: Date) -> Double {
     let phase = date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 2)
     return 0.35 + 0.65 * abs(cos(.pi * phase))
+  }
+}
+
+// MARK: - Interval field helpers
+
+/// Captures the button's backing NSView so the interval menu can be anchored
+/// to it when it pops up.
+private struct ViewAnchor: NSViewRepresentable {
+  var onMount: (NSView) -> Void
+
+  func makeNSView(context: Context) -> NSView {
+    NSView(frame: .zero)
+  }
+
+  func updateNSView(_ nsView: NSView, context: Context) {
+    onMount(nsView)
+  }
+}
+
+/// NSObject target for the interval menu items; keeps a strong reference to
+/// the selection closure.
+private final class IntervalMenuTarget: NSObject {
+  var onSelect: ((Double) -> Void)?
+
+  @objc func select(_ sender: NSMenuItem) {
+    onSelect?(Double(sender.tag))
   }
 }
 
