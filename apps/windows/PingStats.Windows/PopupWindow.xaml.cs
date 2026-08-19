@@ -20,6 +20,9 @@ public partial class PopupWindow : Window
     private bool _isDarkTheme;
     private Palette _pal = DarkPalette();
 
+    private static readonly double[] IntervalOptions = { 1, 5, 10, 30 };
+    private static readonly string[] IntervalLabels = { "1 second", "5 seconds", "10 seconds", "30 seconds" };
+
     private List<double> _settledChart = new();
     private bool _chartAnimating;
     private Color _chartColor;
@@ -122,12 +125,13 @@ public partial class PopupWindow : Window
             UpdateUI();
         };
 
+        IntervalCombo.ItemsSource = IntervalLabels;
+
         IntervalCombo.SelectionChanged += (_, _) =>
         {
-            if (IntervalCombo.SelectedItem is ComboBoxItem item &&
-                double.TryParse(item.Tag?.ToString(), out var seconds))
+            if (IntervalCombo.SelectedIndex >= 0 && IntervalCombo.SelectedIndex < IntervalOptions.Length)
             {
-                _pingManager.SetInterval(seconds);
+                _pingManager.SetInterval(IntervalOptions[IntervalCombo.SelectedIndex]);
             }
         };
 
@@ -602,11 +606,11 @@ public partial class PopupWindow : Window
 
     private void SetIntervalSelection(double seconds)
     {
-        foreach (ComboBoxItem item in IntervalCombo.Items)
+        for (int i = 0; i < IntervalOptions.Length; i++)
         {
-            if (double.TryParse(item.Tag?.ToString(), out var val) && Math.Abs(val - seconds) < 0.1)
+            if (Math.Abs(IntervalOptions[i] - seconds) < 0.1)
             {
-                IntervalCombo.SelectedItem = item;
+                IntervalCombo.SelectedIndex = i;
                 return;
             }
         }

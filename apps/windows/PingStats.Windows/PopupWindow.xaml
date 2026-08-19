@@ -297,11 +297,31 @@
                   Style="{StaticResource ThemedComboBoxStyle}"
                   SelectedIndex="1"
                   HorizontalAlignment="Stretch"
+                  FontFamily="Consolas"
                   FontSize="13">
-          <ComboBoxItem Tag="1">1 second</ComboBoxItem>
-          <ComboBoxItem Tag="5">5 seconds</ComboBoxItem>
-          <ComboBoxItem Tag="10">10 seconds</ComboBoxItem>
-          <ComboBoxItem Tag="30">30 seconds</ComboBoxItem>
+          <ComboBox.ItemTemplate>
+            <DataTemplate>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="16"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                      <Setter Property="Visibility" Value="Collapsed"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ComboBoxItem}}" Value="True">
+                          <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Grid.Column="1" Text="{Binding}" Margin="4,0,0,0"/>
+              </Grid>
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
         </ComboBox>
       </StackPanel>
 
