@@ -198,6 +198,10 @@
         <Setter.Value>
           <ControlTemplate TargetType="CheckBox">
             <StackPanel Orientation="Horizontal" Background="Transparent">
+              <ContentPresenter Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                RecognizesAccessKey="True"
+                                TextElement.Foreground="{TemplateBinding Foreground}"/>
               <Border x:Name="Track"
                       Width="30"
                       Height="18"
@@ -215,10 +219,6 @@
                   </Ellipse.RenderTransform>
                 </Ellipse>
               </Border>
-              <ContentPresenter Margin="8,0,0,0"
-                                VerticalAlignment="Center"
-                                RecognizesAccessKey="True"
-                                TextElement.Foreground="{TemplateBinding Foreground}"/>
             </StackPanel>
             <ControlTemplate.Triggers>
               <Trigger Property="IsChecked" Value="True">
