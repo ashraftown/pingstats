@@ -146,7 +146,7 @@ Local DMG (on a Mac, after a Release build):
 
 ```bash
 brew install create-dmg   # optional but prettier layout
-./scripts/create-dmg.sh /path/to/PingStats.app dist/PingStats.dmg
+./scripts/create-dmg.sh /path/to/PingStats.app dist/PingStats-macos.dmg
 ```
 
 ---

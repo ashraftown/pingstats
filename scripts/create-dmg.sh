@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_PATH="${1:-}"
-OUTPUT_DMG="${2:-${ROOT_DIR}/dist/PingStats.dmg}"
+OUTPUT_DMG="${2:-${ROOT_DIR}/dist/PingStats-macos.dmg}"
 VOLUME_NAME="PingStats"
 STAGE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/pingstats-dmg.XXXXXX")"
 HOWTO_SRC="${ROOT_DIR}/scripts/How to Open.html"
