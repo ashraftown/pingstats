@@ -100,7 +100,6 @@ jobs:
           files: |
             dist/PingStats-${{ needs.meta.outputs.version }}.dmg
             dist/PingStats.dmg
-          generate_release_notes: true
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
