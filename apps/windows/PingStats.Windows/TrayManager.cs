@@ -100,8 +100,10 @@ public class TrayManager : IDisposable
 
     private void OnStateChanged()
     {
+        if (_disposed) return;
         System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
         {
+            if (_disposed) return;
             UpdateIcon();
 
             if (_notifyIcon.ContextMenuStrip?.Items["StartStop"] is ToolStripMenuItem item)
@@ -164,9 +166,9 @@ public class TrayManager : IDisposable
         if (_pingManager.LatestLatencyMs.HasValue)
         {
             var ms = _pingManager.LatestLatencyMs.Value;
-            if (ms < 60) return Hex(0x34D399);
-            if (ms <= 120) return Hex(0xF5A623);
-            return Hex(0xF0625F);
+            if (ms < 60) return _isDarkTheme ? Hex(0x34D399) : Hex(0x1F9D66);
+            if (ms <= 120) return _isDarkTheme ? Hex(0xF5A623) : Hex(0xC77F0A);
+            return _isDarkTheme ? Hex(0xF0625F) : Hex(0xE0524D);
         }
 
         return Color.Gray;

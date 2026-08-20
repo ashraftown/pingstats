@@ -501,7 +501,10 @@ public partial class PopupWindow : Window
         }
 
         var arr = results.ToArray();
-        if (arr.SequenceEqual(_settledChart) && _chartColor == _lastDrawnColor) return;
+        if (arr.SequenceEqual(_settledChart)
+            && _chartColor == _lastDrawnColor
+            && ChartCanvas.ActualWidth == _lastDrawnWidth
+            && ChartCanvas.ActualHeight == _lastDrawnHeight) return;
 
         var shiftedIn =
             _settledChart.Count == 30
@@ -544,6 +547,8 @@ public partial class PopupWindow : Window
     }
 
     private Color _lastDrawnColor;
+    private double _lastDrawnWidth;
+    private double _lastDrawnHeight;
 
     private void DrawChart(IList<double> values, double? stepOverride = null)
     {
@@ -554,6 +559,8 @@ public partial class PopupWindow : Window
         if (width <= 0 || height <= 0) return;
 
         _lastDrawnColor = _chartColor;
+        _lastDrawnWidth = width;
+        _lastDrawnHeight = height;
         var color = _chartColor;
 
         var axisMax = Math.Max(50, Math.Ceiling(values.DefaultIfEmpty(0).Max() / 50) * 50);

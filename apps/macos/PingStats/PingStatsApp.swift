@@ -802,10 +802,9 @@ struct ContentView: View {
               .font(.system(size: 12))
               .foregroundStyle(Color.secondary)
           }
-            .toggleStyle(.switch)
-            .controlSize(.small)
-          }
-        Spacer()
+          .toggleStyle(.switch)
+          .controlSize(.small)
+          Spacer()
           Button {
             showQuitConfirm = true
           } label: {
