@@ -8,41 +8,42 @@
         Topmost="True"
         AllowsTransparency="True"
         Background="Transparent"
-        Width="320"
+        Width="340"
         Deactivated="OnDeactivated"
         Loaded="OnLoaded"
         SizeToContent="Height"
         MinHeight="200"
-        MaxHeight="600">
+        MaxHeight="720">
   <Window.Resources>
     <Style TargetType="Button" x:Key="ActionButton">
-      <Setter Property="Padding" Value="8,4"/>
+      <Setter Property="Padding" Value="0"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
             <Border Background="{TemplateBinding Background}"
                     BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="{TemplateBinding BorderThickness}"
-                    CornerRadius="4"
+                    CornerRadius="7"
+                    x:Name="border"
                     Padding="{TemplateBinding Padding}">
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="border" Property="Opacity" Value="0.85"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
-      <Style.Triggers>
-        <Trigger Property="IsMouseOver" Value="True">
-          <Setter Property="Background" Value="#333333"/>
-        </Trigger>
-      </Style.Triggers>
     </Style>
 
     <Style TargetType="ComboBox" x:Key="ThemedComboBoxStyle">
       <Setter Property="OverridesDefaultStyle" Value="True"/>
+      <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="ComboBox">
@@ -61,8 +62,8 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4"
-                            Padding="4,0,0,0"
+                            CornerRadius="8"
+                            Padding="10,8"
                             SnapsToDevicePixels="True">
                       <Grid>
                         <Grid.ColumnDefinitions>
@@ -71,17 +72,16 @@
                         </Grid.ColumnDefinitions>
                         <ContentPresenter Grid.Column="0"
                                           Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                          VerticalAlignment="Center"
-                                          Margin="0,2,0,2"/>
-                        <Path Grid.Column="1"
-                              x:Name="Arrow"
-                              Data="M0,0 L5,5 L10,0"
-                              Stroke="{TemplateBinding Foreground}"
-                              StrokeThickness="1.5"
-                              Fill="Transparent"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center"
-                              Margin="0,0,6,0"/>
+                                          VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1"
+                                   x:Name="Arrow"
+                                   Text="&#xE70D;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="12"
+                                   Foreground="{TemplateBinding Foreground}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,10,0"/>
                       </Grid>
                     </Border>
                   </ControlTemplate>
@@ -93,11 +93,12 @@
                      AllowsTransparency="True"
                      Focusable="False"
                      PopupAnimation="Slide">
-                <Border Background="{TemplateBinding Background}"
+                <Border Background="{DynamicResource DropdownBg}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="1"
-                        CornerRadius="4"
+                        CornerRadius="8"
                         MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                        Width="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
                         MinWidth="3">
                   <ScrollViewer>
                     <ItemsPresenter/>
@@ -110,20 +111,123 @@
       </Setter>
     </Style>
 
-    <Style TargetType="Button" x:Key="ProminentButton">
-      <Setter Property="Padding" Value="8,6"/>
+    <Style TargetType="Button" x:Key="FooterButton">
       <Setter Property="Cursor" Value="Hand"/>
-      <Setter Property="BorderThickness" Value="0"/>
-      <Setter Property="Foreground" Value="White"/>
-      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="#B8BABF"/>
+      <Setter Property="FontSize" Value="12"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
             <Border Background="{TemplateBinding Background}"
-                    CornerRadius="6"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="8"
+                    x:Name="border"
+                    Padding="12,6">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="border" Property="Opacity" Value="0.85"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="Button" x:Key="ToggleButtonStyle">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="0,11"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    x:Name="border"
+                    CornerRadius="10"
                     Padding="{TemplateBinding Padding}">
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="border" Property="Opacity" Value="0.4"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="TextBox" x:Key="ThemedTextBoxStyle">
+      <Setter Property="OverridesDefaultStyle" Value="True"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TextBox">
+            <Border x:Name="Border"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="8"
+                    SnapsToDevicePixels="True">
+              <ScrollViewer x:Name="PART_ContentHost" Margin="10,8"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Border" Property="Opacity" Value="0.55"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <SolidColorBrush x:Key="ToggleTrackOff" Color="#4A4E55"/>
+    <SolidColorBrush x:Key="ToggleTrackOn" Color="#4C8DFF"/>
+    <SolidColorBrush x:Key="ToggleKnob" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="DropdownBg" Color="#0B0C0F"/>
+
+    <Style TargetType="CheckBox" x:Key="PillToggleStyle">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <StackPanel Orientation="Horizontal" Background="Transparent">
+              <Border x:Name="Track"
+                      Width="30"
+                      Height="18"
+                      CornerRadius="9"
+                      Background="{DynamicResource ToggleTrackOff}"
+                      VerticalAlignment="Center">
+                <Ellipse x:Name="Knob"
+                         Width="14"
+                         Height="14"
+                         Fill="{DynamicResource ToggleKnob}"
+                         HorizontalAlignment="Left"
+                         Margin="2,0,0,0">
+                  <Ellipse.RenderTransform>
+                    <TranslateTransform x:Name="KnobTranslate"/>
+                  </Ellipse.RenderTransform>
+                </Ellipse>
+              </Border>
+              <ContentPresenter Margin="8,0,0,0"
+                                VerticalAlignment="Center"
+                                RecognizesAccessKey="True"
+                                TextElement.Foreground="{TemplateBinding Foreground}"/>
+            </StackPanel>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Track" Property="Background" Value="{DynamicResource ToggleTrackOn}"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="False">
+                <Setter TargetName="Track" Property="Background" Value="{DynamicResource ToggleTrackOff}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
@@ -133,173 +237,254 @@
   <Border x:Name="PopupBorder"
           CornerRadius="10"
           BorderThickness="1"
-          Padding="16">
+          Padding="20">
     <Border.Effect>
       <DropShadowEffect Color="Black" Opacity="0.4" BlurRadius="20" ShadowDepth="4"/>
     </Border.Effect>
 
-    <StackPanel>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel>
       <!-- Header -->
-      <Grid Margin="0,0,0,8">
+      <Grid Margin="0,0,0,14">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto"/>
           <ColumnDefinition Width="*"/>
           <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
-        <TextBlock Grid.Column="0"
-                   x:Name="TitleText"
-                   Text="PingStats"
-                   FontSize="16"
-                   FontWeight="SemiBold"
-                   VerticalAlignment="Center"
-                   MouseDown="OnWindowMouseDown"/>
+        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+          <Ellipse x:Name="HeaderDot" Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center"/>
+          <TextBlock x:Name="TitleText" Text="PingStats" FontSize="14" FontWeight="Medium"
+                     VerticalAlignment="Center" MouseDown="OnWindowMouseDown"/>
+        </StackPanel>
         <Button Grid.Column="2"
                 x:Name="PinButton"
+                Width="26"
+                Height="26"
                 Style="{StaticResource ActionButton}"
                 Click="OnPinToggle"
                 ToolTip="Pin &#x2014; keep open when clicking outside">
-          <Viewbox Width="14" Height="14">
-            <Canvas Width="24" Height="24">
+          <Viewbox Width="14" Height="14" RenderTransformOrigin="0.5,0.5">
+            <Viewbox.RenderTransform>
+              <RotateTransform x:Name="PinIconRotate" Angle="35"/>
+            </Viewbox.RenderTransform>
+            <Canvas Width="41.98" Height="63.92">
               <Path x:Name="PinIcon"
-                    Data="M12,2 C10.9,2 10,2.9 10,4 L10,9 L6,18 L18,18 L14,9 L14,4 C14,2.9 13.1,2 12,2 Z"
-                    Fill="Transparent"
-                    Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
-                    StrokeThickness="1.5"/>
+                    Data="M10.72,41.92Q10.72,44.88 12.21,47.73Q13.71,50.57 16.47,52.89Q19.23,55.21 23.03,56.59L23.93,69.44Q22.09,70.49 20.42,71.66Q18.76,72.83 17.47,73.97Q16.18,75.11 15.47,76.08Q14.95,76.74 14.71,77.39Q14.46,78.03 14.46,78.61Q14.46,79.79 15.29,80.57Q16.11,81.34 17.49,81.34L45.96,81.34Q47.31,81.34 48.14,80.57Q48.96,79.79 48.96,78.61Q48.96,78.03 48.72,77.39Q48.47,76.74 47.97,76.08Q47.24,75.11 45.96,73.98Q44.67,72.85 43,71.68Q41.34,70.51 39.49,69.44L40.39,56.59Q44.21,55.21 46.98,52.89Q49.74,50.57 51.22,47.73Q52.7,44.88 52.7,41.92Q52.7,40.33 51.68,39.35Q50.66,38.37 48.94,38.37L33.86,38.37L33.86,24.34Q33.86,22.95 33.62,21.69Q33.39,20.43 33.02,19.48Q32.66,18.52 32.3,17.97Q31.95,17.42 31.71,17.42Q31.47,17.42 31.12,17.97Q30.77,18.52 30.41,19.48Q30.06,20.43 29.81,21.69Q29.56,22.95 29.56,24.34L29.56,38.37L14.5,38.37Q12.76,38.37 11.74,39.35Q10.72,40.33 10.72,41.92Z"
+                    Fill="Transparent">
+                <Path.RenderTransform>
+                  <MatrixTransform Matrix="1,0,0,-1,-10.72,81.34"/>
+                </Path.RenderTransform>
+              </Path>
             </Canvas>
           </Viewbox>
         </Button>
       </Grid>
 
-      <!-- Host -->
-      <Grid Margin="0,0,0,8">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="56"/>
-          <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <TextBlock Grid.Column="0"
-                   x:Name="HostLabel"
-                   Text="Host:"
-                   VerticalAlignment="Center"/>
-        <TextBox Grid.Column="1"
-                 x:Name="HostTextBox"
-                 KeyDown="OnHostKeyDown"/>
-      </Grid>
-
-      <!-- Interval -->
-      <Grid Margin="0,0,0,8">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="56"/>
-          <ColumnDefinition Width="*"/>
-          <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
-        <TextBlock Grid.Column="0"
-                   x:Name="IntervalLabel"
-                   Text="Every:"
-                   VerticalAlignment="Center"/>
-        <ComboBox Grid.Column="1"
-                  x:Name="IntervalCombo"
-                  Style="{StaticResource ThemedComboBoxStyle}"
-                  SelectedIndex="0"
-                  HorizontalAlignment="Stretch"
-                  Margin="0,0,8,0"
-                  FontSize="12">
-          <ComboBoxItem Tag="1">1 second</ComboBoxItem>
-          <ComboBoxItem Tag="2">2 seconds</ComboBoxItem>
-          <ComboBoxItem Tag="5">5 seconds</ComboBoxItem>
-          <ComboBoxItem Tag="10">10 seconds</ComboBoxItem>
-          <ComboBoxItem Tag="30">30 seconds</ComboBoxItem>
-        </ComboBox>
-        <TextBlock Grid.Column="2"
-                   x:Name="StatusLabel"
-                   Text="paused"
-                   FontSize="11"
-                   VerticalAlignment="Center"/>
-      </Grid>
-
-      <!-- Start/Stop -->
-      <Button x:Name="StartStopButton"
-              Style="{StaticResource ProminentButton}"
-              Click="OnStartStopToggle"
-              Margin="0,0,0,6">
-        <TextBlock x:Name="StartStopText" Text="Start" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-      </Button>
-
-      <!-- Separator -->
-      <Rectangle x:Name="Separator1" Height="1" Margin="0,6"/>
-
-      <!-- Stats -->
-      <StackPanel Margin="0,8,0,0" x:Name="StatsPanel">
-        <Grid>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="80"/>
-            <ColumnDefinition Width="*"/>
-          </Grid.ColumnDefinitions>
-          <TextBlock Grid.Column="0" x:Name="LatestLabel" Text="Latest:" FontFamily="Consolas"/>
-          <TextBlock Grid.Column="1" x:Name="LatestValue" FontWeight="SemiBold" FontFamily="Consolas"/>
-        </Grid>
-        <Grid Margin="0,4,0,0">
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="80"/>
-            <ColumnDefinition Width="*"/>
-          </Grid.ColumnDefinitions>
-          <TextBlock Grid.Column="0" x:Name="StatsLabel" Text="Min/Avg/Max:" FontFamily="Consolas"/>
-          <TextBlock Grid.Column="1" x:Name="StatsValue" FontWeight="SemiBold" FontFamily="Consolas"/>
-        </Grid>
-        <Grid Margin="0,4,0,0" x:Name="IPRow" Visibility="Collapsed">
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="80"/>
-            <ColumnDefinition Width="*"/>
-          </Grid.ColumnDefinitions>
-          <TextBlock Grid.Column="0" x:Name="IPLabel" Text="IP:" FontFamily="Consolas"/>
-          <TextBlock Grid.Column="1" x:Name="IPValue" FontWeight="SemiBold" FontFamily="Consolas"/>
-        </Grid>
-        <Grid Margin="0,4,0,0">
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="80"/>
-            <ColumnDefinition Width="*"/>
-          </Grid.ColumnDefinitions>
-          <TextBlock Grid.Column="0" x:Name="StatusLabel2" Text="Status:" FontFamily="Consolas"/>
-          <TextBlock Grid.Column="1" x:Name="StatusValue" FontWeight="SemiBold" FontFamily="Consolas"/>
-        </Grid>
+      <!-- Hero -->
+      <StackPanel HorizontalAlignment="Center" Margin="0,0,0,14">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+          <TextBlock x:Name="HeroNumber" FontFamily="Consolas" FontSize="38" FontWeight="Medium"/>
+          <TextBlock x:Name="HeroUnit" Text="ms" FontFamily="Consolas" FontSize="16"
+                     VerticalAlignment="Bottom" Margin="2,0,0,3"/>
+        </StackPanel>
+        <TextBlock x:Name="HeroCaption" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,0"/>
       </StackPanel>
 
-      <!-- Separator -->
-      <Rectangle x:Name="Separator2" Height="1" Margin="0,8"/>
+      <!-- Chart -->
+      <Grid Height="64" Margin="0,0,0,14">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="36"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0">
+          <TextBlock x:Name="AxisTopLabel" HorizontalAlignment="Right" VerticalAlignment="Top"
+                     FontFamily="Consolas" FontSize="8.5" Margin="0,0,6,0"/>
+          <TextBlock x:Name="AxisMidLabel" HorizontalAlignment="Right" VerticalAlignment="Center"
+                     FontFamily="Consolas" FontSize="8.5" Margin="0,0,6,0"/>
+          <TextBlock x:Name="AxisBottomLabel" Text="0" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                     FontFamily="Consolas" FontSize="8.5" Margin="0,0,6,0"/>
+        </Grid>
+        <Grid Grid.Column="1" ClipToBounds="True">
+          <Line x:Name="GridTop" X1="0" Y1="0.037" X2="1" Y2="0.037" Stretch="Fill"
+                StrokeDashArray="2 3" StrokeThickness="1"/>
+          <Line x:Name="GridMid" X1="0" Y1="0.472" X2="1" Y2="0.472" Stretch="Fill"
+                StrokeDashArray="2 3" StrokeThickness="1"/>
+          <Line x:Name="GridBottom" X1="0" Y1="0.907" X2="1" Y2="0.907" Stretch="Fill"
+                StrokeThickness="1"/>
+          <Canvas x:Name="ChartCanvas" ClipToBounds="True" SizeChanged="OnGraphSizeChanged">
+            <Canvas.RenderTransform>
+              <TranslateTransform x:Name="ChartSlide"/>
+            </Canvas.RenderTransform>
+          </Canvas>
+        </Grid>
+      </Grid>
 
-      <!-- Graph -->
-      <Border x:Name="GraphBorder"
-              CornerRadius="4"
-              Height="80"
-              Margin="0,8,0,0"
-              ClipToBounds="True">
-        <Canvas x:Name="GraphCanvas" SizeChanged="OnGraphSizeChanged"/>
-      </Border>
+      <!-- Stats -->
+      <Grid Margin="0,0,0,14">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="1"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="1"/>
+        </Grid.RowDefinitions>
+        <Rectangle x:Name="StatsTopBorder" Grid.Row="0" Height="1" Fill="#22FFFFFF"/>
+        <Grid Grid.Row="1">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="1"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="1"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0" Margin="0,8,0,8">
+            <TextBlock x:Name="StatMinText" FontFamily="Consolas" FontSize="15" FontWeight="Medium"
+                       HorizontalAlignment="Center"/>
+            <TextBlock x:Name="StatMinLabel" Text="min" FontSize="10" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+          </StackPanel>
+          <Rectangle Grid.Column="1" x:Name="StatDivider1" Width="1" Fill="#15FFFFFF"/>
+          <StackPanel Grid.Column="2" Margin="0,8,0,8">
+            <TextBlock x:Name="StatAvgText" FontFamily="Consolas" FontSize="15" FontWeight="Medium"
+                       HorizontalAlignment="Center"/>
+            <TextBlock x:Name="StatAvgLabel" Text="avg" FontSize="10" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+          </StackPanel>
+          <Rectangle Grid.Column="3" x:Name="StatDivider2" Width="1" Fill="#15FFFFFF"/>
+          <StackPanel Grid.Column="4" Margin="0,8,0,8">
+            <TextBlock x:Name="StatMaxText" FontFamily="Consolas" FontSize="15" FontWeight="Medium"
+                       HorizontalAlignment="Center"/>
+            <TextBlock x:Name="StatMaxLabel" Text="max" FontSize="10" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+          </StackPanel>
+        </Grid>
+        <Rectangle x:Name="StatsBottomBorder" Grid.Row="2" Height="1" Fill="#22FFFFFF"/>
+      </Grid>
 
-      <!-- Separator -->
-      <Rectangle x:Name="Separator3" Height="1" Margin="0,8"/>
+      <!-- Status -->
+      <Grid Margin="0,0,0,16">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock x:Name="StatusLabel" Grid.Column="0" Text="status" FontSize="12" VerticalAlignment="Center"/>
+        <Border Grid.Column="1" x:Name="StatusPill" CornerRadius="12" Padding="9,0"
+                BorderThickness="1" VerticalAlignment="Center" Height="24">
+          <StackPanel Orientation="Horizontal">
+            <Ellipse x:Name="StatusDot" Width="5" Height="5" VerticalAlignment="Center"/>
+            <TextBlock x:Name="StatusText" FontSize="11" FontWeight="Medium" Margin="5,0,0,0"
+                       VerticalAlignment="Center"/>
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <!-- Host -->
+      <StackPanel Margin="0,0,0,12">
+        <TextBlock x:Name="HostLabel" Text="host" FontSize="11" Margin="0,0,0,4"/>
+        <TextBox x:Name="HostTextBox"
+                 Style="{StaticResource ThemedTextBoxStyle}"
+                 FontFamily="Consolas"
+                 FontSize="13"
+                 AutomationProperties.LabeledBy="{Binding ElementName=HostLabel}"
+                 BorderThickness="1" KeyDown="OnHostKeyDown"/>
+        <TextBlock x:Name="ResolveNote" FontSize="10" Margin="0,5,0,0" MinHeight="15"/>
+      </StackPanel>
+
+      <!-- Interval -->
+      <StackPanel Margin="0,0,0,14">
+        <TextBlock x:Name="IntervalLabel" Text="check every" FontSize="11" Margin="0,0,0,4"/>
+        <ComboBox x:Name="IntervalCombo"
+                  Style="{StaticResource ThemedComboBoxStyle}"
+                  SelectedIndex="1"
+                  HorizontalAlignment="Stretch"
+                  BorderThickness="1"
+                  AutomationProperties.LabeledBy="{Binding ElementName=IntervalLabel}"
+                  FontFamily="Consolas"
+                  FontSize="13">
+          <ComboBox.ItemTemplate>
+            <DataTemplate>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="16"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                      <Setter Property="Visibility" Value="Collapsed"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ComboBoxItem}}" Value="True">
+                          <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Grid.Column="1" Text="{Binding}" Margin="4,0,0,0"/>
+              </Grid>
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+      </StackPanel>
+
+      <!-- Toggle -->
+      <Button x:Name="ToggleButton"
+              Style="{StaticResource ToggleButtonStyle}"
+              Click="OnStartStopToggle"
+              Margin="0,0,0,14">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+          <Path x:Name="ToggleGlyph" Width="13" Height="13" Stretch="Uniform"
+                VerticalAlignment="Center"
+                Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+          <TextBlock x:Name="ToggleLabel" FontSize="13" FontWeight="SemiBold"
+                     Margin="6,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+      </Button>
 
       <!-- Footer -->
-      <Grid Margin="0,6,0,0">
+      <Grid x:Name="FooterRow">
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="Auto"/>
           <ColumnDefinition Width="*"/>
           <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <CheckBox Grid.Column="0"
                   x:Name="LoginCheckBox"
-                  Content="Open at Login"
+                  Style="{StaticResource PillToggleStyle}"
+                  Content="open at login"
                   FontSize="12"
+                  HorizontalAlignment="Left"
+                  VerticalAlignment="Center"
                   Checked="OnLoginCheckChanged"
                   Unchecked="OnLoginCheckChanged"/>
-        <Button x:Name="QuitButton"
-                Grid.Column="2"
-                Style="{StaticResource ActionButton}"
-                Padding="6,3"
-                FontSize="11"
+        <Button Grid.Column="1"
+                x:Name="QuitButton"
+                Style="{StaticResource FooterButton}"
                 Click="OnQuit">
-          <TextBlock Text="Quit PingStats"/>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE7E8;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                       VerticalAlignment="Center"/>
+            <TextBlock Text="quit" FontSize="12" Margin="5,0,0,0" VerticalAlignment="Center"/>
+          </StackPanel>
         </Button>
       </Grid>
-    </StackPanel>
+
+      <!-- Quit confirm -->
+      <Grid x:Name="QuitConfirmRow" Visibility="Collapsed">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock Grid.Column="0" Text="quit pingstats?" FontSize="12" VerticalAlignment="Center"/>
+        <Button Grid.Column="1"
+                x:Name="QuitCancelBtn"
+                Style="{StaticResource FooterButton}"
+                Content="cancel"
+                Margin="6,0,0,0"
+                Click="OnQuitCancel"/>
+        <Button Grid.Column="2"
+                x:Name="QuitConfirmBtn"
+                Style="{StaticResource FooterButton}"
+                Content="quit"
+                Margin="6,0,0,0"
+                Click="OnQuitConfirm"/>
+      </Grid>
+      </StackPanel>
+    </ScrollViewer>
   </Border>
 </Window>

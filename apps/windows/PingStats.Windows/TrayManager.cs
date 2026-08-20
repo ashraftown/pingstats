@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace PingStats;
 
@@ -12,6 +13,9 @@ public class TrayManager : IDisposable
     private static extern bool DestroyIcon(IntPtr handle);
     private readonly NotifyIcon _notifyIcon;
     private readonly PingManager _pingManager;
+    private bool _isDarkTheme;
+    private SolidBrush _textBrush = new(Color.White);
+    private bool _disposed;
 
     private const int IconWidth = 64;
     private const int IconHeight = 64;
@@ -24,6 +28,10 @@ public class TrayManager : IDisposable
     public TrayManager(PingManager pingManager)
     {
         _pingManager = pingManager;
+        _isDarkTheme = IsSystemDarkTheme();
+        _textBrush.Dispose();
+        _textBrush = _isDarkTheme ? new SolidBrush(Color.White) : new SolidBrush(Color.FromArgb(0xFF, 0x1A, 0x1A, 0x1A));
+        SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
 
         _notifyIcon = new NotifyIcon
         {
@@ -62,10 +70,43 @@ public class TrayManager : IDisposable
         _pingManager.StateChanged += OnStateChanged;
     }
 
-    private void OnStateChanged()
+    private void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
     {
+        if (e.Category != UserPreferenceCategory.General
+            && e.Category != UserPreferenceCategory.Window
+            && e.Category != UserPreferenceCategory.VisualStyle
+            && e.Category != UserPreferenceCategory.Color) return;
         System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
         {
+            if (_disposed) return;
+            _isDarkTheme = IsSystemDarkTheme();
+            _textBrush.Dispose();
+            _textBrush = _isDarkTheme
+                ? new SolidBrush(Color.White)
+                : new SolidBrush(Color.FromArgb(0xFF, 0x1A, 0x1A, 0x1A));
+            UpdateIcon();
+        });
+    }
+
+    private static bool IsSystemDarkTheme()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            if (key?.GetValue("AppsUseLightTheme") is int value)
+                return value == 0;
+        }
+        catch { }
+        return false;
+    }
+
+    private void OnStateChanged()
+    {
+        if (_disposed) return;
+        System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+        {
+            if (_disposed) return;
             UpdateIcon();
 
             if (_notifyIcon.ContextMenuStrip?.Items["StartStop"] is ToolStripMenuItem item)
@@ -81,6 +122,7 @@ public class TrayManager : IDisposable
 
     private void UpdateIcon()
     {
+        if (_disposed) return;
         var color = GetColor();
         var displayText = GetDisplayText();
 
@@ -102,7 +144,7 @@ public class TrayManager : IDisposable
         var textX = (IconWidth - textSize.Width) / 2;
         var textY = DotY + DotSize;
 
-        g.DrawString(displayText, font, Brushes.White, textX, textY, StringFormat);
+        g.DrawString(displayText, font, _textBrush, textX, textY, StringFormat);
 
         var hIcon = bitmap.GetHicon();
         try
@@ -127,14 +169,16 @@ public class TrayManager : IDisposable
         if (_pingManager.LatestLatencyMs.HasValue)
         {
             var ms = _pingManager.LatestLatencyMs.Value;
-            if (ms < 50) return Color.LimeGreen;
-            if (ms < 100) return Color.Yellow;
-            if (ms < 200) return Color.Orange;
-            return Color.Red;
+            if (ms < 60) return _isDarkTheme ? Hex(0x34D399) : Hex(0x1F9D66);
+            if (ms <= 120) return _isDarkTheme ? Hex(0xF5A623) : Hex(0xC77F0A);
+            return _isDarkTheme ? Hex(0xF0625F) : Hex(0xE0524D);
         }
 
         return Color.Gray;
     }
+
+    private static Color Hex(uint value) =>
+        Color.FromArgb((int)(value >> 16), (int)((value >> 8) & 0xFF), (int)(value & 0xFF));
 
     private string GetDisplayText()
     {
@@ -152,9 +196,15 @@ public class TrayManager : IDisposable
 
     public void Dispose()
     {
+        _disposed = true;
+        SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
         _pingManager.StateChanged -= OnStateChanged;
-        _notifyIcon.Visible = false;
-        _notifyIcon.Icon = null;
-        _notifyIcon.Dispose();
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            _textBrush.Dispose();
+            _notifyIcon.Visible = false;
+            _notifyIcon.Icon = null;
+            _notifyIcon.Dispose();
+        });
     }
 }

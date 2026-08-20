@@ -16,7 +16,7 @@ public class PingManager : IDisposable
     public bool IsConnected { get; private set; }
     public bool IsRunning { get; private set; }
     public double AverageLatency30S { get; private set; }
-    public List<double> PingResults { get; } = new();
+    private readonly List<double> _pingResults = new();
     public string ResolvedIP { get; private set; } = "";
     public string Host { get; private set; }
     public double IntervalSeconds { get; private set; }
@@ -30,6 +30,7 @@ public class PingManager : IDisposable
 
     private const string DefaultHost = "8.8.8.8";
     private const double DefaultInterval = 1.0;
+    internal static readonly double[] SupportedIntervals = { 1, 5, 10, 30, 60 };
 
     private static readonly string SettingsDir =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PingStats");
@@ -41,7 +42,19 @@ public class PingManager : IDisposable
     {
         var (savedHost, savedInterval) = LoadSettings();
         Host = string.IsNullOrEmpty(savedHost) ? DefaultHost : savedHost;
-        IntervalSeconds = ClampedInterval(savedInterval > 0 ? savedInterval : DefaultInterval);
+        var loadedInterval = savedInterval > 0 ? savedInterval : DefaultInterval;
+        IntervalSeconds = NormalizedInterval(loadedInterval);
+        if (Math.Abs(IntervalSeconds - loadedInterval) > 0.1)
+            SaveSettings();
+    }
+
+    /// Returns a thread-safe copy of the shared results list.
+    public double[] PingResultsSnapshot()
+    {
+        lock (_lock)
+        {
+            return _pingResults.ToArray();
+        }
     }
 
     private static (string? host, double interval) LoadSettings()
@@ -73,6 +86,12 @@ public class PingManager : IDisposable
     private static double ClampedInterval(double value) =>
         Math.Min(60, Math.Max(1, Math.Round(value)));
 
+    private static double NormalizedInterval(double value)
+    {
+        var clamped = ClampedInterval(value);
+        return SupportedIntervals.MinBy(option => Math.Abs(option - clamped));
+    }
+
     public void StartPinging(string? newHost = null)
     {
         lock (_lock)
@@ -85,7 +104,7 @@ public class PingManager : IDisposable
 
             var target = Host;
             var gen = ++_generation;
-            PingResults.Clear();
+            _pingResults.Clear();
             StatusMessage = "Resolving...";
             LatestLatency = "--";
             LatestLatencyMs = null;
@@ -120,8 +139,7 @@ public class PingManager : IDisposable
     {
         lock (_lock)
         {
-            var clamped = ClampedInterval(seconds);
-            IntervalSeconds = clamped;
+            IntervalSeconds = NormalizedInterval(seconds);
             SaveSettings();
 
             if (IsRunning)
@@ -217,10 +235,10 @@ public class PingManager : IDisposable
                     {
                         LatestLatencyMs = latency.Value;
                         LatestLatency = $"{latency.Value:F2} ms";
-                        PingResults.Add(latency.Value);
+                        _pingResults.Add(latency.Value);
 
-                        if (PingResults.Count > 30)
-                            PingResults.RemoveAt(0);
+                        if (_pingResults.Count > 30)
+                            _pingResults.RemoveAt(0);
 
                         UpdateStats();
                         IsConnected = true;
@@ -258,16 +276,16 @@ public class PingManager : IDisposable
 
     private void UpdateStats()
     {
-        if (PingResults.Count == 0)
+        if (_pingResults.Count == 0)
         {
             StatsString = "---";
             AverageLatency30S = 0;
             return;
         }
 
-        var min = PingResults.Min();
-        var max = PingResults.Max();
-        var avg = PingResults.Average();
+        var min = _pingResults.Min();
+        var max = _pingResults.Max();
+        var avg = _pingResults.Average();
 
         StatsString = $"{min:F1}/{avg:F1}/{max:F1}";
         AverageLatency30S = avg;
