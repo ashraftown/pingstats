@@ -7,8 +7,8 @@ APP_PATH="${1:-}"
 OUTPUT_DMG="${2:-${ROOT_DIR}/dist/PingStats-macos.dmg}"
 VOLUME_NAME="PingStats"
 STAGE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/pingstats-dmg.XXXXXX")"
-HOWTO_SRC="${ROOT_DIR}/scripts/How to Open.html"
-HOWTO_NAME="How to Open.html"
+WEBLOC_SRC="${ROOT_DIR}/scripts/Open Privacy & Security.webloc"
+WEBLOC_NAME="Open Privacy & Security.webloc"
 BACKGROUND_SRC="${ROOT_DIR}/assets/dmg-background.png"
 
 # Must match assets/dmg-background.png pixel size at 72 DPI (create-dmg convention:
@@ -27,8 +27,8 @@ if [[ -z "${APP_PATH}" || ! -d "${APP_PATH}" ]]; then
   exit 1
 fi
 
-if [[ ! -f "${HOWTO_SRC}" ]]; then
-  echo "Missing first-open guide: ${HOWTO_SRC}" >&2
+if [[ ! -f "${WEBLOC_SRC}" ]]; then
+  echo "Missing Privacy & Security shortcut: ${WEBLOC_SRC}" >&2
   exit 1
 fi
 
@@ -68,14 +68,14 @@ fi
 mkdir -p "$(dirname "${OUTPUT_DMG}")"
 rm -f "${OUTPUT_DMG}"
 
-# Stage app + simple first-open guide (no scripts — Gatekeeper blocks those too).
+# Stage app + Privacy & Security shortcut (no scripts — Gatekeeper blocks those).
 cp -R "${APP_PATH}" "${STAGE_DIR}/PingStats.app"
-cp "${HOWTO_SRC}" "${STAGE_DIR}/${HOWTO_NAME}"
+cp "${WEBLOC_SRC}" "${STAGE_DIR}/${WEBLOC_NAME}"
 
 if command -v create-dmg >/dev/null 2>&1; then
   # Layout (700×540 points / pixels):
   #   [App] ----→ [Applications]
-  #        [How to Open]
+  #       [Open Privacy & Security]
   # window-pos is near the top-left so small CI screens can fit the full bounds
   # when AppleScript writes .DS_Store (a large pos+size can get clamped).
   CREATE_DMG_ARGS=(
@@ -87,8 +87,8 @@ if command -v create-dmg >/dev/null 2>&1; then
     --icon "PingStats.app" 170 200
     --hide-extension "PingStats.app"
     --app-drop-link 530 200
-    --icon "${HOWTO_NAME}" 350 420
-    --hide-extension "${HOWTO_NAME}"
+    --icon "${WEBLOC_NAME}" 350 420
+    --hide-extension "${WEBLOC_NAME}"
     --background "${BACKGROUND_SRC}"
     --no-internet-enable
   )

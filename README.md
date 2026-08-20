@@ -46,12 +46,11 @@ Glanceable RTT in your menu bar (macOS) / system tray (Windows) · rolling min/a
 ### DMG (recommended)
 
 1. Download **`PingStats-*.dmg`** from the repo **Releases** page
-2. Open the DMG → open **How to Open** (short guide + link)
-3. Drag **PingStats** onto **Applications**
-4. Open the app once (warning appears — click **Done**)
-5. Use the guide’s **Open Privacy & Security** link (or System Settings → Privacy & Security)
-6. Click **Open Anyway** for PingStats
-7. Later opens work normally; optional: enable **Open at Login** in the popup
+2. Open the DMG → drag **PingStats** onto **Applications**
+3. Open the app once (warning appears — click **Done**)
+4. Double-click **Open Privacy & Security** on the DMG (or System Settings → Privacy & Security)
+5. Click **Open Anyway** for PingStats
+6. Later opens work normally; optional: enable **Open at Login** in the popup
 
 > Releases are **not** Apple-notarized (no Developer ID). On modern macOS the first launch  
 > shows *“Apple could not verify…”* — that system dialog cannot be customized. Allowing the  
@@ -137,7 +136,7 @@ Workflow: [`.github/workflows/release.yml`](.github/workflows/release.yml)
 What you get in the DMG:
 
 - `PingStats.app` (left) + shortcut to **Applications** (right)
-- **How to Open.html** — first-open steps + link into Privacy & Security
+- **Open Privacy & Security** — double-clickable `.webloc` into System Settings
 - Custom Finder background (`assets/dmg-background.png`) via [`create-dmg`](https://github.com/create-dmg/create-dmg)
 
 You can also run the workflow manually (**Actions → Release → Run workflow**) to produce an artifact without a tag.
@@ -190,7 +189,7 @@ pingstats/
 │       └── pingstats-popup-ui.png # Popup UI screenshot
 ├── scripts/
 │   ├── create-dmg.sh               # DMG packager
-│   └── How to Open.html            # First-open guide (staged into DMG)
+│   └── Open Privacy & Security.webloc  # DMG shortcut into System Settings
 ├── CONTRIBUTING.md
 ├── LICENSE
 ├── package.json                    # npm workspace (apps/web)
