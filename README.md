@@ -182,8 +182,7 @@ pingstats/
 │   ├── logo.svg
 │   ├── favicon.svg
 │   ├── og-image.*
-│   ├── dmg-background.png     # Finder window background (1x)
-│   ├── dmg-background@2x.png  # Retina source
+│   ├── dmg-background.png     # Finder window background (1x master)
 │   └── screenshots/           # README images
 │       ├── pingstats-icon.png     # Menu bar icon screenshot
 │       └── pingstats-popup-ui.png # Popup UI screenshot
