@@ -26,7 +26,7 @@ class PingManager: NSObject, ObservableObject {
     private static let oldIntervalKey = "PingMenuBar.intervalSeconds"
     private static let defaultHost = "8.8.8.8"
     private static let defaultInterval: Double = 1.0
-    private static let supportedIntervals: [Double] = [1, 5, 10, 30, 60]
+    static let supportedIntervals: [Double] = [1, 5, 10, 30, 60]
     private static let pingOutputRegex = try? NSRegularExpression(
         pattern: "time=([0-9.]+)\\s*ms",
         options: []

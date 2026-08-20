@@ -453,7 +453,7 @@ struct ContentView: View {
   @State private var hostField = ""
   @State private var showQuitConfirm = false
   private let intervalMenuTarget = IntervalMenuTarget()
-  private let intervalOptions: [Double] = [1, 5, 10, 30, 60]
+  private let intervalOptions: [Double] = PingManager.supportedIntervals
 
   private var state: PopupState {
     if !pingManager.isRunning { return .stopped }

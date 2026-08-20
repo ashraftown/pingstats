@@ -20,7 +20,7 @@ public partial class PopupWindow : Window
     private bool _isDarkTheme;
     private Palette _pal = DarkPalette();
 
-    private static readonly double[] IntervalOptions = { 1, 5, 10, 30, 60 };
+    private static readonly double[] IntervalOptions = PingManager.SupportedIntervals;
     private static readonly string[] IntervalLabels = { "1 second", "5 seconds", "10 seconds", "30 seconds", "1 minute" };
 
     private static readonly Geometry PlayGlyph = Geometry.Parse(
