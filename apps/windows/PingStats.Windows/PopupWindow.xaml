@@ -447,6 +447,7 @@
                   Style="{StaticResource PillToggleStyle}"
                   Content="open at login"
                   FontSize="12"
+                  HorizontalAlignment="Left"
                   VerticalAlignment="Center"
                   Checked="OnLoginCheckChanged"
                   Unchecked="OnLoginCheckChanged"/>

@@ -432,8 +432,8 @@ public partial class PopupWindow : Window
         }
 
         // Stats
-        var results = _pingManager.PingResults;
-        if (results.Count == 0)
+        var results = _pingManager.PingResultsSnapshot();
+        if (results.Length == 0)
         {
             StatMinText.Text = "--";
             StatAvgText.Text = "--";
@@ -489,10 +489,10 @@ public partial class PopupWindow : Window
 
     private void UpdateGraph()
     {
-        var results = _pingManager.PingResults;
+        var arr = _pingManager.PingResultsSnapshot();
         if (_chartAnimating) return;
 
-        if (results.Count == 0)
+        if (arr.Length == 0)
         {
             _settledChart.Clear();
             ChartSlide.BeginAnimation(TranslateTransform.XProperty, null);
@@ -500,7 +500,6 @@ public partial class PopupWindow : Window
             return;
         }
 
-        var arr = results.ToArray();
         if (arr.SequenceEqual(_settledChart)
             && _chartColor == _lastDrawnColor
             && ChartCanvas.ActualWidth == _lastDrawnWidth

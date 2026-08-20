@@ -72,7 +72,10 @@ public class TrayManager : IDisposable
 
     private void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
     {
-        if (e.Category != UserPreferenceCategory.General) return;
+        if (e.Category != UserPreferenceCategory.General
+            && e.Category != UserPreferenceCategory.Window
+            && e.Category != UserPreferenceCategory.VisualStyle
+            && e.Category != UserPreferenceCategory.Color) return;
         System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
         {
             if (_disposed) return;

@@ -32,7 +32,7 @@ Glanceable RTT in your menu bar (macOS) / system tray (Windows) · rolling min/a
 | Feature | Description |
 |---|---|
 | **macOS menu bar** / **Windows tray** | Latest ping (ms) with color: green &lt;60 · yellow ≤120 · red &gt;120 |
-| **Popup** | Latest, min/avg/max, resolved IP, live bar graph |
+| **Popup** | Latest, min/avg/max, resolved IP, live line and filled-area chart |
 | **Host** | Any IP or hostname (default `8.8.8.8`) |
 | **Interval** | 1s / 5s / 10s / 30s / 1 minute (persisted) |
 | **Pin** | Keep the popup open while you work elsewhere |

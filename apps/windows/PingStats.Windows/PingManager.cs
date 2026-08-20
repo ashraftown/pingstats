@@ -48,6 +48,15 @@ public class PingManager : IDisposable
             SaveSettings();
     }
 
+    /// Returns a thread-safe copy of the shared PingResults list.
+    public double[] PingResultsSnapshot()
+    {
+        lock (_lock)
+        {
+            return PingResults.ToArray();
+        }
+    }
+
     private static (string? host, double interval) LoadSettings()
     {
         try
