@@ -91,14 +91,12 @@ jobs:
             -p:PublishSingleFile=true `
             -p:DebugType=None -p:DebugSymbols=false `
             -o publish/PingStats
-          $short = $env:GITHUB_SHA.Substring(0, 7)
-          Compress-Archive -Path publish/PingStats/* -DestinationPath "PingStats-$short-windows.zip"
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: PingStats-windows
-          path: PingStats-*.zip
+          path: publish/PingStats
           if-no-files-found: error
 
   web:
