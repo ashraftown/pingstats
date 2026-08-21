@@ -75,22 +75,27 @@ cp -R "${APP_PATH}" "${STAGE_DIR}/PingStats.app"
 # ("document content is not readable"). Generate a native one via Finder instead;
 # fall back to the committed file if Finder scripting is unavailable.
 WEBLOC_URL="x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension"
+WEBLOC_TMP="$(mktemp -d "${TMPDIR:-/tmp}/pingstats-webloc.XXXXXX")"
 if command -v osascript >/dev/null 2>&1 && osascript >/dev/null <<EOF
 tell application "Finder"
-  make new internet location file at (POSIX file "${STAGE_DIR}") to "${WEBLOC_URL}" with properties {name:"Open Privacy & Security"}
+  make new internet location file at (POSIX file "${WEBLOC_TMP}") to "${WEBLOC_URL}" with properties {name:"Open Privacy & Security"}
 end tell
 EOF
 then
-  if [[ -f "${STAGE_DIR}/${WEBLOC_NAME}" ]]; then
+  # Finder may or may not append .webloc to the name — take whatever it made
+  GENERATED="$(find "${WEBLOC_TMP}" -maxdepth 1 -type f ! -name '.DS_Store' | head -n 1 || true)"
+  if [[ -n "${GENERATED}" ]]; then
+    mv "${GENERATED}" "${STAGE_DIR}/${WEBLOC_NAME}"
     echo "Generated native webloc via Finder"
   else
-    echo "warning: Finder did not create ${WEBLOC_NAME}; using committed copy" >&2
+    echo "warning: Finder produced no webloc; using committed copy" >&2
     cp "${WEBLOC_SRC}" "${STAGE_DIR}/${WEBLOC_NAME}"
   fi
 else
   echo "warning: osascript/Finder unavailable; using committed webloc copy" >&2
   cp "${WEBLOC_SRC}" "${STAGE_DIR}/${WEBLOC_NAME}"
 fi
+rm -rf "${WEBLOC_TMP}"
 
 if command -v create-dmg >/dev/null 2>&1; then
   # Layout (700×540 points / pixels):
