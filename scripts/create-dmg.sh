@@ -15,7 +15,7 @@ BACKGROUND_SRC="${ROOT_DIR}/assets/dmg-background.png"
 # window points == background pixels). Keep window origin near (0,0) so CI/virtual
 # displays can realize the full size when Finder writes .DS_Store.
 WIN_W=700
-WIN_H=660
+WIN_H=540
 
 cleanup() {
   rm -rf "${STAGE_DIR}"
@@ -73,7 +73,7 @@ cp -R "${APP_PATH}" "${STAGE_DIR}/PingStats.app"
 cp "${WEBLOC_SRC}" "${STAGE_DIR}/${WEBLOC_NAME}"
 
 if command -v create-dmg >/dev/null 2>&1; then
-  # Layout (700×660 points / pixels):
+  # Layout (700×540 points / pixels):
   #   [App] ----→ [Applications]
   #                    [Open Privacy & Security]
   # window-pos is near the top-left so small CI screens can fit the full bounds
@@ -84,10 +84,10 @@ if command -v create-dmg >/dev/null 2>&1; then
     --window-size "${WIN_W}" "${WIN_H}"
     --icon-size 96
     --text-size 12
-    --icon "PingStats.app" 170 300
+    --icon "PingStats.app" 170 220
     --hide-extension "PingStats.app"
-    --app-drop-link 530 300
-    --icon "${WEBLOC_NAME}" 530 460
+    --app-drop-link 530 220
+    --icon "${WEBLOC_NAME}" 530 380
     --hide-extension "${WEBLOC_NAME}"
     --background "${BACKGROUND_SRC}"
     --no-internet-enable
