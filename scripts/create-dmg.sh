@@ -7,8 +7,6 @@ APP_PATH="${1:-}"
 OUTPUT_DMG="${2:-${ROOT_DIR}/dist/PingStats-macos.dmg}"
 VOLUME_NAME="PingStats"
 STAGE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/pingstats-dmg.XXXXXX")"
-WEBLOC_SRC="${ROOT_DIR}/scripts/Open Privacy & Security.webloc"
-WEBLOC_NAME="Open Privacy & Security.webloc"
 BACKGROUND_SRC="${ROOT_DIR}/assets/dmg-background.png"
 
 # Must match assets/dmg-background.png pixel size at 72 DPI (create-dmg convention:
@@ -24,11 +22,6 @@ trap cleanup EXIT
 
 if [[ -z "${APP_PATH}" || ! -d "${APP_PATH}" ]]; then
   echo "Usage: $0 /path/to/PingStats.app [output.dmg]" >&2
-  exit 1
-fi
-
-if [[ ! -f "${WEBLOC_SRC}" ]]; then
-  echo "Missing Privacy & Security shortcut: ${WEBLOC_SRC}" >&2
   exit 1
 fi
 
@@ -68,39 +61,12 @@ fi
 mkdir -p "$(dirname "${OUTPUT_DMG}")"
 rm -f "${OUTPUT_DMG}"
 
-# Stage app + Privacy & Security shortcut (no scripts — Gatekeeper blocks those).
+# Stage the app (no scripts — Gatekeeper blocks those).
 cp -R "${APP_PATH}" "${STAGE_DIR}/PingStats.app"
-
-# Weblocs created off-Mac lack the Finder metadata macOS expects and fail to open
-# ("document content is not readable"). Generate a native one via Finder instead;
-# fall back to the committed file if Finder scripting is unavailable.
-WEBLOC_URL="x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension"
-WEBLOC_TMP="$(mktemp -d "${TMPDIR:-/tmp}/pingstats-webloc.XXXXXX")"
-if command -v osascript >/dev/null 2>&1 && osascript >/dev/null <<EOF
-tell application "Finder"
-  make new internet location file at (POSIX file "${WEBLOC_TMP}") to "${WEBLOC_URL}" with properties {name:"Open Privacy & Security"}
-end tell
-EOF
-then
-  # Finder may or may not append .webloc to the name — take whatever it made
-  GENERATED="$(find "${WEBLOC_TMP}" -maxdepth 1 -type f ! -name '.DS_Store' | head -n 1 || true)"
-  if [[ -n "${GENERATED}" ]]; then
-    mv "${GENERATED}" "${STAGE_DIR}/${WEBLOC_NAME}"
-    echo "Generated native webloc via Finder"
-  else
-    echo "warning: Finder produced no webloc; using committed copy" >&2
-    cp "${WEBLOC_SRC}" "${STAGE_DIR}/${WEBLOC_NAME}"
-  fi
-else
-  echo "warning: osascript/Finder unavailable; using committed webloc copy" >&2
-  cp "${WEBLOC_SRC}" "${STAGE_DIR}/${WEBLOC_NAME}"
-fi
-rm -rf "${WEBLOC_TMP}"
 
 if command -v create-dmg >/dev/null 2>&1; then
   # Layout (700×540 points / pixels):
   #   [App] ----→ [Applications]
-  #                    [Open Privacy & Security]
   # window-pos is near the top-left so small CI screens can fit the full bounds
   # when AppleScript writes .DS_Store (a large pos+size can get clamped).
   CREATE_DMG_ARGS=(
@@ -112,8 +78,6 @@ if command -v create-dmg >/dev/null 2>&1; then
     --icon "PingStats.app" 170 220
     --hide-extension "PingStats.app"
     --app-drop-link 530 220
-    --icon "${WEBLOC_NAME}" 530 380
-    --hide-extension "${WEBLOC_NAME}"
     --background "${BACKGROUND_SRC}"
     --no-internet-enable
   )
