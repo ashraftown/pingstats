@@ -14,7 +14,7 @@ export function startHomeMotion({
 }) {
   if (typeof IntersectionObserver === "undefined") return () => {};
 
-  const marks = Array.from(field.querySelectorAll<HTMLElement>(".hero-float-chip"));
+  const marks = Array.from(field.querySelectorAll<HTMLElement>(".hero-float-mark"));
   const gated = [...marks, ...tracks];
   const visible = new Set<Element>();
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
