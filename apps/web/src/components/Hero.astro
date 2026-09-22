@@ -288,6 +288,12 @@ import { RELEASES_URL } from "../lib/releases";
     }
   }
 
+  /* Below ~480px the taller text stack pushes the buttons past the fixed
+     CTA-side chips, so hide them instead of overlapping the actions. */
+  @media (max-width: 480px) {
+    .hf-5, .hf-6 { display: none; }
+  }
+
   .hero-preview {
     max-width: 640px;
     margin: 0 auto;
