@@ -38,8 +38,8 @@ Package.resolved
 *~
 
 # .NET / Windows
-apps/windows/PingStats.Windows/bin/
-apps/windows/PingStats.Windows/obj/
+apps/windows/**/bin/
+apps/windows/**/obj/
 *.user
 *.suo
 *.userosscache

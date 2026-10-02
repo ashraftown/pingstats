@@ -37,7 +37,7 @@ jobs:
 
   macos:
     name: Build macOS DMG
-    runs-on: macos-14
+    runs-on: macos-26
     needs: meta
 
     steps:
@@ -50,10 +50,18 @@ jobs:
         run: |
           sudo xcode-select -s /Applications/Xcode.app
           xcodebuild -version
+          test "$(xcodebuild -version | awk 'NR==1 { print ($2+0 >= 26) ? 1 : 0 }')" = "1"
 
       - name: Build Release
+        env:
+          VERSION: ${{ needs.meta.outputs.version }}
+          RUN_NUMBER: ${{ github.run_number }}
         run: |
           set -euo pipefail
+          MARKETING_VERSION="0.0.0"
+          if [[ "${VERSION}" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+            MARKETING_VERSION="${VERSION}"
+          fi
           xcodebuild \
             -project apps/macos/PingStats.xcodeproj \
             -scheme PingStats \
@@ -61,8 +69,8 @@ jobs:
             -derivedDataPath .build \
             -destination "platform=macOS,arch=arm64" \
             CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
+            MARKETING_VERSION="${MARKETING_VERSION}" \
+            CURRENT_PROJECT_VERSION="${RUN_NUMBER}" \
             build
 
           APP_PATH=".build/Build/Products/Release/PingStats.app"
@@ -124,16 +132,24 @@ jobs:
         run: dotnet restore apps/windows/PingStats.Windows/PingStats.Windows.csproj -r win-x64
 
       - name: Publish Release
+        env:
+          VERSION: ${{ needs.meta.outputs.version }}
         run: |
-          dotnet publish apps/windows/PingStats.Windows/PingStats.Windows.csproj `
-            -c Release `
-            --no-restore `
-            -r win-x64 `
-            --self-contained `
-            -p:IncludeNativeLibrariesForSelfExtract=true `
-            -p:PublishSingleFile=true `
-            -p:DebugType=None -p:DebugSymbols=false `
-            -o publish/PingStats
+          $publishArgs = @(
+            'publish', 'apps/windows/PingStats.Windows/PingStats.Windows.csproj',
+            '-c', 'Release',
+            '--no-restore',
+            '-r', 'win-x64',
+            '--self-contained',
+            '-p:IncludeNativeLibrariesForSelfExtract=true',
+            '-p:PublishSingleFile=true',
+            '-p:DebugType=None', '-p:DebugSymbols=false',
+            '-o', 'publish/PingStats'
+          )
+          if ($env:VERSION -match '^[0-9]+(\.[0-9]+){0,2}$') {
+            $publishArgs += "-p:Version=$env:VERSION"
+          }
+          dotnet @publishArgs
 
       - name: Zip artifact
         run: |

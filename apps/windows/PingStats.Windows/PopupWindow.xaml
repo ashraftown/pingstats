@@ -462,6 +462,8 @@
           </StackPanel>
         </Button>
       </Grid>
+      <TextBlock x:Name="LoginHint" FontSize="10" TextWrapping="Wrap" Margin="0,6,0,0"
+                 Visibility="Collapsed"/>
 
       <!-- Quit confirm -->
       <Grid x:Name="QuitConfirmRow" Visibility="Collapsed">

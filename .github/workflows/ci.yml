@@ -26,6 +26,17 @@ jobs:
           xcodebuild -version
           test "$(xcodebuild -version | awk 'NR==1 { print ($2+0 >= 26) ? 1 : 0 }')" = "1"
 
+      - name: Test
+        run: |
+          set -euo pipefail
+          xcodebuild test \
+            -project apps/macos/PingStats.xcodeproj \
+            -scheme PingStats \
+            -configuration Debug \
+            -derivedDataPath .build \
+            -destination "platform=macOS,arch=arm64" \
+            CODE_SIGN_IDENTITY="-"
+
       - name: Build Release
         run: |
           set -euo pipefail
@@ -77,6 +88,9 @@ jobs:
 
       - name: Restore
         run: dotnet restore apps/windows/PingStats.Windows/PingStats.Windows.csproj
+
+      - name: Test
+        run: dotnet test apps/windows/PingStats.Windows.Tests/PingStats.Windows.Tests.csproj -c Release
 
       - name: Build Release
         run: dotnet build apps/windows/PingStats.Windows/PingStats.Windows.csproj -c Release --no-restore

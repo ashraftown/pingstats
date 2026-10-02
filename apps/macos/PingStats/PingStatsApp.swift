@@ -130,8 +130,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     popover?.behavior = .applicationDefined
     popover?.delegate = self
     popover?.animates = true
-    // Hide NSPopover arrow (private key; widely used for menu bar apps)
-    popover?.setValue(true, forKeyPath: "shouldHideAnchor")
+    let anchorKey = "shouldHideAnchor"
+    if popover?.responds(to: NSSelectorFromString(anchorKey)) == true {
+      popover?.setValue(true, forKey: anchorKey)
+    }
 
     let hostingController = NSHostingController(
       rootView: ContentView()
@@ -624,11 +626,11 @@ struct ContentView: View {
   }
 
   private var statsValues: (min: String, avg: String, max: String) {
-    let results = pingManager.pingResults
-    guard !results.isEmpty else { return ("--", "--", "--") }
-    let minValue = results.min() ?? 0
-    let maxValue = results.max() ?? 0
-    let avg = results.reduce(0, +) / Double(results.count)
+    let samples = pingManager.pingResults.compactMap { $0 }
+    guard !samples.isEmpty else { return ("--", "--", "--") }
+    let minValue = samples.min() ?? 0
+    let maxValue = samples.max() ?? 0
+    let avg = samples.reduce(0, +) / Double(samples.count)
     return ("\(Int(minValue.rounded()))", "\(Int(avg.rounded()))", "\(Int(maxValue.rounded()))")
   }
 
@@ -683,20 +685,28 @@ struct ContentView: View {
   private var resolveNote: some View {
     let text: Text
     let color: Color
-    if !pingManager.resolvedIP.isEmpty {
+    let visible: Bool
+    if pingManager.statusMessage == "Invalid host" || pingManager.statusMessage.hasPrefix("Error:") {
+      text = Text(pingManager.statusMessage)
+      color = Color(hex: 0xF0958F)
+      visible = true
+    } else if !pingManager.resolvedIP.isEmpty {
       text = Text("resolves to ") + Text(pingManager.resolvedIP)
       color = Color.secondary
+      visible = true
     } else if state == .resolving {
       text = Text("resolving…")
       color = Color.secondary
+      visible = true
     } else {
       text = Text(" ")
       color = Color.secondary
+      visible = false
     }
     return text
       .font(.system(size: 10, design: .monospaced))
       .foregroundStyle(color)
-      .opacity(!pingManager.resolvedIP.isEmpty || state == .resolving ? 1 : 0)
+      .opacity(visible ? 1 : 0)
   }
 
   // MARK: Interval
@@ -945,14 +955,13 @@ private final class IntervalMenuTarget: NSObject {
 
 // MARK: - Ping chart
 
-/// Live line/area chart of the last 30 samples with a dynamic Y axis and a
-/// 550ms slide-in on each new sample. Coordinate math mirrors the mock.
+/// Live line/area chart of the last 30 attempts. A nil sample is a gap.
 struct PingChartView: View {
-  let pingResults: [Double]
+  let pingResults: [Double?]
   let strokeColor: Color
 
-  @State private var settled: [Double] = []
-  @State private var display: [Double] = []
+  @State private var settled: [Double?] = []
+  @State private var display: [Double?] = []
   @State private var slideProgress: CGFloat = 0
   @State private var syncGeneration = 0
 
@@ -985,8 +994,7 @@ struct PingChartView: View {
           .fill(strokeColor.opacity(0.12))
 
           ForEach(Array(chart.enumerated()), id: \.offset) { index, value in
-            if index > 0 {
-              let previous = chart[index - 1]
+            if index > 0, let value, let previous = chart[index - 1] {
               let tier = LatencyTier.tier(max(value, previous))
               Path { path in
                 path.move(to: Self.point(index - 1, value: previous, stepX: stepX, axisMax: axisMax, topY: topY, baselineY: baselineY))
@@ -997,7 +1005,7 @@ struct PingChartView: View {
           }
 
           ForEach(Array(chart.enumerated()), id: \.offset) { index, value in
-            if LatencyTier.tier(value) != .green {
+            if let value, LatencyTier.tier(value) != .green {
               Circle()
                 .fill(LatencyTier.tier(value).color)
                 .frame(width: 6, height: 6)
@@ -1022,7 +1030,7 @@ struct PingChartView: View {
     }
   }
 
-  private func sync(_ newValues: [Double]) {
+  private func sync(_ newValues: [Double?]) {
     syncGeneration += 1
     let generation = syncGeneration
     if newValues == settled { return }
@@ -1114,8 +1122,8 @@ struct PingChartView: View {
     }
   }
 
-  private static func axisMax(_ values: [Double]) -> Double {
-    guard let maxValue = values.max(), maxValue > 0 else { return 50 }
+  private static func axisMax(_ values: [Double?]) -> Double {
+    guard let maxValue = values.compactMap({ $0 }).max(), maxValue > 0 else { return 50 }
     return max(50, ceil(maxValue / 50) * 50)
   }
 
@@ -1139,7 +1147,7 @@ struct PingChartView: View {
   }
 
   private static func areaPath(
-    _ values: [Double],
+    _ values: [Double?],
     stepX: CGFloat,
     axisMax: Double,
     topY: CGFloat,
@@ -1147,19 +1155,35 @@ struct PingChartView: View {
     bottomY: CGFloat
   ) -> Path {
     Path { path in
-      let lastIndex = values.count - 1
-      guard lastIndex >= 0 else { return }
-      path.move(to: CGPoint(x: marginLeft, y: bottomY))
+      var runStartX: CGFloat?
+      var lastX: CGFloat = marginLeft
       for (index, value) in values.enumerated() {
-        path.addLine(
-          to: CGPoint(
-            x: marginLeft + CGFloat(index) * stepX,
-            y: y(value, axisMax: axisMax, topY: topY, baselineY: baselineY)
-          )
+        let x = marginLeft + CGFloat(index) * stepX
+        guard let value else {
+          if let startX = runStartX {
+            path.addLine(to: CGPoint(x: lastX, y: bottomY))
+            path.addLine(to: CGPoint(x: startX, y: bottomY))
+            path.closeSubpath()
+            runStartX = nil
+          }
+          continue
+        }
+        let point = CGPoint(
+          x: x,
+          y: y(value, axisMax: axisMax, topY: topY, baselineY: baselineY)
         )
+        if runStartX == nil {
+          path.move(to: CGPoint(x: x, y: bottomY))
+          runStartX = x
+        }
+        path.addLine(to: point)
+        lastX = x
       }
-      path.addLine(to: CGPoint(x: marginLeft + CGFloat(lastIndex) * stepX, y: bottomY))
-      path.closeSubpath()
+      if let startX = runStartX {
+        path.addLine(to: CGPoint(x: lastX, y: bottomY))
+        path.addLine(to: CGPoint(x: startX, y: bottomY))
+        path.closeSubpath()
+      }
     }
   }
 }
