@@ -273,7 +273,7 @@ public partial class PopupWindow : Window
     {
         Dispatcher.BeginInvoke(() =>
         {
-            if (!_pingManager.IsRunning)
+            if (!_pingManager.IsRunning && _pingManager.StatusMessage != "Invalid host")
                 HostTextBox.Text = _pingManager.Host;
             UpdateUI();
         });
@@ -392,6 +392,16 @@ public partial class PopupWindow : Window
             && !string.IsNullOrEmpty(_pingManager.ResolvedIP)
             && !string.Equals(_pingManager.Host, _pingManager.ResolvedIP, StringComparison.OrdinalIgnoreCase))
             HostTextBox.Text = $"{_pingManager.Host} ({_pingManager.ResolvedIP})";
+        string? hostWarning = !running && _pingManager.StatusMessage == "Invalid host"
+            ? _pingManager.StatusMessage
+            : !string.IsNullOrEmpty(_pingManager.SettingsWarning)
+                ? _pingManager.SettingsWarning
+                : _pingManager.StatusMessage.StartsWith("Error:")
+                    ? _pingManager.StatusMessage
+                    : null;
+        HostWarning.Text = hostWarning ?? "";
+        HostWarning.Foreground = Brush(_pal.RedLabel);
+        HostWarning.Visibility = hostWarning is null ? Visibility.Collapsed : Visibility.Visible;
         HeroNumber.Text = heroNumber;
         HeroNumber.Foreground = Brush(heroColor);
         HeroCaption.Text = heroCaption;

@@ -678,15 +678,30 @@ struct ContentView: View {
           guard !pingManager.isRunning else { return }
           startWithField()
         }
+      if let warning = hostWarning {
+        Text(warning)
+          .font(.system(size: 10))
+          .foregroundStyle(Color(hex: 0xF0958F))
+      }
     }
   }
 
   private var displayedHost: String {
     guard pingManager.isRunning,
-          hostField.contains(where: \.isLetter),
+          !PingManager.isIPAddress(hostField),
           !pingManager.resolvedIP.isEmpty,
           pingManager.resolvedIP != hostField else { return hostField }
     return "\(hostField) (\(pingManager.resolvedIP))"
+  }
+
+  private var hostWarning: String? {
+    if pingManager.statusMessage.hasPrefix("Error:") {
+      return pingManager.statusMessage
+    }
+    if !pingManager.isRunning && pingManager.statusMessage == "Invalid host" {
+      return pingManager.statusMessage
+    }
+    return nil
   }
 
   // MARK: Interval

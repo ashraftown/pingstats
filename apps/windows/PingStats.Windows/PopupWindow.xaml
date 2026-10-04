@@ -381,6 +381,7 @@
                  FontSize="13"
                  AutomationProperties.LabeledBy="{Binding ElementName=HostLabel}"
                  BorderThickness="1" KeyDown="OnHostKeyDown"/>
+        <TextBlock x:Name="HostWarning" FontSize="10" Margin="0,5,0,0" Visibility="Collapsed"/>
       </StackPanel>
 
       <!-- Interval -->
