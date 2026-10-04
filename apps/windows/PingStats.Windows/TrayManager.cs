@@ -114,9 +114,9 @@ public class TrayManager : IDisposable
                 item.Text = _pingManager.IsRunning ? "Stop" : "Start";
             }
 
-            _notifyIcon.Text = _pingManager.IsRunning
-                ? $"PingStats - {_pingManager.Host}\n{_pingManager.LatestLatency}"
-                : "PingStats - Stopped";
+            _notifyIcon.Text = TrayText(_pingManager.IsRunning
+                ? $"PingStats - {_pingManager.Host} - {_pingManager.LatestLatency}"
+                : "PingStats - Stopped");
         });
     }
 
@@ -168,13 +168,21 @@ public class TrayManager : IDisposable
 
         if (_pingManager.LatestLatencyMs.HasValue)
         {
-            var ms = _pingManager.LatestLatencyMs.Value;
-            if (ms < 60) return _isDarkTheme ? Hex(0x34D399) : Hex(0x1F9D66);
-            if (ms <= 120) return _isDarkTheme ? Hex(0xF5A623) : Hex(0xC77F0A);
-            return _isDarkTheme ? Hex(0xF0625F) : Hex(0xE0524D);
+            return LatencyScale.FromMilliseconds(_pingManager.LatestLatencyMs.Value) switch
+            {
+                LatencyTier.Green => _isDarkTheme ? Hex(0x34D399) : Hex(0x1F9D66),
+                LatencyTier.Yellow => _isDarkTheme ? Hex(0xF5A623) : Hex(0xC77F0A),
+                _ => _isDarkTheme ? Hex(0xF0625F) : Hex(0xE0524D),
+            };
         }
 
         return Color.Gray;
+    }
+
+    private static string TrayText(string text)
+    {
+        const int limit = 127;
+        return text.Length <= limit ? text : text[..(limit - 1)] + "\u2026";
     }
 
     private static Color Hex(uint value) =>

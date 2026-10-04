@@ -1,5 +1,6 @@
 import Foundation
 import Network
+import Darwin
 
 class PingManager: NSObject, ObservableObject {
     @Published var latestLatency: String = "--"
@@ -10,7 +11,8 @@ class PingManager: NSObject, ObservableObject {
     @Published var isConnected: Bool = false
     @Published var isRunning: Bool = false
     @Published var averageLatency30s: Double = 0.0
-    @Published var pingResults: [Double] = []
+    /// Last 30 attempts. Nil is a timeout or probe error.
+    @Published var pingResults: [Double?] = []
     @Published var resolvedIP: String = ""
     @Published var host: String
     /// Seconds between pings. Default 1. Clamped to 1...60.
@@ -18,7 +20,9 @@ class PingManager: NSObject, ObservableObject {
 
     private var queue = DispatchQueue(label: "com.pingapp.ping")
     private var pingTimer: Timer?
-    private var isPingInFlight = false
+    private var generation = 0
+    private var probeActive = false
+    private var probeAddress = ""
 
     private static let hostKey = "PingStats.host"
     private static let intervalKey = "PingStats.intervalSeconds"
@@ -26,11 +30,21 @@ class PingManager: NSObject, ObservableObject {
     private static let oldIntervalKey = "PingMenuBar.intervalSeconds"
     private static let defaultHost = "8.8.8.8"
     private static let defaultInterval: Double = 1.0
+    private static let sampleWindow = 30
     static let supportedIntervals: [Double] = [1, 5, 10, 30, 60]
     private static let pingOutputRegex = try? NSRegularExpression(
         pattern: "time=([0-9.]+)\\s*ms",
         options: []
     )
+    private static let hostCharacters = CharacterSet(
+        charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-:[]"
+    )
+
+    private enum ProbeResult {
+        case sample(Double)
+        case timeout
+        case failed(String)
+    }
 
     override init() {
         let ud = UserDefaults.standard
@@ -67,13 +81,71 @@ class PingManager: NSObject, ObservableObject {
         return supportedIntervals.min { abs($0 - clamped) < abs($1 - clamped) } ?? defaultInterval
     }
 
+    /// True when the string can be passed to ping without being read as a flag.
+    static func isValidHost(_ raw: String) -> Bool {
+        let host = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !host.isEmpty, host.count <= 253, !host.hasPrefix("-") else { return false }
+        if let separator = host.firstIndex(of: "%") {
+            guard host[host.index(after: separator)...].firstIndex(of: "%") == nil else { return false }
+            let scope = host[host.index(after: separator)...]
+            let scopeCharacters = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-")
+            guard !scope.isEmpty, scope.unicodeScalars.allSatisfy({ scopeCharacters.contains($0) }) else { return false }
+            var address = String(host[..<separator])
+            if address.hasPrefix("["), address.hasSuffix("]") {
+                address = String(address.dropFirst().dropLast())
+            }
+            guard address.contains(":"), address.unicodeScalars.allSatisfy({ hostCharacters.contains($0) }) else {
+                return false
+            }
+            var parsedAddress = in6_addr()
+            return address.withCString { inet_pton(AF_INET6, $0, &parsedAddress) == 1 }
+        }
+        return host.unicodeScalars.allSatisfy { hostCharacters.contains($0) }
+    }
+
+    /// Arguments for one macOS ping. IPv6 addresses get `-6`.
+    static func pingArguments(_ address: String) -> [String] {
+        var probe = address
+        if probe.hasPrefix("["), probe.hasSuffix("]"), probe.count >= 2 {
+            probe = String(probe.dropFirst().dropLast())
+        }
+        var args = ["-c", "1", "-W", "2000"]
+        if probe.contains(":") {
+            args.insert("-6", at: 0)
+        }
+        args.append(probe)
+        return args
+    }
+
+    static func parsePingOutput(_ output: String) -> Double? {
+        guard let regex = pingOutputRegex else { return nil }
+        let range = NSRange(output.startIndex..., in: output)
+        if let match = regex.firstMatch(in: output, options: [], range: range),
+           let timeRange = Range(match.range(at: 1), in: output) {
+            return Double(output[timeRange])
+        }
+        return nil
+    }
+
     /// Start (or restart) continuous pings. Uses `host` and `intervalSeconds`.
     func startPinging(host newHost: String? = nil) {
         if let newHost = newHost?.trimmingCharacters(in: .whitespacesAndNewlines), !newHost.isEmpty {
+            guard Self.isValidHost(newHost) else {
+                statusMessage = "Invalid host"
+                return
+            }
             host = newHost
             UserDefaults.standard.set(host, forKey: Self.hostKey)
         }
+        guard Self.isValidHost(host) else {
+            statusMessage = "Invalid host"
+            return
+        }
 
+        generation += 1
+        let gen = generation
+        probeActive = false
+        probeAddress = ""
         let target = host
         pingResults.removeAll()
         statusMessage = "Resolving..."
@@ -81,6 +153,7 @@ class PingManager: NSObject, ObservableObject {
         latestLatencyMs = nil
         averageLatency30s = 0.0
         resolvedIP = ""
+        statsString = "--/--/--"
         isRunning = true
         isConnected = false
 
@@ -91,87 +164,77 @@ class PingManager: NSObject, ObservableObject {
             guard let self = self else { return }
 
             DispatchQueue.main.async {
-                // Host may have changed while resolving
-                guard self.isRunning, self.host == target else { return }
+                guard self.isRunning, self.host == target, self.generation == gen else { return }
 
                 self.resolvedIP = resolvedHost
+                self.probeAddress = resolvedHost
                 self.statusMessage = "Connecting..."
-                self.performPing(host: target)
-                self.scheduleTimer(for: target)
+                self.performPing(host: target, generation: gen, probeAddress: resolvedHost)
             }
         }
     }
 
-    /// Update interval; persists and reschedules if currently running.
+    /// Update interval; persists and reschedules if currently running and idle.
     func setInterval(_ seconds: Double) {
         let normalized = Self.normalizedInterval(seconds)
         intervalSeconds = normalized
         UserDefaults.standard.set(normalized, forKey: Self.intervalKey)
 
-        guard isRunning else { return }
-        scheduleTimer(for: host)
+        guard isRunning, !probeActive else { return }
+        scheduleTimer(for: host, generation: generation)
     }
 
-    private func scheduleTimer(for target: String) {
+    private func scheduleTimer(for target: String, generation gen: Int) {
         pingTimer?.invalidate()
 
-        let interval = intervalSeconds
-        let timer = Timer(timeInterval: interval, repeats: true) { [weak self] timer in
-            guard let self = self else {
-                timer.invalidate()
-                return
-            }
-            if self.isRunning, self.host == target {
-                self.performPing(host: target)
-            } else {
-                timer.invalidate()
-            }
+        let timer = Timer(timeInterval: intervalSeconds, repeats: false) { [weak self] _ in
+            guard let self else { return }
+            guard self.isRunning, self.host == target, self.generation == gen, !self.probeActive else { return }
+            let address = self.probeAddress.isEmpty ? target : self.probeAddress
+            self.performPing(host: target, generation: gen, probeAddress: address)
         }
-        // `.common` so pings continue while the menu/popover tracking runs
         RunLoop.main.add(timer, forMode: .common)
         pingTimer = timer
     }
 
     private func resolveHost(_ host: String, completion: @escaping (String) -> Void) {
         queue.async {
-            var hints = addrinfo()
-            hints.ai_family = AF_INET // IPv4
-            hints.ai_socktype = SOCK_STREAM
-
-            var result: UnsafeMutablePointer<addrinfo>?
-            let status = getaddrinfo(host, nil, &hints, &result)
-
-            defer {
-                if result != nil {
-                    freeaddrinfo(result)
-                }
+            if let address = Self.lookup(host, family: AF_INET) ?? Self.lookup(host, family: AF_INET6) {
+                completion(address)
+                return
             }
-
-            if status == 0, let info = result {
-                var addr = info.pointee.ai_addr.pointee
-                var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-
-                let nameStatus = getnameinfo(
-                    &addr,
-                    info.pointee.ai_addrlen,
-                    &hostname,
-                    socklen_t(hostname.count),
-                    nil,
-                    0,
-                    NI_NUMERICHOST
-                )
-
-                if nameStatus == 0 {
-                    completion(String(cString: hostname))
-                    return
-                }
-            }
-
             completion(host)
         }
     }
 
+    private static func lookup(_ host: String, family: Int32) -> String? {
+        var hints = addrinfo()
+        hints.ai_family = family
+        hints.ai_socktype = SOCK_DGRAM
+
+        var result: UnsafeMutablePointer<addrinfo>?
+        guard getaddrinfo(host, nil, &hints, &result) == 0, let info = result else { return nil }
+        defer { freeaddrinfo(info) }
+
+        var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+        let nameStatus = getnameinfo(
+            info.pointee.ai_addr,
+            info.pointee.ai_addrlen,
+            &hostname,
+            socklen_t(hostname.count),
+            nil,
+            0,
+            NI_NUMERICHOST
+        )
+        guard nameStatus == 0 else { return nil }
+        let address = String(cString: hostname)
+        return address.isEmpty ? nil : address
+    }
+
     func stopPinging() {
+        generation += 1
+        probeActive = false
+        probeAddress = ""
         pingTimer?.invalidate()
         pingTimer = nil
         isRunning = false
@@ -183,91 +246,96 @@ class PingManager: NSObject, ObservableObject {
         resolvedIP = ""
     }
 
-    private func performPing(host: String) {
+    private func performPing(host: String, generation gen: Int, probeAddress: String) {
+        guard !probeActive else { return }
+        probeActive = true
         queue.async { [weak self] in
-            guard let self = self else { return }
-
-            // Skip if previous ping still running (avoids backlog when interval < RTT/timeout)
-            if self.isPingInFlight { return }
-            self.isPingInFlight = true
-            defer { self.isPingInFlight = false }
-
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/sbin/ping")
-            // One probe; -W is milliseconds on macOS
-            process.arguments = ["-c", "1", "-W", "2000", host]
-
-            let pipe = Pipe()
-            process.standardOutput = pipe
-            process.standardError = pipe
-
-            do {
-                try process.run()
-                process.waitUntilExit()
-
-                let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                let output = String(data: data, encoding: .utf8) ?? ""
-
-                if let latency = self.parsePingOutput(output) {
-                    DispatchQueue.main.async {
-                        guard self.isRunning, self.host == host else { return }
-                        self.latestLatencyMs = latency
-                        self.latestLatency = String(format: "%.2f ms", latency)
-                        self.pingResults.append(latency)
-
-                        // Keep last 30 successful samples for graph / min-avg-max
-                        if self.pingResults.count > 30 {
-                            self.pingResults.removeFirst()
-                        }
-
-                        self.updateStats()
-                        self.isConnected = true
-                        self.statusMessage = "Connected"
-                    }
-                } else {
-                    DispatchQueue.main.async {
-                        guard self.isRunning, self.host == host else { return }
-                        self.isConnected = false
-                        self.statusMessage = "Timeout"
-                        self.latestLatency = "✗"
-                        self.latestLatencyMs = nil
-                    }
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    guard self.isRunning, self.host == host else { return }
-                    self.statusMessage = "Error: \(error.localizedDescription)"
-                    self.isConnected = false
-                    self.latestLatency = "✗"
-                    self.latestLatencyMs = nil
-                }
+            guard let self else { return }
+            let result = self.runPing(probeAddress)
+            DispatchQueue.main.async {
+                guard self.generation == gen else { return }
+                self.probeActive = false
+                guard self.isRunning, self.host == host else { return }
+                self.apply(result)
+                self.scheduleTimer(for: host, generation: gen)
             }
         }
     }
 
-    private func parsePingOutput(_ output: String) -> Double? {
-        // Look for pattern like "time=25.123 ms"
-        guard let regex = Self.pingOutputRegex else { return nil }
-        let range = NSRange(output.startIndex..., in: output)
-        if let match = regex.firstMatch(in: output, options: [], range: range),
-           let timeRange = Range(match.range(at: 1), in: output) {
-            return Double(output[timeRange])
+    private func runPing(_ address: String) -> ProbeResult {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/sbin/ping")
+        process.arguments = Self.pingArguments(address)
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+
+        do {
+            try process.run()
+            let watchdog = DispatchWorkItem {
+                if process.isRunning {
+                    process.terminate()
+                }
+            }
+            DispatchQueue.global().asyncAfter(deadline: .now() + 3, execute: watchdog)
+            process.waitUntilExit()
+            watchdog.cancel()
+
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+            if let latency = Self.parsePingOutput(output) {
+                return .sample(latency)
+            }
+            return .timeout
+        } catch {
+            return .failed(error.localizedDescription)
         }
-        return nil
+    }
+
+    private func apply(_ result: ProbeResult) {
+        switch result {
+        case .sample(let latency):
+            latestLatencyMs = latency
+            latestLatency = String(format: "%.2f ms", latency)
+            append(latency)
+            updateStats()
+            isConnected = true
+            statusMessage = "Connected"
+        case .timeout:
+            isConnected = false
+            statusMessage = "Timeout"
+            latestLatency = "✗"
+            latestLatencyMs = nil
+            append(nil)
+        case .failed(let message):
+            statusMessage = "Error: \(message)"
+            isConnected = false
+            latestLatency = "✗"
+            latestLatencyMs = nil
+            append(nil)
+        }
+    }
+
+    private func append(_ sample: Double?) {
+        pingResults.append(sample)
+        if pingResults.count > Self.sampleWindow {
+            pingResults.removeFirst()
+        }
     }
 
     private func updateStats() {
-        guard !pingResults.isEmpty else {
+        let samples = pingResults.compactMap { $0 }
+        guard !samples.isEmpty else {
             statsString = "---"
             averageLatency30s = 0.0
             return
         }
 
-        let min = pingResults.min() ?? 0
-        let max = pingResults.max() ?? 0
-        let avg = pingResults.reduce(0, +) / Double(pingResults.count)
-
-        statsString = String(format: "%.1f/%.1f/%.1f", min, avg, max)
+        let minValue = samples.min() ?? 0
+        let maxValue = samples.max() ?? 0
+        let avg = samples.reduce(0, +) / Double(samples.count)
+        statsString = String(format: "%.1f/%.1f/%.1f", minValue, avg, maxValue)
         averageLatency30s = avg
     }
 }

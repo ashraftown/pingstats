@@ -4,7 +4,9 @@ Issues and pull requests are welcome. Please keep each change focused and includ
 
 ## Development
 
-- Build and run the `PingStats` scheme in `apps/macos/PingStats.xcodeproj` in Xcode on macOS 13 or later.
+- Build and run the `PingStats` scheme in `apps/macos/PingStats.xcodeproj` in Xcode on macOS 13 or later (Apple Silicon).
+- Windows: `dotnet build apps/windows/PingStats.Windows/PingStats.Windows.csproj -c Release`
+- Web: `npm ci && npm run build -w apps/web`
 - Before opening a pull request, ensure the project builds in the Release configuration.
 - Follow the existing Swift style and avoid unrelated formatting changes.
 

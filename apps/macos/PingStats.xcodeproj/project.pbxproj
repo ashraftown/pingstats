@@ -10,6 +10,8 @@
 		A1000001000000000000001 /* PingStatsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000001 /* PingStatsApp.swift */; };
 		A1000003000000000000001 /* PingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003000000000000001 /* PingManager.swift */; };
 		A1000004000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000004000000000000001 /* Assets.xcassets */; };
+		B10000010000000000000001 /* PingManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000001 /* PingManagerTests.swift */; };
+		B10000020000000000000001 /* PingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003000000000000001 /* PingManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,10 +21,19 @@
 		A2000004000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000005000000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A2000006000000000000001 /* PingStats.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PingStats.entitlements; sourceTree = "<group>"; };
+		B20000010000000000000001 /* PingManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PingManagerTests.swift; sourceTree = "<group>"; };
+		B20000020000000000000001 /* PingStatsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PingStatsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A4000001000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B90000010000000000000001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -36,6 +47,7 @@
 			isa = PBXGroup;
 			children = (
 				A5000002000000000000001 /* PingStats */,
+				B50000010000000000000001 /* PingStatsTests */,
 				A5000003000000000000001 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -52,10 +64,19 @@
 			path = PingStats;
 			sourceTree = "<group>";
 		};
+		B50000010000000000000001 /* PingStatsTests */ = {
+			isa = PBXGroup;
+			children = (
+				B20000010000000000000001 /* PingManagerTests.swift */,
+			);
+			path = PingStatsTests;
+			sourceTree = "<group>";
+		};
 		A5000003000000000000001 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				A3000001000000000000001 /* PingStats.app */,
+				B20000020000000000000001 /* PingStatsTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -79,6 +100,23 @@
 			productName = PingStats;
 			productReference = A3000001000000000000001 /* PingStats.app */;
 			productType = "com.apple.product-type.application";
+		};
+		B60000010000000000000001 /* PingStatsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B70000010000000000000001 /* Build configuration list for PBXNativeTarget "PingStatsTests" */;
+			buildPhases = (
+				B80000010000000000000001 /* Sources */,
+				B90000010000000000000001 /* Frameworks */,
+				BA0000010000000000000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PingStatsTests;
+			productName = PingStatsTests;
+			productReference = B20000020000000000000001 /* PingStatsTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -109,6 +147,7 @@
 			projectRoot = "";
 			targets = (
 				A6000001000000000000001 /* PingStats */,
+				B60000010000000000000001 /* PingStatsTests */,
 			);
 		};
 /* End PBXProject section */
@@ -122,6 +161,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BA0000010000000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -131,6 +177,15 @@
 			files = (
 				A1000001000000000000001 /* PingStatsApp.swift in Sources */,
 				A1000003000000000000001 /* PingManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B80000010000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000010000000000000001 /* PingManagerTests.swift in Sources */,
+				B10000020000000000000001 /* PingManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -309,6 +364,34 @@
 			};
 			name = Release;
 		};
+		BB0000010000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.corewaze.PingStatsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		BB0000020000000000000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.corewaze.PingStatsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -326,6 +409,15 @@
 			buildConfigurations = (
 				AB000003000000000000001 /* Debug */,
 				AB000004000000000000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B70000010000000000000001 /* Build configuration list for PBXNativeTarget "PingStatsTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB0000010000000000000001 /* Debug */,
+				BB0000020000000000000001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

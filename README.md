@@ -108,13 +108,13 @@ Requires [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) an
 ### macOS
 
 - Shells out to `/sbin/ping -c 1` and parses `time=… ms` (same numbers as Terminal)
-- Menu bar shows the **latest** sample; popup keeps **min/avg/max** over the last 30 successes
+- Menu bar shows the **latest** sample; popup keeps **min/avg/max** of the successes in the last 30 attempts. A timeout is a gap on the chart.
 - Sandbox is **off** so `ping` can run
 
 ### Windows
 
 - Uses the .NET `Ping` API (`System.Net.NetworkInformation.Ping`) to probe the host and measures round-trip time
-- System tray icon shows the **latest** sample; popup keeps **min/avg/max** over the last 30 successes
+- System tray icon shows the **latest** sample; popup keeps **min/avg/max** of the successes in the last 30 attempts. A timeout is a gap on the chart.
 - No sandbox restrictions
 
 Both platforms track the same stats and share the same feature set.
@@ -207,7 +207,7 @@ PingStats continues that idea with UX and packaging changes (latest-in-menu-bar,
 
 ### macOS
 
-- macOS **13.0** or later  
+- macOS **13.0** or later, Apple Silicon  
 - Xcode **15+** to build from source  
 
 ### Windows

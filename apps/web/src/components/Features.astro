@@ -2,15 +2,15 @@
 const features = [
   {
     title: "Color-coded RTT",
-    desc: "Green under 50ms, yellow under 100ms, orange under 200ms, red above — status at a glance.",
+    desc: "Green under 60 ms, yellow from 60 ms to 120 ms, red above 120 ms.",
   },
   {
     title: "Min / Avg / Max stats",
-    desc: "Track min, average, and max round-trip time for every session.",
+    desc: "Min, average, and max of the successful samples in the last 30 attempts.",
   },
   {
-    title: "Live bar graph",
-    desc: "A rolling graph of the last 30 pings so you can spot trends instantly.",
+    title: "Live line chart",
+    desc: "The last 30 attempts. A gap is a timeout.",
   },
   {
     title: "Configurable host",

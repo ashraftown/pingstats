@@ -18,17 +18,43 @@
                BuildableName = "PingStats.app"
                BlueprintName = "PingStats"
                ReferencedContainer = "container:PingStats.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-      </BuildActionEntries>
-   </BuildAction>
-   <TestAction
-      buildConfiguration = "Debug"
-      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
-      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES"
-      shouldAutocreateTestPlan = "YES">
-   </TestAction>
+             </BuildableReference>
+          </BuildActionEntry>
+          <BuildActionEntry
+             buildForTesting = "YES"
+             buildForRunning = "NO"
+             buildForProfiling = "NO"
+             buildForArchiving = "NO"
+             buildForAnalyzing = "NO">
+             <BuildableReference
+                BuildableIdentifier = "primary"
+                BlueprintIdentifier = "B60000010000000000000001"
+                BuildableName = "PingStatsTests.xctest"
+                BlueprintName = "PingStatsTests"
+                ReferencedContainer = "container:PingStats.xcodeproj">
+             </BuildableReference>
+          </BuildActionEntry>
+       </BuildActionEntries>
+    </BuildAction>
+    <TestAction
+       buildConfiguration = "Debug"
+       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+       shouldUseLaunchSchemeArgsEnv = "YES"
+       shouldAutocreateTestPlan = "YES">
+       <Testables>
+          <TestableReference
+             skipped = "NO">
+             <BuildableReference
+                BuildableIdentifier = "primary"
+                BlueprintIdentifier = "B60000010000000000000001"
+                BuildableName = "PingStatsTests.xctest"
+                BlueprintName = "PingStatsTests"
+                ReferencedContainer = "container:PingStats.xcodeproj">
+             </BuildableReference>
+          </TestableReference>
+       </Testables>
+    </TestAction>
    <LaunchAction
       buildConfiguration = "Release"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"

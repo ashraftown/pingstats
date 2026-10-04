@@ -28,8 +28,9 @@ public partial class PopupWindow : Window
     private static readonly Geometry StopGlyph = Geometry.Parse(
         "M4,2h10a2,2 0 0,1 2,2v10a2,2 0 0,1 -2,2H4a2,2 0 0,1 -2,-2V4a2,2 0 0,1 2,-2Z");
 
-    private List<double> _settledChart = new();
+    private List<double?> _settledChart = new();
     private bool _chartAnimating;
+    private bool _chartDirty;
     private Color _chartColor;
     private bool _headerDotPulsing;
 
@@ -270,7 +271,7 @@ public partial class PopupWindow : Window
 
     private void OnPingStateChanged()
     {
-        Dispatcher.Invoke(UpdateUI);
+        Dispatcher.BeginInvoke(UpdateUI);
     }
 
     private void OnTrayIconClicked()
@@ -414,8 +415,22 @@ public partial class PopupWindow : Window
         }
         ToggleButton.IsEnabled = running || !string.IsNullOrWhiteSpace(HostTextBox.Text);
 
-        // Resolve note (always kept in layout so the popup doesn't jump)
-        if (!string.IsNullOrEmpty(_pingManager.ResolvedIP))
+        if (!running && _pingManager.StatusMessage == "Invalid host")
+        {
+            ResolveNote.Text = "Invalid host";
+            ResolveNote.Foreground = Brush(_pal.RedLabel);
+        }
+        else if (!string.IsNullOrEmpty(_pingManager.SettingsWarning))
+        {
+            ResolveNote.Text = _pingManager.SettingsWarning;
+            ResolveNote.Foreground = Brush(_pal.RedLabel);
+        }
+        else if (_pingManager.StatusMessage.StartsWith("Error:"))
+        {
+            ResolveNote.Text = _pingManager.StatusMessage;
+            ResolveNote.Foreground = Brush(_pal.RedLabel);
+        }
+        else if (!string.IsNullOrEmpty(_pingManager.ResolvedIP))
         {
             ResolveNote.Text = "resolves to " + _pingManager.ResolvedIP;
             ResolveNote.Foreground = Brush(_pal.Muted2);
@@ -431,9 +446,9 @@ public partial class PopupWindow : Window
             ResolveNote.Foreground = Brush(_pal.Muted2);
         }
 
-        // Stats
         var results = _pingManager.PingResultsSnapshot();
-        if (results.Length == 0)
+        var samples = results.Where(v => v.HasValue).Select(v => v!.Value).ToArray();
+        if (samples.Length == 0)
         {
             StatMinText.Text = "--";
             StatAvgText.Text = "--";
@@ -441,9 +456,9 @@ public partial class PopupWindow : Window
         }
         else
         {
-            StatMinText.Text = ((int)Math.Round(results.Min())).ToString();
-            StatAvgText.Text = ((int)Math.Round(results.Average())).ToString();
-            StatMaxText.Text = ((int)Math.Round(results.Max())).ToString();
+            StatMinText.Text = ((int)Math.Round(samples.Min())).ToString();
+            StatAvgText.Text = ((int)Math.Round(samples.Average())).ToString();
+            StatMaxText.Text = ((int)Math.Round(samples.Max())).ToString();
         }
         StatMinText.Foreground = Brush(_pal.Text);
         StatAvgText.Foreground = Brush(_pal.Text);
@@ -453,12 +468,12 @@ public partial class PopupWindow : Window
         UpdateGraph();
     }
 
-    private Color TierColor(double ms)
+    private Color TierColor(double ms) => LatencyScale.FromMilliseconds(ms) switch
     {
-        if (ms < 60) return _pal.Green;
-        if (ms <= 120) return _pal.Yellow;
-        return _pal.Red;
-    }
+        LatencyTier.Green => _pal.Green,
+        LatencyTier.Yellow => _pal.Yellow,
+        _ => _pal.Red,
+    };
 
     private void UpdateHeaderDotPulse(bool pulse)
     {
@@ -490,7 +505,11 @@ public partial class PopupWindow : Window
     private void UpdateGraph()
     {
         var arr = _pingManager.PingResultsSnapshot();
-        if (_chartAnimating) return;
+        if (_chartAnimating)
+        {
+            _chartDirty = true;
+            return;
+        }
 
         if (arr.Length == 0)
         {
@@ -530,11 +549,17 @@ public partial class PopupWindow : Window
             };
             anim.Completed += (_, _) =>
             {
-                _settledChart = arr.ToList();
+                _chartAnimating = false;
                 ChartSlide.BeginAnimation(TranslateTransform.XProperty, null);
                 ChartSlide.X = 0;
+                if (_chartDirty)
+                {
+                    _chartDirty = false;
+                    UpdateGraph();
+                    return;
+                }
+                _settledChart = arr.ToList();
                 DrawChart(_settledChart);
-                _chartAnimating = false;
             };
             ChartSlide.BeginAnimation(TranslateTransform.XProperty, anim);
         }
@@ -549,7 +574,7 @@ public partial class PopupWindow : Window
     private double _lastDrawnWidth;
     private double _lastDrawnHeight;
 
-    private void DrawChart(IList<double> values, double? stepOverride = null)
+    private void DrawChart(IList<double?> values, double? stepOverride = null)
     {
         ChartCanvas.Children.Clear();
 
@@ -562,7 +587,8 @@ public partial class PopupWindow : Window
         _lastDrawnHeight = height;
         var color = _chartColor;
 
-        var axisMax = Math.Max(50, Math.Ceiling(values.DefaultIfEmpty(0).Max() / 50) * 50);
+        var peak = values.Where(v => v.HasValue).Select(v => v!.Value).DefaultIfEmpty(0).Max();
+        var axisMax = Math.Max(50, Math.Ceiling(peak / 50) * 50);
         AxisTopLabel.Text = ((int)axisMax).ToString();
         AxisMidLabel.Text = ((int)(axisMax / 2)).ToString();
 
@@ -575,60 +601,74 @@ public partial class PopupWindow : Window
             return baselineY - f * (baselineY - topY);
         }
 
-        var linePoints = new PointCollection();
         double step = stepOverride ?? (width / Math.Max(values.Count - 1, 1));
-        for (int i = 0; i < values.Count; i++)
-            linePoints.Add(new Point(i * step, YFor(values[i])));
-
-        double lastX = linePoints.Count > 0 ? linePoints[^1].X : width;
-
-        var areaPoints = new PointCollection(linePoints)
+        PointCollection? run = null;
+        void CloseRun()
         {
-            new Point(lastX, height),
-            new Point(0, height),
-        };
-
-        var area = new Polygon
-        {
-            Points = areaPoints,
-            Fill = Brush(Tint(color, 31)),
-        };
-        ChartCanvas.Children.Add(area);
-
-        for (int i = 1; i < values.Count; i++)
-        {
-            var segment = new Line
+            if (run == null || run.Count == 0) return;
+            var area = new PointCollection(run)
             {
-                X1 = (i - 1) * step,
-                Y1 = YFor(values[i - 1]),
-                X2 = i * step,
-                Y2 = YFor(values[i]),
-                Stroke = Brush(TierColor(Math.Max(values[i - 1], values[i]))),
-                StrokeThickness = 2,
-                StrokeStartLineCap = PenLineCap.Round,
-                StrokeEndLineCap = PenLineCap.Round,
+                new Point(run[^1].X, height),
+                new Point(run[0].X, height),
             };
-            ChartCanvas.Children.Add(segment);
+            ChartCanvas.Children.Add(new Polygon
+            {
+                Points = area,
+                Fill = Brush(Tint(color, 31)),
+            });
+            run = null;
         }
 
         for (int i = 0; i < values.Count; i++)
         {
-            var tierColor = TierColor(values[i]);
-            if (tierColor != _pal.Green)
+            if (values[i] is not double sample)
             {
-                var marker = new Ellipse
-                {
-                    Width = 6,
-                    Height = 6,
-                    Fill = Brush(tierColor),
-                    Stroke = Brush(_pal.Background),
-                    StrokeThickness = 2,
-                };
-                double mx = i * step;
-                Canvas.SetLeft(marker, mx - 3);
-                Canvas.SetTop(marker, YFor(values[i]) - 3);
-                ChartCanvas.Children.Add(marker);
+                CloseRun();
+                continue;
             }
+            run ??= new PointCollection();
+            run.Add(new Point(i * step, YFor(sample)));
+        }
+        CloseRun();
+
+        for (int i = 1; i < values.Count; i++)
+        {
+            if (values[i - 1] is not double previous || values[i] is not double current)
+                continue;
+            ChartCanvas.Children.Add(new Line
+            {
+                X1 = (i - 1) * step,
+                Y1 = YFor(previous),
+                X2 = i * step,
+                Y2 = YFor(current),
+                Stroke = Brush(TierColor(Math.Max(previous, current))),
+                StrokeThickness = 2,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+            });
+        }
+
+        for (int i = 0; i < values.Count; i++)
+        {
+            if (values[i] is not double sample)
+                continue;
+            var tierColor = TierColor(sample);
+            var isolatedSuccess =
+                (i == 0 || values[i - 1] is not double)
+                && (i == values.Count - 1 || values[i + 1] is not double);
+            if (tierColor == _pal.Green && !isolatedSuccess)
+                continue;
+            var marker = new Ellipse
+            {
+                Width = 6,
+                Height = 6,
+                Fill = Brush(tierColor),
+                Stroke = Brush(_pal.Background),
+                StrokeThickness = 2,
+            };
+            Canvas.SetLeft(marker, i * step - 3);
+            Canvas.SetTop(marker, YFor(sample) - 3);
+            ChartCanvas.Children.Add(marker);
         }
     }
 
@@ -745,9 +785,27 @@ public partial class PopupWindow : Window
             DragMove();
     }
 
+    private bool _suppressLoginEvent;
+
     private void OnLoginCheckChanged(object sender, RoutedEventArgs e)
     {
-        SetStartupWithWindows(LoginCheckBox.IsChecked == true);
+        if (_suppressLoginEvent)
+            return;
+        try
+        {
+            SetStartupWithWindows(LoginCheckBox.IsChecked == true);
+            LoginHint.Text = "";
+            LoginHint.Visibility = Visibility.Collapsed;
+        }
+        catch (Exception ex)
+        {
+            _suppressLoginEvent = true;
+            LoginCheckBox.IsChecked = IsStartupWithWindowsEnabled();
+            _suppressLoginEvent = false;
+            LoginHint.Text = ex.Message;
+            LoginHint.Foreground = Brush(_pal.RedLabel);
+            LoginHint.Visibility = Visibility.Visible;
+        }
         AnimateLoginToggle();
     }
 
@@ -766,24 +824,19 @@ public partial class PopupWindow : Window
 
     private static void SetStartupWithWindows(bool enable)
     {
-        try
-        {
-            using var key = Registry.CurrentUser.OpenSubKey(
-                @"Software\Microsoft\Windows\CurrentVersion\Run", true);
-            if (key == null) return;
+        using var key = Registry.CurrentUser.OpenSubKey(
+            @"Software\Microsoft\Windows\CurrentVersion\Run", true)
+            ?? throw new InvalidOperationException("Could not open the startup registry key");
 
-            if (enable)
-            {
-                var exePath = Environment.ProcessPath;
-                if (exePath != null)
-                    key.SetValue("PingStats", $"\"{exePath}\"");
-            }
-            else
-            {
-                key.DeleteValue("PingStats", false);
-            }
+        if (enable)
+        {
+            var exePath = Environment.ProcessPath
+                ?? throw new InvalidOperationException("Could not find the PingStats executable");
+            key.SetValue("PingStats", $"\"{exePath}\"");
+            return;
         }
-        catch { }
+
+        key.DeleteValue("PingStats", false);
     }
 
     private static bool IsStartupWithWindowsEnabled()
@@ -800,7 +853,9 @@ public partial class PopupWindow : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        _suppressLoginEvent = true;
         LoginCheckBox.IsChecked = IsStartupWithWindowsEnabled();
+        _suppressLoginEvent = false;
     }
 
     protected override void OnClosed(EventArgs e)
