@@ -69,10 +69,18 @@ public class PingManager : IDisposable
             return false;
         foreach (var c in host)
         {
-            if (char.IsAsciiLetterOrDigit(c) || c is '.' or '-' or ':' or '[' or ']')
+            if (char.IsAsciiLetterOrDigit(c) || c is '.' or '-' or ':' or '[' or ']' or '%')
                 continue;
             return false;
         }
+        var scopeSeparator = host.IndexOf('%');
+        if (scopeSeparator >= 0
+            && (scopeSeparator != host.LastIndexOf('%')
+                || scopeSeparator == host.Length - 1
+                || !host[(scopeSeparator + 1)..].All(char.IsAsciiDigit)
+                || !IPAddress.TryParse(host[..scopeSeparator], out var scopedAddress)
+                || scopedAddress.AddressFamily != AddressFamily.InterNetworkV6))
+            return false;
         return true;
     }
 
@@ -81,6 +89,20 @@ public class PingManager : IDisposable
         if (address.Length >= 2 && address[0] == '[' && address[^1] == ']')
             return address[1..^1];
         return address;
+    }
+
+    private static bool TryParseScopedIPv6(string address, out IPAddress parsedAddress)
+    {
+        parsedAddress = IPAddress.None;
+        var scopeSeparator = address.IndexOf('%');
+        if (scopeSeparator <= 0 || scopeSeparator != address.LastIndexOf('%')
+            || !uint.TryParse(address[(scopeSeparator + 1)..], out var scopeId)
+            || !IPAddress.TryParse(address[..scopeSeparator], out var baseAddress)
+            || baseAddress.AddressFamily != AddressFamily.InterNetworkV6)
+            return false;
+
+        parsedAddress = new IPAddress(baseAddress.GetAddressBytes(), scopeId);
+        return true;
     }
 
     private static (string? host, double interval) LoadSettings()
@@ -302,9 +324,11 @@ public class PingManager : IDisposable
             try
             {
                 using var ping = new System.Net.NetworkInformation.Ping();
-                var reply = IPAddress.TryParse(address, out var ip)
-                    ? ping.Send(ip, 2000)
-                    : ping.Send(address, 2000);
+                var reply = TryParseScopedIPv6(address, out var scopedIp)
+                    ? ping.Send(scopedIp, 2000)
+                    : IPAddress.TryParse(address, out var ip)
+                        ? ping.Send(ip, 2000)
+                        : ping.Send(address, 2000);
                 double? latency = reply != null
                     && reply.Status == System.Net.NetworkInformation.IPStatus.Success
                     ? reply.RoundtripTime

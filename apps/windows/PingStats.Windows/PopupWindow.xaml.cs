@@ -425,6 +425,11 @@ public partial class PopupWindow : Window
             ResolveNote.Text = _pingManager.SettingsWarning;
             ResolveNote.Foreground = Brush(_pal.RedLabel);
         }
+        else if (_pingManager.StatusMessage.StartsWith("Error:"))
+        {
+            ResolveNote.Text = _pingManager.StatusMessage;
+            ResolveNote.Foreground = Brush(_pal.RedLabel);
+        }
         else if (!string.IsNullOrEmpty(_pingManager.ResolvedIP))
         {
             ResolveNote.Text = "resolves to " + _pingManager.ResolvedIP;
@@ -434,11 +439,6 @@ public partial class PopupWindow : Window
         {
             ResolveNote.Text = "resolving\u2026";
             ResolveNote.Foreground = Brush(_pal.Muted);
-        }
-        else if (_pingManager.StatusMessage.StartsWith("Error:"))
-        {
-            ResolveNote.Text = _pingManager.StatusMessage;
-            ResolveNote.Foreground = Brush(_pal.RedLabel);
         }
         else
         {
@@ -653,7 +653,10 @@ public partial class PopupWindow : Window
             if (values[i] is not double sample)
                 continue;
             var tierColor = TierColor(sample);
-            if (tierColor == _pal.Green)
+            var isolatedSuccess =
+                (i == 0 || values[i - 1] is not double)
+                && (i == values.Count - 1 || values[i + 1] is not double);
+            if (tierColor == _pal.Green && !isolatedSuccess)
                 continue;
             var marker = new Ellipse
             {

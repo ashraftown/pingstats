@@ -1005,7 +1005,8 @@ struct PingChartView: View {
           }
 
           ForEach(Array(chart.enumerated()), id: \.offset) { index, value in
-            if let value, LatencyTier.tier(value) != .green {
+            if let value,
+               LatencyTier.tier(value) != .green || Self.isIsolatedSuccess(at: index, in: chart) {
               Circle()
                 .fill(LatencyTier.tier(value).color)
                 .frame(width: 6, height: 6)
@@ -1125,6 +1126,13 @@ struct PingChartView: View {
   private static func axisMax(_ values: [Double?]) -> Double {
     guard let maxValue = values.compactMap({ $0 }).max(), maxValue > 0 else { return 50 }
     return max(50, ceil(maxValue / 50) * 50)
+  }
+
+  private static func isIsolatedSuccess(at index: Int, in values: [Double?]) -> Bool {
+    guard values.indices.contains(index), values[index] != nil else { return false }
+    let hasPreviousSuccess = index > values.startIndex && values[index - 1] != nil
+    let hasNextSuccess = index + 1 < values.endIndex && values[index + 1] != nil
+    return !hasPreviousSuccess && !hasNextSuccess
   }
 
   private static func y(_ value: Double, axisMax: Double, topY: CGFloat, baselineY: CGFloat) -> CGFloat {
