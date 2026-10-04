@@ -366,8 +366,7 @@
         <Border Grid.Column="1" x:Name="StatusPill" CornerRadius="12" Padding="9,0"
                 BorderThickness="1" VerticalAlignment="Center" Height="24">
           <StackPanel Orientation="Horizontal">
-            <Ellipse x:Name="StatusDot" Width="5" Height="5" VerticalAlignment="Center"/>
-            <TextBlock x:Name="StatusText" FontSize="11" FontWeight="Medium" Margin="5,0,0,0"
+            <TextBlock x:Name="StatusText" FontSize="11" FontWeight="Medium"
                        VerticalAlignment="Center"/>
           </StackPanel>
         </Border>
@@ -382,7 +381,6 @@
                  FontSize="13"
                  AutomationProperties.LabeledBy="{Binding ElementName=HostLabel}"
                  BorderThickness="1" KeyDown="OnHostKeyDown"/>
-        <TextBlock x:Name="ResolveNote" FontSize="10" Margin="0,5,0,0" MinHeight="15"/>
       </StackPanel>
 
       <!-- Interval -->

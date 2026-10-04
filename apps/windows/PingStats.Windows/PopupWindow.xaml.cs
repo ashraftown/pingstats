@@ -271,7 +271,12 @@ public partial class PopupWindow : Window
 
     private void OnPingStateChanged()
     {
-        Dispatcher.BeginInvoke(UpdateUI);
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (!_pingManager.IsRunning)
+                HostTextBox.Text = _pingManager.Host;
+            UpdateUI();
+        });
     }
 
     private void OnTrayIconClicked()
@@ -314,7 +319,6 @@ public partial class PopupWindow : Window
         Color headerDot;
         Color pillBg;
         Color pillFg;
-        Color pillDot;
         Color pillBorder;
         string pillText;
         string heroCaption;
@@ -327,7 +331,6 @@ public partial class PopupWindow : Window
             headerDot = _pal.Green;
             pillBg = Tint(_pal.Green, 31);
             pillFg = _pal.Green;
-            pillDot = _pal.Green;
             pillBorder = Tint(_pal.Green, 71);
             pillText = "connected";
             heroCaption = "latest ping";
@@ -348,7 +351,6 @@ public partial class PopupWindow : Window
             headerDot = _pal.Red;
             pillBg = Tint(_pal.Red, 31);
             pillFg = _pal.RedLabel;
-            pillDot = _pal.Red;
             pillBorder = Tint(_pal.Red, 71);
             pillText = "timeout";
             heroCaption = "timeout";
@@ -361,7 +363,6 @@ public partial class PopupWindow : Window
             headerDot = _pal.Muted;
             pillBg = _pal.PillNeutralBg;
             pillFg = _pal.Footer;
-            pillDot = _pal.Muted;
             pillBorder = Tint(_pal.Text, 31);
             pillText = "resolving";
             heroCaption = "resolving\u2026";
@@ -374,7 +375,6 @@ public partial class PopupWindow : Window
             headerDot = _pal.Muted;
             pillBg = _pal.PillNeutralBg;
             pillFg = _pal.Footer;
-            pillDot = _pal.Muted;
             pillBorder = Tint(_pal.Text, 31);
             pillText = "stopped";
             heroCaption = "not monitoring";
@@ -387,8 +387,11 @@ public partial class PopupWindow : Window
         StatusPill.Background = Brush(pillBg);
         StatusPill.BorderBrush = Brush(pillBorder);
         StatusText.Foreground = Brush(pillFg);
-        StatusDot.Fill = Brush(pillDot);
         StatusText.Text = pillText;
+        if (running && !System.Net.IPAddress.TryParse(_pingManager.Host, out _)
+            && !string.IsNullOrEmpty(_pingManager.ResolvedIP)
+            && !string.Equals(_pingManager.Host, _pingManager.ResolvedIP, StringComparison.OrdinalIgnoreCase))
+            HostTextBox.Text = $"{_pingManager.Host} ({_pingManager.ResolvedIP})";
         HeroNumber.Text = heroNumber;
         HeroNumber.Foreground = Brush(heroColor);
         HeroCaption.Text = heroCaption;
@@ -414,37 +417,6 @@ public partial class PopupWindow : Window
             ToggleLabel.Text = "start monitoring";
         }
         ToggleButton.IsEnabled = running || !string.IsNullOrWhiteSpace(HostTextBox.Text);
-
-        if (!running && _pingManager.StatusMessage == "Invalid host")
-        {
-            ResolveNote.Text = "Invalid host";
-            ResolveNote.Foreground = Brush(_pal.RedLabel);
-        }
-        else if (!string.IsNullOrEmpty(_pingManager.SettingsWarning))
-        {
-            ResolveNote.Text = _pingManager.SettingsWarning;
-            ResolveNote.Foreground = Brush(_pal.RedLabel);
-        }
-        else if (_pingManager.StatusMessage.StartsWith("Error:"))
-        {
-            ResolveNote.Text = _pingManager.StatusMessage;
-            ResolveNote.Foreground = Brush(_pal.RedLabel);
-        }
-        else if (!string.IsNullOrEmpty(_pingManager.ResolvedIP))
-        {
-            ResolveNote.Text = "resolves to " + _pingManager.ResolvedIP;
-            ResolveNote.Foreground = Brush(_pal.Muted2);
-        }
-        else if (resolving)
-        {
-            ResolveNote.Text = "resolving\u2026";
-            ResolveNote.Foreground = Brush(_pal.Muted);
-        }
-        else
-        {
-            ResolveNote.Text = " ";
-            ResolveNote.Foreground = Brush(_pal.Muted2);
-        }
 
         var results = _pingManager.PingResultsSnapshot();
         var samples = results.Where(v => v.HasValue).Select(v => v!.Value).ToArray();
