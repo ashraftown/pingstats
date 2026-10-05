@@ -72,7 +72,8 @@ const jsonLd = JSON.stringify({
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={absolute(siteShareImage.path)} />
     <meta name="twitter:image:alt" content={siteShareImage.alt} />
-    <script type="application/ld+json" set:html={jsonLd} />
+    {/* Escape < so a value can never close the script tag early. */}
+    <script type="application/ld+json" set:html={jsonLd.replace(/</g, "\\u003c")} />
     <link
       rel="preload"
       href={jetbrainsMonoLatinUrl}
