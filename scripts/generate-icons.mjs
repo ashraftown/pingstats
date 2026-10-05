@@ -26,7 +26,11 @@ const windowsIconSizes = [16, 24, 32, 48, 64, 128, 256];
 const source = await readFile(sourcePath);
 const metadata = await sharp(source).metadata();
 if (metadata.width !== 1024 || metadata.height !== 1024) {
-  throw new Error(`Expected a 1024×1024 master icon, got ${metadata.width}×${metadata.height}.`);
+  throw new Error(`Expected a 1024×1024 app icon source, got ${metadata.width}×${metadata.height}.`);
+}
+const imageStats = await sharp(source).stats();
+if (!imageStats.isOpaque) {
+  throw new Error("Expected the app icon source to be fully opaque.");
 }
 
 const cache = new Map();
