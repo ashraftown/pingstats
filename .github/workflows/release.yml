@@ -151,6 +151,17 @@ jobs:
           }
           dotnet @publishArgs
 
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+
+      - name: Build Windows installer
+        env:
+          VERSION: ${{ needs.meta.outputs.version }}
+        run: |
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          & $iscc "/DAppVersion=$env:VERSION" "/DOutputVersion=$env:VERSION" scripts/windows-installer.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE" }
+
       - name: Zip artifact
         run: |
           Compress-Archive -Path publish/PingStats/* -DestinationPath "PingStats-${{ needs.meta.outputs.version }}-windows.zip"
@@ -163,12 +174,14 @@ jobs:
           path: |
             PingStats-${{ needs.meta.outputs.version }}-windows.zip
             PingStats-windows.zip
+            dist/PingStats-${{ needs.meta.outputs.version }}-windows-setup.exe
 
       - name: Attach to GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
         with:
           files: |
+            dist/PingStats-${{ needs.meta.outputs.version }}-windows-setup.exe
             PingStats-${{ needs.meta.outputs.version }}-windows.zip
             PingStats-windows.zip
         env:

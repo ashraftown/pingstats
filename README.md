@@ -11,7 +11,7 @@ Glanceable RTT in your menu bar (macOS) / system tray (Windows) · rolling min/a
 [![Windows](https://img.shields.io/badge/Windows-10%2B-blue?style=flat-square&logo=windows)](#windows)
 [![.NET](https://img.shields.io/badge/.NET-8-512BD4?style=flat-square&logo=dotnet)](#windows)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
-[![Release](https://img.shields.io/badge/release-DMG-blue?style=flat-square)](#install)
+[![Release](https://img.shields.io/badge/release-DMG%20%2B%20installer-blue?style=flat-square)](#install)
 
 <br />
 
@@ -21,7 +21,7 @@ Glanceable RTT in your menu bar (macOS) / system tray (Windows) · rolling min/a
 <br />
 
 **macOS** — Drag · Drop · Allow once. Release DMGs use the classic Applications layout.  
-**Windows** — `dotnet build` from source, or grab a published zip from Releases.
+**Windows** — run the per-user installer from Releases, or use the portable ZIP.
 
 </div>
 
@@ -89,6 +89,14 @@ apps/windows/PingStats.Windows/bin/Release/net8.0-windows/PingStats.exe
 
 Requires [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) and Windows 10+.
 
+### Windows — Install
+
+1. Download **`PingStats-*-windows-setup.exe`** from the repo **Releases** page.
+2. Run the installer. It installs PingStats for your Windows user, adds a Start menu shortcut, and can create a desktop shortcut.
+3. Optionally enable **Open at Login** in the app.
+
+The installer does not require administrator access. The **`PingStats-*-windows.zip`** release remains available as a portable build.
+
 ---
 
 ## Usage
@@ -121,9 +129,9 @@ Both platforms track the same stats and share the same feature set.
 
 ---
 
-## Releases (DMG via GitHub Actions)
+## Releases (DMG and Windows installer via GitHub Actions)
 
-Pushing a version tag builds a **drag-to-Applications** DMG on `macos-14` and attaches it to a GitHub Release:
+Pushing a version tag builds a **drag-to-Applications** DMG and a Windows setup installer, then attaches them to a GitHub Release:
 
 ```bash
 git tag v1.0.0

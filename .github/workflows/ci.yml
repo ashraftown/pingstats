@@ -106,11 +106,22 @@ jobs:
             -p:DebugType=None -p:DebugSymbols=false `
             -o publish/PingStats
 
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+
+      - name: Build Windows installer
+        run: |
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          & $iscc /DAppVersion=0.0.0 /DOutputVersion=ci scripts/windows-installer.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE" }
+
       - name: Upload Windows artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: PingStats-windows
-          path: publish/PingStats
+          path: |
+            dist/PingStats-ci-windows-setup.exe
+            publish/PingStats
           if-no-files-found: error
 
   web:
