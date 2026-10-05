@@ -485,7 +485,7 @@ struct ContentView: View {
     .padding(20)
     .frame(width: 340)
     .background(
-      (colorScheme == .dark ? Color.black : Color.white).opacity(0.12),
+      (colorScheme == .dark ? Color.black.opacity(0.25) : Color.white.opacity(0.12)),
       in: RoundedRectangle(cornerRadius: 12, style: .continuous)
     )
     .onAppear {
