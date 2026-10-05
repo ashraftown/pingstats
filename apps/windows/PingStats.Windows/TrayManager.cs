@@ -21,6 +21,7 @@ public class TrayManager : IDisposable
     private const int IconHeight = 64;
     private const int DotSize = 7;
     private const int DotY = 0;
+    private const int MaxTrayLatencyMs = 999;
     private static readonly StringFormat StringFormat = StringFormat.GenericTypographic;
 
     public event Action? TrayIconClicked;
@@ -245,8 +246,8 @@ public class TrayManager : IDisposable
         if (!_pingManager.IsRunning)
             return "--";
 
-        if (_pingManager.LatestLatencyMs.HasValue)
-            return ((int)Math.Round(_pingManager.LatestLatencyMs.Value)).ToString();
+        if (_pingManager.LatestLatencyMs is double milliseconds)
+            return Math.Min((int)Math.Round(milliseconds), MaxTrayLatencyMs).ToString();
 
         if (_pingManager.LatestLatency == "\u2717")
             return "\u2717";
