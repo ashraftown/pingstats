@@ -65,6 +65,8 @@ public partial class PopupWindow : Window
         public Color PopupBackground;
         public Color Border;
         public Color Text;
+        // These labels sit over desktop content through a 50% tint, so keep them at full contrast.
+        public Color PopupLabel;
         public Color Muted;
         public Color Muted2;
         public Color Footer;
@@ -92,6 +94,7 @@ public partial class PopupWindow : Window
         PopupBackground = Color.FromArgb(128, 11, 12, 15),
         Border = Color.FromArgb(20, 255, 255, 255),
         Text = Hex(0xF5F6F7),
+        PopupLabel = Hex(0xFFFFFF),
         Muted = Hex(0x71757D),
         Muted2 = Hex(0x9AA0A8),
         Footer = Hex(0xB8BABF),
@@ -119,6 +122,7 @@ public partial class PopupWindow : Window
         PopupBackground = Color.FromArgb(128, 255, 255, 255),
         Border = Hex(0xE0E0E0),
         Text = Hex(0x1A1A1A),
+        PopupLabel = Hex(0x1A1A1A),
         Muted = Hex(0x6E6E6E),
         Muted2 = Hex(0x4A4A4A),
         Footer = Hex(0x555555),
@@ -262,13 +266,16 @@ public partial class PopupWindow : Window
 
     private void ApplyTheme()
     {
-        PopupBorder.Background = Brush(_pal.PopupBackground);
+        // DWM backdrops require a non-layered window. If setup fails, use a solid theme surface.
+        PopupBorder.Background = _supportsAcrylicBackdrop && !_hasAcrylicBackdrop
+            ? Brush(_pal.Background)
+            : Brush(_pal.PopupBackground);
         PopupBorder.BorderBrush = Brush(_pal.Border);
 
         TitleText.Foreground = Brush(_pal.Text);
-        HostLabel.Foreground = Brush(_pal.Muted);
-        IntervalLabel.Foreground = Brush(_pal.Muted);
-        StatusLabel.Foreground = Brush(_pal.Muted);
+        HostLabel.Foreground = Brush(_pal.PopupLabel);
+        IntervalLabel.Foreground = Brush(_pal.PopupLabel);
+        StatusLabel.Foreground = Brush(_pal.PopupLabel);
         StatMinLabel.Foreground = Brush(_pal.Muted);
         StatAvgLabel.Foreground = Brush(_pal.Muted);
         StatMaxLabel.Foreground = Brush(_pal.Muted);
