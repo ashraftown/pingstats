@@ -149,19 +149,42 @@ public class TrayManager : IDisposable
         var textArea = new SizeF(
             IconWidth - horizontalPadding * 2,
             IconHeight - DotY - DotSize - bottomPadding);
-        var fontSize = maxFontSize;
-        Font font;
-        SizeF textSize;
-        while (true)
+        var font = new Font("Consolas", minFontSize, FontStyle.Regular, GraphicsUnit.Pixel);
+        var textSize = g.MeasureString(displayText, font, int.MaxValue, StringFormat);
+        if (FitsTextArea(textSize, textArea))
         {
-            font = new Font("Consolas", fontSize, FontStyle.Regular, GraphicsUnit.Pixel);
-            textSize = g.MeasureString(displayText, font, int.MaxValue, StringFormat);
-            if ((textSize.Width <= textArea.Width && textSize.Height <= textArea.Height)
-                || fontSize <= minFontSize)
-                break;
-
-            font.Dispose();
-            fontSize = Math.Max(minFontSize, fontSize - 1);
+            var largestFont = new Font("Consolas", maxFontSize, FontStyle.Regular, GraphicsUnit.Pixel);
+            var largestTextSize = g.MeasureString(displayText, largestFont, int.MaxValue, StringFormat);
+            if (FitsTextArea(largestTextSize, textArea))
+            {
+                font.Dispose();
+                font = largestFont;
+                textSize = largestTextSize;
+            }
+            else
+            {
+                largestFont.Dispose();
+                var low = minFontSize;
+                var high = maxFontSize;
+                for (var i = 0; i < 5; i++)
+                {
+                    var fontSize = (low + high) / 2;
+                    var candidate = new Font("Consolas", fontSize, FontStyle.Regular, GraphicsUnit.Pixel);
+                    var candidateSize = g.MeasureString(displayText, candidate, int.MaxValue, StringFormat);
+                    if (FitsTextArea(candidateSize, textArea))
+                    {
+                        font.Dispose();
+                        font = candidate;
+                        textSize = candidateSize;
+                        low = fontSize;
+                    }
+                    else
+                    {
+                        candidate.Dispose();
+                        high = fontSize;
+                    }
+                }
+            }
         }
 
         using (font)
@@ -186,6 +209,9 @@ public class TrayManager : IDisposable
             DestroyIcon(hIcon);
         }
     }
+
+    private static bool FitsTextArea(SizeF textSize, SizeF textArea) =>
+        textSize.Width <= textArea.Width && textSize.Height <= textArea.Height;
 
     private Color GetColor()
     {
