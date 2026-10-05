@@ -8,6 +8,7 @@
     "prebuild": "node scripts/sync-brand.mjs",
     "build": "astro build",
     "preview": "astro preview",
+    "test": "node --test 'src/lib/*.test.mjs'",
     "deploy": "astro build && wrangler deploy"
   },
   "dependencies": {

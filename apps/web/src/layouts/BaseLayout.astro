@@ -18,6 +18,7 @@ import {
   siteTitle,
   siteUrl,
 } from "../site";
+import { serializeJsonLd } from "../lib/jsonLd.mjs";
 
 interface Props {
   title?: string;
@@ -72,8 +73,8 @@ const jsonLd = JSON.stringify({
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={absolute(siteShareImage.path)} />
     <meta name="twitter:image:alt" content={siteShareImage.alt} />
-    {/* Escape < so a value can never close the script tag early. */}
-    <script type="application/ld+json" set:html={jsonLd.replace(/</g, "\\u003c")} />
+    {/* Escape < via serializeJsonLd so no value can close the script tag early. */}
+    <script type="application/ld+json" set:html={serializeJsonLd(jsonLd)} />
     <link
       rel="preload"
       href={jetbrainsMonoLatinUrl}
