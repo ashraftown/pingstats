@@ -451,6 +451,7 @@ enum PopupState: Equatable {
 struct ContentView: View {
   @EnvironmentObject var pingManager: PingManager
   @EnvironmentObject var popoverCoordinator: PopoverCoordinator
+  @Environment(\.colorScheme) private var colorScheme
   @StateObject private var loginItems = LoginItemManager()
   @State private var hostField = ""
   @State private var showQuitConfirm = false
@@ -483,6 +484,10 @@ struct ContentView: View {
     }
     .padding(20)
     .frame(width: 340)
+    .background(
+      (colorScheme == .dark ? Color.black : Color.white).opacity(0.5),
+      in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+    )
     .onAppear {
       if hostField.isEmpty {
         hostField = pingManager.host

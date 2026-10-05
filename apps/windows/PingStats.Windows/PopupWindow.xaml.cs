@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
@@ -13,6 +15,14 @@ namespace PingStats;
 
 public partial class PopupWindow : Window
 {
+    private const int DwmSystemBackdropTypeAttribute = 38;
+    private const int DwmSystemBackdropTransient = 3;
+    private const int DwmUseImmersiveDarkModeAttribute = 20;
+    private const int DwmWindowCornerPreferenceAttribute = 33;
+    private const int DwmWindowCornerRound = 2;
+    // Windows 11 22H2 adds system Acrylic for transient windows. Older builds use layered alpha instead.
+    private readonly bool _supportsAcrylicBackdrop = OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621);
+    private bool _hasAcrylicBackdrop;
     private readonly PingManager _pingManager;
     private readonly TrayManager _trayManager;
     private bool _isPinned;
@@ -22,6 +32,21 @@ public partial class PopupWindow : Window
 
     private static readonly double[] IntervalOptions = PingManager.SupportedIntervals;
     private static readonly string[] IntervalLabels = { "1 second", "5 seconds", "10 seconds", "30 seconds", "1 minute" };
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Margins
+    {
+        public int Left;
+        public int Right;
+        public int Top;
+        public int Bottom;
+    }
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmExtendFrameIntoClientArea(IntPtr hwnd, ref Margins margins);
 
     private static readonly Geometry PlayGlyph = Geometry.Parse(
         "M8,5.14v13.72c0,0.93 1.04,1.5 1.81,1l10.4,-6.86c0.73,-0.48 0.73,-1.55 0,-2.03L9.81,4.14C9.04,3.64 8,4.21 8,5.14Z");
@@ -37,8 +62,11 @@ public partial class PopupWindow : Window
     private sealed class Palette
     {
         public Color Background;
+        public Color PopupBackground;
         public Color Border;
         public Color Text;
+        // These labels sit over desktop content through a 50% tint, so keep them at full contrast.
+        public Color PopupLabel;
         public Color Muted;
         public Color Muted2;
         public Color Footer;
@@ -63,8 +91,10 @@ public partial class PopupWindow : Window
     private static Palette DarkPalette() => new()
     {
         Background = Hex(0x0B0C0F),
+        PopupBackground = Color.FromArgb(128, 11, 12, 15),
         Border = Color.FromArgb(20, 255, 255, 255),
         Text = Hex(0xF5F6F7),
+        PopupLabel = Hex(0xFFFFFF),
         Muted = Hex(0x71757D),
         Muted2 = Hex(0x9AA0A8),
         Footer = Hex(0xB8BABF),
@@ -89,8 +119,10 @@ public partial class PopupWindow : Window
     private static Palette LightPalette() => new()
     {
         Background = Hex(0xFFFFFF),
+        PopupBackground = Color.FromArgb(128, 255, 255, 255),
         Border = Hex(0xE0E0E0),
         Text = Hex(0x1A1A1A),
+        PopupLabel = Hex(0x1A1A1A),
         Muted = Hex(0x6E6E6E),
         Muted2 = Hex(0x4A4A4A),
         Footer = Hex(0x555555),
@@ -125,6 +157,12 @@ public partial class PopupWindow : Window
     public PopupWindow(PingManager pingManager, TrayManager trayManager)
     {
         InitializeComponent();
+
+        if (_supportsAcrylicBackdrop)
+        {
+            AllowsTransparency = false;
+            SourceInitialized += OnSourceInitialized;
+        }
 
         _pingManager = pingManager;
         _trayManager = trayManager;
@@ -169,6 +207,30 @@ public partial class PopupWindow : Window
         SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
     }
 
+    private void OnSourceInitialized(object? sender, EventArgs e)
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        var darkMode = IsSystemDarkTheme() ? 1 : 0;
+        DwmSetWindowAttribute(hwnd, DwmUseImmersiveDarkModeAttribute, ref darkMode, sizeof(int));
+
+        var backdrop = DwmSystemBackdropTransient;
+        if (DwmSetWindowAttribute(hwnd, DwmSystemBackdropTypeAttribute, ref backdrop, sizeof(int)) != 0)
+            return;
+
+        var cornerPreference = DwmWindowCornerRound;
+        DwmSetWindowAttribute(hwnd, DwmWindowCornerPreferenceAttribute, ref cornerPreference, sizeof(int));
+
+        var margins = new Margins { Left = -1, Right = -1, Top = -1, Bottom = -1 };
+        if (DwmExtendFrameIntoClientArea(hwnd, ref margins) != 0)
+            return;
+
+        if (HwndSource.FromHwnd(hwnd)?.CompositionTarget is { } compositionTarget)
+        {
+            compositionTarget.BackgroundColor = Colors.Transparent;
+            _hasAcrylicBackdrop = true;
+        }
+    }
+
     private void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
     {
         if (e.Category == UserPreferenceCategory.General)
@@ -176,6 +238,12 @@ public partial class PopupWindow : Window
             Dispatcher.Invoke(() =>
             {
                 _isDarkTheme = IsSystemDarkTheme();
+                if (_hasAcrylicBackdrop)
+                {
+                    var darkMode = _isDarkTheme ? 1 : 0;
+                    DwmSetWindowAttribute(new WindowInteropHelper(this).Handle,
+                        DwmUseImmersiveDarkModeAttribute, ref darkMode, sizeof(int));
+                }
                 _pal = _isDarkTheme ? DarkPalette() : LightPalette();
                 ApplyTheme();
                 UpdateUI();
@@ -198,13 +266,16 @@ public partial class PopupWindow : Window
 
     private void ApplyTheme()
     {
-        PopupBorder.Background = Brush(_pal.Background);
+        // DWM backdrops require a non-layered window. If setup fails, use a solid theme surface.
+        PopupBorder.Background = _supportsAcrylicBackdrop && !_hasAcrylicBackdrop
+            ? Brush(_pal.Background)
+            : Brush(_pal.PopupBackground);
         PopupBorder.BorderBrush = Brush(_pal.Border);
 
         TitleText.Foreground = Brush(_pal.Text);
-        HostLabel.Foreground = Brush(_pal.Muted);
-        IntervalLabel.Foreground = Brush(_pal.Muted);
-        StatusLabel.Foreground = Brush(_pal.Muted);
+        HostLabel.Foreground = Brush(_pal.PopupLabel);
+        IntervalLabel.Foreground = Brush(_pal.PopupLabel);
+        StatusLabel.Foreground = Brush(_pal.PopupLabel);
         StatMinLabel.Foreground = Brush(_pal.Muted);
         StatAvgLabel.Foreground = Brush(_pal.Muted);
         StatMaxLabel.Foreground = Brush(_pal.Muted);
