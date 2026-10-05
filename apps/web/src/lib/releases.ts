@@ -46,22 +46,28 @@ export async function resolveDownloadUrl(platform: "mac" | "win"): Promise<strin
   }
 }
 
-export async function fetchLatestRelease(): Promise<Release> {
+// In-flight request shared by every button on the page, so hero and footer
+// trigger one GitHub call instead of one per button.
+let pending: Promise<Release> | null = null;
+
+export function fetchLatestRelease(): Promise<Release> {
   const cached = sessionStorage.getItem(CACHE_KEY);
-  if (cached) return JSON.parse(cached);
+  if (cached) return Promise.resolve(JSON.parse(cached));
 
-  const response = await fetch(LATEST_API_URL);
-  if (!response.ok) throw new Error(`GitHub release request failed: ${response.status}`);
-  const data: Release = await response.json();
-  // A rate-limit or error payload is still JSON: refuse anything shapeless
-  // so callers fall back instead of rendering "undefined".
-  if (!data?.tag_name || !Array.isArray(data.assets)) {
-    throw new Error("GitHub release response missing tag_name or assets");
-  }
-
-  if (data?.assets) {
-    sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
-  }
-
-  return data;
+  pending ??= fetch(LATEST_API_URL)
+    .then(async (response) => {
+      if (!response.ok) throw new Error(`GitHub release request failed: ${response.status}`);
+      const data: Release = await response.json();
+      // A rate-limit or error payload is still JSON: refuse anything shapeless
+      // so callers fall back instead of rendering "undefined".
+      if (!data?.tag_name || !Array.isArray(data.assets)) {
+        throw new Error("GitHub release response missing tag_name or assets");
+      }
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      return data;
+    })
+    .finally(() => {
+      pending = null;
+    });
+  return pending;
 }
