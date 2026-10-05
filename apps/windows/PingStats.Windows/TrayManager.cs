@@ -21,6 +21,9 @@ public class TrayManager : IDisposable
     private const int IconHeight = 64;
     private const int DotSize = 7;
     private const int DotY = 0;
+    private const int MaxTrayLatencyMs = 999;
+    private const int TwoDigitFontSize = 48;
+    private const int ThreeDigitFontSize = 32;
     private static readonly StringFormat StringFormat = StringFormat.GenericTypographic;
 
     public event Action? TrayIconClicked;
@@ -142,7 +145,8 @@ public class TrayManager : IDisposable
             g.FillEllipse(brush, dotX, DotY, DotSize, DotSize);
         }
 
-        using var font = new Font("Consolas", 54, FontStyle.Bold, GraphicsUnit.Pixel);
+        var fontSize = displayText.Length == 3 ? ThreeDigitFontSize : TwoDigitFontSize;
+        using var font = new Font("Consolas", fontSize, FontStyle.Regular, GraphicsUnit.Pixel);
         var textSize = g.MeasureString(displayText, font, int.MaxValue, StringFormat);
         var textX = (IconWidth - textSize.Width) / 2;
         var textY = DotY + DotSize;
@@ -196,8 +200,8 @@ public class TrayManager : IDisposable
         if (!_pingManager.IsRunning)
             return "--";
 
-        if (_pingManager.LatestLatencyMs.HasValue)
-            return ((int)Math.Round(_pingManager.LatestLatencyMs.Value)).ToString();
+        if (_pingManager.LatestLatencyMs is double milliseconds)
+            return Math.Min((int)Math.Round(milliseconds), MaxTrayLatencyMs).ToString();
 
         if (_pingManager.LatestLatency == "\u2717")
             return "\u2717";
