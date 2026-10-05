@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
@@ -13,6 +15,14 @@ namespace PingStats;
 
 public partial class PopupWindow : Window
 {
+    private const int DwmSystemBackdropTypeAttribute = 38;
+    private const int DwmSystemBackdropTransient = 3;
+    private const int DwmUseImmersiveDarkModeAttribute = 20;
+    private const int DwmWindowCornerPreferenceAttribute = 33;
+    private const int DwmWindowCornerRound = 2;
+    // Windows 11 22H2 adds system Acrylic for transient windows. Older builds use layered alpha instead.
+    private readonly bool _supportsAcrylicBackdrop = OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621);
+    private bool _hasAcrylicBackdrop;
     private readonly PingManager _pingManager;
     private readonly TrayManager _trayManager;
     private bool _isPinned;
@@ -22,6 +32,21 @@ public partial class PopupWindow : Window
 
     private static readonly double[] IntervalOptions = PingManager.SupportedIntervals;
     private static readonly string[] IntervalLabels = { "1 second", "5 seconds", "10 seconds", "30 seconds", "1 minute" };
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Margins
+    {
+        public int Left;
+        public int Right;
+        public int Top;
+        public int Bottom;
+    }
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmExtendFrameIntoClientArea(IntPtr hwnd, ref Margins margins);
 
     private static readonly Geometry PlayGlyph = Geometry.Parse(
         "M8,5.14v13.72c0,0.93 1.04,1.5 1.81,1l10.4,-6.86c0.73,-0.48 0.73,-1.55 0,-2.03L9.81,4.14C9.04,3.64 8,4.21 8,5.14Z");
@@ -129,6 +154,12 @@ public partial class PopupWindow : Window
     {
         InitializeComponent();
 
+        if (_supportsAcrylicBackdrop)
+        {
+            AllowsTransparency = false;
+            SourceInitialized += OnSourceInitialized;
+        }
+
         _pingManager = pingManager;
         _trayManager = trayManager;
 
@@ -172,6 +203,30 @@ public partial class PopupWindow : Window
         SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
     }
 
+    private void OnSourceInitialized(object? sender, EventArgs e)
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        var darkMode = IsSystemDarkTheme() ? 1 : 0;
+        DwmSetWindowAttribute(hwnd, DwmUseImmersiveDarkModeAttribute, ref darkMode, sizeof(int));
+
+        var backdrop = DwmSystemBackdropTransient;
+        if (DwmSetWindowAttribute(hwnd, DwmSystemBackdropTypeAttribute, ref backdrop, sizeof(int)) != 0)
+            return;
+
+        var cornerPreference = DwmWindowCornerRound;
+        DwmSetWindowAttribute(hwnd, DwmWindowCornerPreferenceAttribute, ref cornerPreference, sizeof(int));
+
+        var margins = new Margins { Left = -1, Right = -1, Top = -1, Bottom = -1 };
+        if (DwmExtendFrameIntoClientArea(hwnd, ref margins) != 0)
+            return;
+
+        if (HwndSource.FromHwnd(hwnd)?.CompositionTarget is { } compositionTarget)
+        {
+            compositionTarget.BackgroundColor = Colors.Transparent;
+            _hasAcrylicBackdrop = true;
+        }
+    }
+
     private void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
     {
         if (e.Category == UserPreferenceCategory.General)
@@ -179,6 +234,12 @@ public partial class PopupWindow : Window
             Dispatcher.Invoke(() =>
             {
                 _isDarkTheme = IsSystemDarkTheme();
+                if (_hasAcrylicBackdrop)
+                {
+                    var darkMode = _isDarkTheme ? 1 : 0;
+                    DwmSetWindowAttribute(new WindowInteropHelper(this).Handle,
+                        DwmUseImmersiveDarkModeAttribute, ref darkMode, sizeof(int));
+                }
                 _pal = _isDarkTheme ? DarkPalette() : LightPalette();
                 ApplyTheme();
                 UpdateUI();
@@ -201,7 +262,7 @@ public partial class PopupWindow : Window
 
     private void ApplyTheme()
     {
-        PopupBorder.Background = Brush(_pal.PopupBackground);
+        PopupBorder.Background = _hasAcrylicBackdrop ? Brushes.Transparent : Brush(_pal.PopupBackground);
         PopupBorder.BorderBrush = Brush(_pal.Border);
 
         TitleText.Foreground = Brush(_pal.Text);
