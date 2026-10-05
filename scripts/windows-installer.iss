@@ -8,6 +8,7 @@
 #define AppName "PingStats"
 #define AppPublisher "Ashraf Town"
 #define AppExeName "PingStats.exe"
+#define RepoRoot ".."
 
 [Setup]
 AppId={{A2F2A694-1CE0-4AF9-9AA5-3E601A50D25A}
@@ -18,12 +19,12 @@ DefaultDirName={localappdata}\Programs\PingStats
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
-OutputDir=dist
+OutputDir={#RepoRoot}\dist
 OutputBaseFilename=PingStats-{#OutputVersion}-windows-setup
-SetupIconFile=apps\windows\PingStats.Windows\Resources\app.ico
+SetupIconFile={#RepoRoot}\apps\windows\PingStats.Windows\Resources\app.ico
 UninstallDisplayIcon={app}\{#AppExeName}
-ArchitecturesAllowed=x64
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -35,7 +36,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
 
 [Files]
-Source: "publish\PingStats\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#RepoRoot}\publish\PingStats\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
@@ -43,3 +44,19 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: deskto
 
 [Run]
 Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: postinstall nowait skipifsilent
+
+[Code]
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ExistingStartupCommand: string;
+begin
+  if CurStep = ssPostInstall then
+  begin
+    if RegQueryStringValue(HKEY_CURRENT_USER,
+      'Software\Microsoft\Windows\CurrentVersion\Run', 'PingStats',
+      ExistingStartupCommand) then
+      RegWriteStringValue(HKEY_CURRENT_USER,
+        'Software\Microsoft\Windows\CurrentVersion\Run', 'PingStats',
+        '"' + ExpandConstant('{app}\{#AppExeName}') + '"');
+  end;
+end;

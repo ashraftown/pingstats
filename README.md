@@ -95,7 +95,7 @@ Requires [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) an
 2. Run the installer. It installs PingStats for your Windows user, adds a Start menu shortcut, and can create a desktop shortcut.
 3. Optionally enable **Open at Login** in the app.
 
-The installer does not require administrator access. The **`PingStats-*-windows.zip`** release remains available as a portable build.
+The installer does not require administrator access. It also updates the app's existing **Open at Login** entry to point to the installed copy. The **`PingStats-*-windows.zip`** release remains available as a portable build. The x64 build also runs through Windows emulation on Windows 11 ARM.
 
 ---
 
