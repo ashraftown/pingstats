@@ -5,5 +5,12 @@
   "description": "PingStats — live network latency on macOS, Windows, and the web.",
   "workspaces": [
     "apps/web"
-  ]
+  ],
+  "scripts": {
+    "icons:generate": "node scripts/generate-icons.mjs",
+    "icons:check": "node scripts/generate-icons.mjs --check"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.5"
+  }
 }
