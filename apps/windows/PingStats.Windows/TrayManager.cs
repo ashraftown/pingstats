@@ -179,7 +179,8 @@ public class TrayManager : IDisposable
         try
         {
             using var tmp = Icon.FromHandle(hIcon);
-            var newIcon = (Icon)tmp.Clone();
+            // Give the tray a small-size icon instead of making the shell shrink the 64px image.
+            var newIcon = new Icon(tmp, SystemInformation.SmallIconSize);
             var oldIcon = _notifyIcon.Icon;
             _notifyIcon.Icon = newIcon;
             oldIcon?.Dispose();
