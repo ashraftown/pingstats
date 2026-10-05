@@ -37,6 +37,7 @@ public partial class PopupWindow : Window
     private sealed class Palette
     {
         public Color Background;
+        public Color PopupBackground;
         public Color Border;
         public Color Text;
         public Color Muted;
@@ -63,6 +64,7 @@ public partial class PopupWindow : Window
     private static Palette DarkPalette() => new()
     {
         Background = Hex(0x0B0C0F),
+        PopupBackground = Color.FromArgb(232, 11, 12, 15),
         Border = Color.FromArgb(20, 255, 255, 255),
         Text = Hex(0xF5F6F7),
         Muted = Hex(0x71757D),
@@ -89,6 +91,7 @@ public partial class PopupWindow : Window
     private static Palette LightPalette() => new()
     {
         Background = Hex(0xFFFFFF),
+        PopupBackground = Color.FromArgb(240, 255, 255, 255),
         Border = Hex(0xE0E0E0),
         Text = Hex(0x1A1A1A),
         Muted = Hex(0x6E6E6E),
@@ -198,7 +201,7 @@ public partial class PopupWindow : Window
 
     private void ApplyTheme()
     {
-        PopupBorder.Background = Brush(_pal.Background);
+        PopupBorder.Background = Brush(_pal.PopupBackground);
         PopupBorder.BorderBrush = Brush(_pal.Border);
 
         TitleText.Foreground = Brush(_pal.Text);
