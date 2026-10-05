@@ -1,9 +1,9 @@
-import { GITHUB_REPO, MACOS_DMG, WINDOWS_ZIP } from "../consts";
+import { GITHUB_REPO, MACOS_DMG, WINDOWS_SETUP } from "../consts";
 
 // Ported from t3code apps/marketing/src/lib/releases.ts (stable channel only;
 // PingStats has no nightly train, no Linux build, and no mobile apps).
 // Resolves the exact versioned assets (PingStats-<version>-macos.dmg,
-// PingStats-<version>-windows.zip) instead of relying on the
+// PingStats-<version>-windows-setup.exe) instead of relying on the
 // /releases/latest/download redirect, and exposes the tag for display.
 
 export const RELEASES_URL = `${GITHUB_REPO}/releases`;
@@ -28,12 +28,12 @@ export function pickAsset(
   assets: ReleaseAsset[],
   platform: "mac" | "win",
 ): string | null {
-  const suffix = platform === "mac" ? "-macos.dmg" : "-windows.zip";
+  const suffix = platform === "mac" ? "-macos.dmg" : "-windows-setup.exe";
   return assets.find((a) => a.name.endsWith(suffix))?.browser_download_url ?? null;
 }
 
 export function fallbackUrl(platform: "mac" | "win"): string {
-  return platform === "mac" ? MACOS_DMG : WINDOWS_ZIP;
+  return platform === "mac" ? MACOS_DMG : WINDOWS_SETUP;
 }
 
 export async function fetchLatestRelease(): Promise<Release> {

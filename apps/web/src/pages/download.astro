@@ -1,6 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { GITHUB_REPO, MACOS_DMG, WINDOWS_ZIP } from "../consts";
+import { GITHUB_REPO, MACOS_DMG, WINDOWS_SETUP, WINDOWS_ZIP } from "../consts";
 import { RELEASES_URL } from "../lib/releases";
 import { siteLogo } from "../site";
 ---
@@ -49,13 +49,17 @@ import { siteLogo } from "../site";
           <h2 class="platform-name">Windows</h2>
         </div>
         <div class="download-cards">
-          <a id="dl-win-card" class="download-card" href={WINDOWS_ZIP}>
+          <a id="dl-win-card" class="download-card" href={WINDOWS_SETUP}>
             <span class="card-text">
               <span class="card-arch">Windows 10, 11</span>
-              <span class="card-format">.zip</span>
+              <span class="card-format">.exe installer</span>
             </span>
           </a>
         </div>
+        <p class="intel-note">
+          Prefer a portable copy? Download the
+          <a href={WINDOWS_ZIP} target="_blank" rel="noopener noreferrer">.zip</a>.
+        </p>
       </section>
     </div>
 
