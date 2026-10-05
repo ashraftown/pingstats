@@ -1,6 +1,6 @@
 # App icons
 
-`pingstats-app-icon-source.png` is the source image for the macOS and Windows
+`app-icon.png` is the source image for the macOS and Windows
 app icons. Keep it square and opaque. Do not edit the generated app icon files
 directly.
 
