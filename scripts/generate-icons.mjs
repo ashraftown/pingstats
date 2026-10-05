@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const sourcePath = join(root, "assets/icons/master.png");
+const sourcePath = join(root, "assets/icons/pingstats-app-icon-source.png");
 const macOSPath = join(root, "apps/macos/PingStats/Assets.xcassets/AppIcon.appiconset");
 const windowsPath = join(root, "apps/windows/PingStats.Windows/Resources");
 const checkOnly = process.argv.includes("--check");

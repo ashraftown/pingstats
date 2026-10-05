@@ -1,7 +1,8 @@
 # App icons
 
-`master.png` is the source image for the macOS and Windows app icons. Keep it
-square and opaque. Do not edit the generated app icon files directly.
+`pingstats-app-icon-source.png` is the source image for the macOS and Windows
+app icons. Keep it square and opaque. Do not edit the generated app icon files
+directly.
 
 Run `npm run icons:generate` from the repository root after changing the master
 image. The script creates all macOS asset catalog sizes and the rounded Windows
