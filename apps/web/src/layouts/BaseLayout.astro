@@ -30,7 +30,7 @@ const { title = siteTitle, description = siteDescription } = Astro.props;
 const absolute = (path: string) => new URL(path, siteUrl).toString();
 const canonical = new URL(Astro.url.pathname, siteUrl).toString();
 
-const jsonLd = JSON.stringify({
+const jsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: siteName,
@@ -40,7 +40,7 @@ const jsonLd = JSON.stringify({
   operatingSystem: "macOS, Windows",
   offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
   logo: { "@type": "ImageObject", url: absolute(siteLogo.path) },
-});
+};
 ---
 
 <!doctype html>
