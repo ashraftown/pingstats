@@ -142,12 +142,35 @@ public class TrayManager : IDisposable
             g.FillEllipse(brush, dotX, DotY, DotSize, DotSize);
         }
 
-        using var font = new Font("Consolas", 54, FontStyle.Bold, GraphicsUnit.Pixel);
-        var textSize = g.MeasureString(displayText, font, int.MaxValue, StringFormat);
-        var textX = (IconWidth - textSize.Width) / 2;
-        var textY = DotY + DotSize;
+        const float maxFontSize = 54;
+        const float minFontSize = 8;
+        const float horizontalPadding = 2;
+        const float bottomPadding = 1;
+        var textArea = new SizeF(
+            IconWidth - horizontalPadding * 2,
+            IconHeight - DotY - DotSize - bottomPadding);
+        var fontSize = maxFontSize;
+        Font font;
+        SizeF textSize;
+        while (true)
+        {
+            font = new Font("Consolas", fontSize, FontStyle.Regular, GraphicsUnit.Pixel);
+            textSize = g.MeasureString(displayText, font, int.MaxValue, StringFormat);
+            if ((textSize.Width <= textArea.Width && textSize.Height <= textArea.Height)
+                || fontSize <= minFontSize)
+                break;
 
-        g.DrawString(displayText, font, _textBrush, textX, textY, StringFormat);
+            font.Dispose();
+            fontSize = Math.Max(minFontSize, fontSize - 1);
+        }
+
+        using (font)
+        {
+            var textX = (IconWidth - textSize.Width) / 2;
+            var textY = DotY + DotSize;
+
+            g.DrawString(displayText, font, _textBrush, textX, textY, StringFormat);
+        }
 
         var hIcon = bitmap.GetHicon();
         try
