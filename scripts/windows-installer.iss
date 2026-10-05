@@ -46,17 +46,41 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: deskto
 Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: postinstall nowait skipifsilent
 
 [Code]
-procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ExistingStartupEnabled: Boolean;
+
+function InitializeSetup(): Boolean;
 var
   ExistingStartupCommand: string;
 begin
-  if CurStep = ssPostInstall then
+  ExistingStartupEnabled := RegQueryStringValue(HKEY_CURRENT_USER,
+    'Software\Microsoft\Windows\CurrentVersion\Run', 'PingStats',
+    ExistingStartupCommand);
+  Result := True;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if (CurStep = ssPostInstall) and ExistingStartupEnabled then
   begin
+    RegWriteStringValue(HKEY_CURRENT_USER,
+      'Software\Microsoft\Windows\CurrentVersion\Run', 'PingStats',
+      '"' + ExpandConstant('{app}\{#AppExeName}') + '"');
+  end;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  StartupCommand: string;
+  InstalledCommand: string;
+begin
+  if CurUninstallStep = usUninstall then
+  begin
+    InstalledCommand := '"' + ExpandConstant('{app}\{#AppExeName}') + '"';
     if RegQueryStringValue(HKEY_CURRENT_USER,
       'Software\Microsoft\Windows\CurrentVersion\Run', 'PingStats',
-      ExistingStartupCommand) then
-      RegWriteStringValue(HKEY_CURRENT_USER,
-        'Software\Microsoft\Windows\CurrentVersion\Run', 'PingStats',
-        '"' + ExpandConstant('{app}\{#AppExeName}') + '"');
+      StartupCommand) and (CompareText(StartupCommand, InstalledCommand) = 0) then
+      RegDeleteValue(HKEY_CURRENT_USER,
+        'Software\Microsoft\Windows\CurrentVersion\Run', 'PingStats');
   end;
 end;
