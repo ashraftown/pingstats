@@ -114,8 +114,11 @@ public class TrayManager : IDisposable
                 item.Text = _pingManager.IsRunning ? "Stop" : "Start";
             }
 
+            var latency = _pingManager.LatestLatencyMs is double milliseconds
+                ? $"{(int)Math.Round(milliseconds)}ms"
+                : _pingManager.LatestLatency;
             _notifyIcon.Text = TrayText(_pingManager.IsRunning
-                ? $"PingStats - {_pingManager.Host} - {_pingManager.LatestLatency}"
+                ? $"PingStats - {_pingManager.Host} - {latency}"
                 : "PingStats - Stopped");
         });
     }

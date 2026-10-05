@@ -103,6 +103,22 @@ class PingManager: NSObject, ObservableObject {
         return host.unicodeScalars.allSatisfy { hostCharacters.contains($0) }
     }
 
+    static func isIPAddress(_ raw: String) -> Bool {
+        var address = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let scope = address.firstIndex(of: "%") {
+            address = String(address[..<scope])
+        }
+        if address.hasPrefix("["), address.hasSuffix("]") {
+            address = String(address.dropFirst().dropLast())
+        }
+        if address.contains(":") {
+            var parsed = in6_addr()
+            return address.withCString { inet_pton(AF_INET6, $0, &parsed) == 1 }
+        }
+        var parsed = in_addr()
+        return address.withCString { inet_pton(AF_INET, $0, &parsed) == 1 }
+    }
+
     /// Arguments for one macOS ping. IPv6 addresses get `-6`.
     static func pingArguments(_ address: String) -> [String] {
         var probe = address

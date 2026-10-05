@@ -642,11 +642,8 @@ struct ContentView: View {
         .font(.system(size: 12))
         .foregroundStyle(Color.secondary)
       Spacer()
-      HStack(spacing: 5) {
-        Circle().fill(state.dotColor).frame(width: 5, height: 5)
-        Text(state.pillText)
-          .font(.system(size: 11, weight: .medium))
-      }
+      Text(state.pillText)
+        .font(.system(size: 11, weight: .medium))
       .foregroundStyle(state.pillFg)
       .padding(.horizontal, 9)
       .padding(.vertical, 3)
@@ -664,7 +661,10 @@ struct ContentView: View {
       Text("host")
         .font(.system(size: 11))
         .foregroundStyle(Color.secondary)
-      TextField("hostname or IP", text: $hostField)
+      TextField("hostname or IP", text: Binding(
+        get: { displayedHost },
+        set: { hostField = $0 }
+      ))
         .textFieldStyle(.plain)
         .font(.system(size: 13, design: .monospaced))
         .foregroundStyle(Color.primary)
@@ -678,35 +678,30 @@ struct ContentView: View {
           guard !pingManager.isRunning else { return }
           startWithField()
         }
-      resolveNote
+      if let warning = hostWarning {
+        Text(warning)
+          .font(.system(size: 10))
+          .foregroundStyle(Color(hex: 0xF0958F))
+      }
     }
   }
 
-  private var resolveNote: some View {
-    let text: Text
-    let color: Color
-    let visible: Bool
-    if pingManager.statusMessage == "Invalid host" || pingManager.statusMessage.hasPrefix("Error:") {
-      text = Text(pingManager.statusMessage)
-      color = Color(hex: 0xF0958F)
-      visible = true
-    } else if !pingManager.resolvedIP.isEmpty {
-      text = Text("resolves to ") + Text(pingManager.resolvedIP)
-      color = Color.secondary
-      visible = true
-    } else if state == .resolving {
-      text = Text("resolving…")
-      color = Color.secondary
-      visible = true
-    } else {
-      text = Text(" ")
-      color = Color.secondary
-      visible = false
+  private var displayedHost: String {
+    guard pingManager.isRunning,
+          !PingManager.isIPAddress(hostField),
+          !pingManager.resolvedIP.isEmpty,
+          pingManager.resolvedIP != hostField else { return hostField }
+    return "\(hostField) (\(pingManager.resolvedIP))"
+  }
+
+  private var hostWarning: String? {
+    if pingManager.statusMessage.hasPrefix("Error:") {
+      return pingManager.statusMessage
     }
-    return text
-      .font(.system(size: 10, design: .monospaced))
-      .foregroundStyle(color)
-      .opacity(visible ? 1 : 0)
+    if !pingManager.isRunning && pingManager.statusMessage == "Invalid host" {
+      return pingManager.statusMessage
+    }
+    return nil
   }
 
   // MARK: Interval
