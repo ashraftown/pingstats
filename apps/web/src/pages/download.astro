@@ -49,13 +49,17 @@ import { siteLogo } from "../site";
           <h2 class="platform-name">Windows</h2>
         </div>
         <div class="download-cards">
-          <a id="dl-win-card" class="download-card" href={WINDOWS_ZIP}>
+          <a id="dl-win-card" class="download-card" href={RELEASES_URL}>
             <span class="card-text">
               <span class="card-arch">Windows 10, 11</span>
-              <span class="card-format">.zip</span>
+              <span class="card-format">.exe installer</span>
             </span>
           </a>
         </div>
+        <p class="intel-note">
+          Prefer a portable copy? Download the
+          <a href={WINDOWS_ZIP} target="_blank" rel="noopener noreferrer">.zip</a>.
+        </p>
       </section>
     </div>
 
@@ -69,7 +73,7 @@ import { siteLogo } from "../site";
 </BaseLayout>
 
 <script>
-  import { fetchLatestRelease, fallbackUrl, pickAsset, RELEASES_URL } from "../lib/releases";
+  import { fetchLatestRelease, pickAsset, RELEASES_URL } from "../lib/releases";
 
   const versionLabel = document.getElementById("version-label")!;
   const changelogLink = document.getElementById("changelog-link") as HTMLAnchorElement;
@@ -81,11 +85,13 @@ import { siteLogo } from "../site";
       const release = await fetchLatestRelease();
       versionLabel.textContent = release.tag_name;
       if (release.html_url) changelogLink.href = release.html_url;
-      if (macCard) macCard.href = pickAsset(release.assets ?? [], "mac") ?? fallbackUrl("mac");
-      if (winCard) winCard.href = pickAsset(release.assets ?? [], "win") ?? fallbackUrl("win");
+      if (macCard) macCard.href = pickAsset(release.assets ?? [], "mac") ?? RELEASES_URL;
+      if (winCard) winCard.href = pickAsset(release.assets ?? [], "win") ?? RELEASES_URL;
     } catch {
       versionLabel.textContent = "Releases";
       changelogLink.href = RELEASES_URL;
+      if (macCard) macCard.href = RELEASES_URL;
+      if (winCard) winCard.href = RELEASES_URL;
     }
   }
 
