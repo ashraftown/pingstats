@@ -18,6 +18,7 @@ import {
   siteTitle,
   siteUrl,
 } from "../site";
+import { serializeJsonLd } from "../lib/jsonLd.mjs";
 
 interface Props {
   title?: string;
@@ -29,7 +30,7 @@ const { title = siteTitle, description = siteDescription } = Astro.props;
 const absolute = (path: string) => new URL(path, siteUrl).toString();
 const canonical = new URL(Astro.url.pathname, siteUrl).toString();
 
-const jsonLd = JSON.stringify({
+const jsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: siteName,
@@ -39,7 +40,7 @@ const jsonLd = JSON.stringify({
   operatingSystem: "macOS, Windows",
   offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
   logo: { "@type": "ImageObject", url: absolute(siteLogo.path) },
-});
+};
 ---
 
 <!doctype html>
@@ -72,7 +73,8 @@ const jsonLd = JSON.stringify({
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={absolute(siteShareImage.path)} />
     <meta name="twitter:image:alt" content={siteShareImage.alt} />
-    <script type="application/ld+json" set:html={jsonLd} />
+    {/* Escape < via serializeJsonLd so no value can close the script tag early. */}
+    <script type="application/ld+json" set:html={serializeJsonLd(jsonLd)} />
     <link
       rel="preload"
       href={jetbrainsMonoLatinUrl}
