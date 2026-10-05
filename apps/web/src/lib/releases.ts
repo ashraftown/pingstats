@@ -1,4 +1,4 @@
-import { GITHUB_REPO, MACOS_DMG, WINDOWS_SETUP } from "../consts";
+import { GITHUB_REPO } from "../consts";
 
 // Ported from t3code apps/marketing/src/lib/releases.ts (stable channel only;
 // PingStats has no nightly train, no Linux build, and no mobile apps).
@@ -29,11 +29,21 @@ export function pickAsset(
   platform: "mac" | "win",
 ): string | null {
   const suffix = platform === "mac" ? "-macos.dmg" : "-windows-setup.exe";
-  return assets.find((a) => a.name.endsWith(suffix))?.browser_download_url ?? null;
+  const matches = assets.filter((a) => a.name.endsWith(suffix));
+  // Prefer the versioned asset over the unversioned release alias.
+  return (matches.find((a) => /^PingStats-\d/.test(a.name)) ?? matches[0])
+    ?.browser_download_url ?? null;
 }
 
-export function fallbackUrl(platform: "mac" | "win"): string {
-  return platform === "mac" ? MACOS_DMG : WINDOWS_SETUP;
+// Resolves the exact versioned download for a platform. Falls back to the
+// releases page when the GitHub API fails, so links never 404.
+export async function resolveDownloadUrl(platform: "mac" | "win"): Promise<string> {
+  try {
+    const release = await fetchLatestRelease();
+    return pickAsset(release.assets ?? [], platform) ?? RELEASES_URL;
+  } catch {
+    return RELEASES_URL;
+  }
 }
 
 export async function fetchLatestRelease(): Promise<Release> {

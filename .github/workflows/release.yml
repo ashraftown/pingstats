@@ -162,7 +162,6 @@ jobs:
           $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
           & $iscc "/DAppVersion=$env:VERSION" "/DOutputVersion=$env:VERSION" scripts/windows-installer.iss
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE" }
-          Copy-Item "dist/PingStats-$env:VERSION-windows-setup.exe" "dist/PingStats-windows-setup.exe"
 
       - name: Zip artifact
         run: |
@@ -177,7 +176,6 @@ jobs:
             PingStats-${{ needs.meta.outputs.version }}-windows.zip
             PingStats-windows.zip
             dist/PingStats-${{ needs.meta.outputs.version }}-windows-setup.exe
-            dist/PingStats-windows-setup.exe
 
       - name: Attach to GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -185,7 +183,6 @@ jobs:
         with:
           files: |
             dist/PingStats-${{ needs.meta.outputs.version }}-windows-setup.exe
-            dist/PingStats-windows-setup.exe
             PingStats-${{ needs.meta.outputs.version }}-windows.zip
             PingStats-windows.zip
           generate_release_notes: true
