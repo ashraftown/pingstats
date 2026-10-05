@@ -22,6 +22,8 @@ public class TrayManager : IDisposable
     private const int DotSize = 7;
     private const int DotY = 0;
     private const int MaxTrayLatencyMs = 999;
+    private const int TwoDigitFontSize = 48;
+    private const int ThreeDigitFontSize = 32;
     private static readonly StringFormat StringFormat = StringFormat.GenericTypographic;
 
     public event Action? TrayIconClicked;
@@ -143,58 +145,13 @@ public class TrayManager : IDisposable
             g.FillEllipse(brush, dotX, DotY, DotSize, DotSize);
         }
 
-        const float maxFontSize = 54;
-        const float minFontSize = 8;
-        const float horizontalPadding = 2;
-        const float bottomPadding = 1;
-        var textArea = new SizeF(
-            IconWidth - horizontalPadding * 2,
-            IconHeight - DotY - DotSize - bottomPadding);
-        var font = new Font("Consolas", minFontSize, FontStyle.Regular, GraphicsUnit.Pixel);
+        var fontSize = displayText.Length == 3 ? ThreeDigitFontSize : TwoDigitFontSize;
+        using var font = new Font("Consolas", fontSize, FontStyle.Regular, GraphicsUnit.Pixel);
         var textSize = g.MeasureString(displayText, font, int.MaxValue, StringFormat);
-        if (FitsTextArea(textSize, textArea))
-        {
-            var largestFont = new Font("Consolas", maxFontSize, FontStyle.Regular, GraphicsUnit.Pixel);
-            var largestTextSize = g.MeasureString(displayText, largestFont, int.MaxValue, StringFormat);
-            if (FitsTextArea(largestTextSize, textArea))
-            {
-                font.Dispose();
-                font = largestFont;
-                textSize = largestTextSize;
-            }
-            else
-            {
-                largestFont.Dispose();
-                var low = minFontSize;
-                var high = maxFontSize;
-                for (var i = 0; i < 5; i++)
-                {
-                    var fontSize = (low + high) / 2;
-                    var candidate = new Font("Consolas", fontSize, FontStyle.Regular, GraphicsUnit.Pixel);
-                    var candidateSize = g.MeasureString(displayText, candidate, int.MaxValue, StringFormat);
-                    if (FitsTextArea(candidateSize, textArea))
-                    {
-                        font.Dispose();
-                        font = candidate;
-                        textSize = candidateSize;
-                        low = fontSize;
-                    }
-                    else
-                    {
-                        candidate.Dispose();
-                        high = fontSize;
-                    }
-                }
-            }
-        }
+        var textX = (IconWidth - textSize.Width) / 2;
+        var textY = DotY + DotSize;
 
-        using (font)
-        {
-            var textX = (IconWidth - textSize.Width) / 2;
-            var textY = DotY + DotSize;
-
-            g.DrawString(displayText, font, _textBrush, textX, textY, StringFormat);
-        }
+        g.DrawString(displayText, font, _textBrush, textX, textY, StringFormat);
 
         var hIcon = bitmap.GetHicon();
         try
@@ -210,9 +167,6 @@ public class TrayManager : IDisposable
             DestroyIcon(hIcon);
         }
     }
-
-    private static bool FitsTextArea(SizeF textSize, SizeF textArea) =>
-        textSize.Width <= textArea.Width && textSize.Height <= textArea.Height;
 
     private Color GetColor()
     {
