@@ -39,6 +39,28 @@ public class PingManagerTests
         Assert.Equal("Invalid host", mgr.StatusMessage);
     }
 
+    [Fact]
+    public void Unresolvable_host_waits_for_dns_and_never_fakes_the_ip()
+    {
+        using var mgr = new PingManager();
+        try
+        {
+            mgr.StartPinging("pingstats-test.invalid");
+            var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+            while (DateTime.UtcNow < deadline && mgr.StatusMessage == "Resolving...")
+                Thread.Sleep(100);
+
+            Assert.Equal("Waiting for DNS...", mgr.StatusMessage);
+            Assert.True(mgr.IsRunning);
+            Assert.Equal(string.Empty, mgr.ResolvedIP);
+            Assert.Empty(mgr.PingResultsSnapshot());
+        }
+        finally
+        {
+            mgr.StopPinging();
+        }
+    }
+
     [Theory]
     [InlineData(7, 5)]
     [InlineData(0, 1)]

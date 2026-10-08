@@ -28,4 +28,13 @@ final class PingManagerTests: XCTestCase {
         XCTAssertEqual(PingManager.pingArguments("fe80::1"), ["-6", "-c", "1", "-W", "2000", "fe80::1"])
         XCTAssertEqual(PingManager.pingArguments("[::1]"), ["-6", "-c", "1", "-W", "2000", "::1"])
     }
+
+    func testIsIPAddress() {
+        XCTAssertTrue(PingManager.isIPAddress("8.8.8.8"))
+        XCTAssertTrue(PingManager.isIPAddress("::1"))
+        XCTAssertTrue(PingManager.isIPAddress("[fe80::1]"))
+        XCTAssertTrue(PingManager.isIPAddress("fe80::1%en0"))
+        XCTAssertFalse(PingManager.isIPAddress("example.com"))
+        XCTAssertFalse(PingManager.isIPAddress(""))
+    }
 }

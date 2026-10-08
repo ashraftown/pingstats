@@ -461,7 +461,8 @@ public partial class PopupWindow : Window
         StatusText.Text = pillText;
         if (running && !System.Net.IPAddress.TryParse(_pingManager.Host, out _)
             && !string.IsNullOrEmpty(_pingManager.ResolvedIP)
-            && !string.Equals(_pingManager.Host, _pingManager.ResolvedIP, StringComparison.OrdinalIgnoreCase))
+            && !string.Equals(PingManager.NormalizeProbeAddress(_pingManager.Host),
+                _pingManager.ResolvedIP, StringComparison.OrdinalIgnoreCase))
             HostTextBox.Text = $"{_pingManager.Host} ({_pingManager.ResolvedIP})";
         string? hostWarning = !running && _pingManager.StatusMessage == "Invalid host"
             ? _pingManager.StatusMessage
