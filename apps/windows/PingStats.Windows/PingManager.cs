@@ -31,6 +31,12 @@ public class PingManager : IDisposable
     private bool _isPingInFlight;
     private int _generation;
     private string _probeAddress = "";
+    /// Generation whose DNS lookup is outstanding, or -1 when idle.
+    private int _resolveGeneration = -1;
+    /// Timer for the next DNS attempt while a target stays unresolved.
+    private Timer? _resolveRetryTimer;
+    /// Delay between DNS retries while the target stays unresolved.
+    private static readonly TimeSpan ResolveRetryInterval = TimeSpan.FromSeconds(3);
 
     private const string DefaultHost = "8.8.8.8";
     private const double DefaultInterval = 1.0;
@@ -198,6 +204,8 @@ public class PingManager : IDisposable
                 notify = StateChanged;
                 _pingTimer?.Dispose();
                 _pingTimer = null;
+                // A late lookup for the previous session drops itself; free the slot.
+                _resolveGeneration = -1;
             }
         }
 
@@ -205,25 +213,81 @@ public class PingManager : IDisposable
         if (rejected)
             return;
 
-        ResolveHost(target, resolvedHost =>
+        AttemptResolve(target, gen);
+    }
+
+    /// Resolve `target`, then start probing it. If DNS does not answer, retry
+    /// at `ResolveRetryInterval` until either DNS answers or the session
+    /// changes, so monitoring resumes on its own after an offline start.
+    /// Brackets are stripped first so IP literals resolve locally.
+    private void AttemptResolve(string target, int generation)
+    {
+        lock (_lock)
+        {
+            if (!IsRunning || Host != target || _generation != generation)
+                return;
+            // One lookup at a time per session; a retry timer never stacks.
+            if (_resolveGeneration >= 0)
+                return;
+            _resolveGeneration = generation;
+        }
+
+        ResolveHost(NormalizeProbeAddress(target), resolvedHost =>
         {
             Action? inner = null;
             lock (_lock)
             {
-                if (!IsRunning || Host != target || _generation != gen)
+                if (_resolveGeneration != generation)
+                    return; // A newer session owns the in-flight slot now.
+                _resolveGeneration = -1;
+
+                if (!IsRunning || Host != target || _generation != generation)
                     return;
 
-                ResolvedIP = resolvedHost;
-                _probeAddress = resolvedHost;
-                StatusMessage = "Connecting...";
-                inner = StateChanged;
-                _isPingInFlight = true;
-                PerformPing(target, gen, resolvedHost);
-                ScheduleTimer(target, gen);
+                _resolveRetryTimer?.Dispose();
+                _resolveRetryTimer = null;
+
+                if (resolvedHost is null)
+                {
+                    StatusMessage = "Waiting for DNS...";
+                    inner = StateChanged;
+                    ScheduleResolveRetry(target, generation);
+                }
+                else
+                {
+                    ResolvedIP = resolvedHost;
+                    _probeAddress = resolvedHost;
+                    StatusMessage = "Connecting...";
+                    inner = StateChanged;
+                    _isPingInFlight = true;
+                    PerformPing(target, generation, resolvedHost);
+                    ScheduleTimer(target, generation);
+                }
             }
 
             inner?.Invoke();
         });
+    }
+
+    /// Schedule the next DNS attempt for a target that stays unresolved.
+    private void ScheduleResolveRetry(string target, int generation)
+    {
+        _resolveRetryTimer?.Dispose();
+        var retry = new Timer(ResolveRetryInterval.TotalMilliseconds)
+        {
+            AutoReset = false,
+        };
+        retry.Elapsed += (_, _) =>
+        {
+            lock (_lock)
+            {
+                if (!IsRunning || Host != target || _generation != generation)
+                    return;
+            }
+            AttemptResolve(target, generation);
+        };
+        _resolveRetryTimer = retry;
+        _resolveRetryTimer.Start();
     }
 
     public void SetInterval(double seconds)
@@ -239,7 +303,7 @@ public class PingManager : IDisposable
                 notify = StateChanged;
             }
 
-            if (IsRunning && !_isPingInFlight)
+            if (IsRunning && !_isPingInFlight && _probeAddress.Length > 0)
                 ScheduleTimer(Host, _generation);
         }
 
@@ -257,9 +321,11 @@ public class PingManager : IDisposable
             {
                 if (!IsRunning || Host != target || _isPingInFlight || _generation != generation)
                     return;
+                // DNS still pending; the resolve path restarts the schedule.
+                if (string.IsNullOrEmpty(_probeAddress))
+                    return;
                 _isPingInFlight = true;
-                var probe = string.IsNullOrEmpty(_probeAddress) ? target : _probeAddress;
-                PerformPing(target, generation, probe);
+                PerformPing(target, generation, _probeAddress);
             }
         };
         _pingTimer.AutoReset = false;
@@ -275,7 +341,7 @@ public class PingManager : IDisposable
         _pingTimer.Start();
     }
 
-    private static void ResolveHost(string host, Action<string> completion)
+    private static void ResolveHost(string host, Action<string?> completion)
     {
         System.Threading.ThreadPool.QueueUserWorkItem(_ =>
         {
@@ -284,11 +350,11 @@ public class PingManager : IDisposable
                 var addresses = Dns.GetHostAddresses(host);
                 var ipv4 = addresses.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork);
                 var ipv6 = addresses.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetworkV6);
-                completion((ipv4 ?? ipv6)?.ToString() ?? host);
+                completion((ipv4 ?? ipv6)?.ToString());
             }
             catch
             {
-                completion(host);
+                completion(null);
             }
         });
     }
@@ -301,6 +367,9 @@ public class PingManager : IDisposable
             _generation++;
             _pingTimer?.Dispose();
             _pingTimer = null;
+            _resolveRetryTimer?.Dispose();
+            _resolveRetryTimer = null;
+            _resolveGeneration = -1;
             IsRunning = false;
             _isPingInFlight = false;
             IsConnected = false;

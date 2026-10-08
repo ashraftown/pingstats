@@ -19,10 +19,16 @@ class PingManager: NSObject, ObservableObject {
     @Published var intervalSeconds: Double
 
     private var queue = DispatchQueue(label: "com.pingapp.ping")
+    /// DNS lookups run here so a slow resolver never delays probes waiting on
+    /// the shared ping queue.
+    private let resolveQueue = DispatchQueue(label: "com.pingapp.resolve")
     private var pingTimer: Timer?
     private var generation = 0
     private var probeActive = false
     private var probeAddress = ""
+
+    /// Delay between DNS retries after a failed resolve.
+    private static let resolveRetrySeconds: TimeInterval = 3
 
     private static let hostKey = "PingStats.host"
     private static let intervalKey = "PingStats.intervalSeconds"
@@ -162,7 +168,8 @@ class PingManager: NSObject, ObservableObject {
         let gen = generation
         probeActive = false
         probeAddress = ""
-        let target = host
+        pingTimer?.invalidate()
+        pingTimer = nil
         pingResults.removeAll()
         statusMessage = "Resolving..."
         latestLatency = "--"
@@ -173,20 +180,41 @@ class PingManager: NSObject, ObservableObject {
         isRunning = true
         isConnected = false
 
-        pingTimer?.invalidate()
-        pingTimer = nil
+        let target = host
+        attemptResolve(for: target, generation: gen)
+    }
 
-        resolveHost(target) { [weak self] resolvedHost in
+    /// Resolve `target`, then start probing it. If DNS does not answer, retry
+    /// every `resolveRetrySeconds` until it does (or the session changes), so
+    /// monitoring resumes on its own after an offline start. IP literals
+    /// resolve locally and never block on DNS.
+    private func attemptResolve(for target: String, generation gen: Int) {
+        resolveQueue.async { [weak self] in
             guard let self = self else { return }
+            let address = Self.lookupIPv4or6(target)
 
             DispatchQueue.main.async {
                 guard self.isRunning, self.host == target, self.generation == gen else { return }
 
-                self.resolvedIP = resolvedHost
-                self.probeAddress = resolvedHost
-                self.statusMessage = "Connecting..."
-                self.performPing(host: target, generation: gen, probeAddress: resolvedHost)
+                if Self.isIPAddress(target) || address != nil {
+                    let effective = address ?? target
+                    self.resolvedIP = effective
+                    self.probeAddress = effective
+                    self.statusMessage = "Connecting..."
+                    self.performPing(host: target, generation: gen, probeAddress: effective)
+                    return
+                }
+
+                self.statusMessage = "Waiting for DNS..."
+                self.scheduleResolveRetry(for: target, generation: gen)
             }
+        }
+    }
+
+    private func scheduleResolveRetry(for target: String, generation gen: Int) {
+        resolveQueue.asyncAfter(deadline: .now() + Self.resolveRetrySeconds) { [weak self] in
+            guard let self = self else { return }
+            self.attemptResolve(for: target, generation: gen)
         }
     }
 
@@ -196,7 +224,7 @@ class PingManager: NSObject, ObservableObject {
         intervalSeconds = normalized
         UserDefaults.standard.set(normalized, forKey: Self.intervalKey)
 
-        guard isRunning, !probeActive else { return }
+        guard isRunning, !probeActive, !probeAddress.isEmpty else { return }
         scheduleTimer(for: host, generation: generation)
     }
 
@@ -206,23 +234,21 @@ class PingManager: NSObject, ObservableObject {
         let timer = Timer(timeInterval: intervalSeconds, repeats: false) { [weak self] _ in
             guard let self else { return }
             guard self.isRunning, self.host == target, self.generation == gen, !self.probeActive else { return }
-            let address = self.probeAddress.isEmpty ? target : self.probeAddress
-            self.performPing(host: target, generation: gen, probeAddress: address)
+            // DNS still pending; the resolve retry will start the first probe.
+            guard !self.probeAddress.isEmpty else { return }
+            self.performPing(host: target, generation: gen, probeAddress: self.probeAddress)
         }
         RunLoop.main.add(timer, forMode: .common)
         pingTimer = timer
     }
 
-    private func resolveHost(_ host: String, completion: @escaping (String) -> Void) {
-        queue.async {
-            if let address = Self.lookup(host, family: AF_INET) ?? Self.lookup(host, family: AF_INET6) {
-                completion(address)
-                return
-            }
-            completion(host)
-        }
+    /// Resolve a target to an address string via DNS, preferring IPv4.
+    /// Returns nil when DNS does not answer.
+    private static func lookupIPv4or6(_ target: String) -> String? {
+        lookup(target, family: AF_INET) ?? lookup(target, family: AF_INET6)
     }
 
+    /// Resolve one address family; returns nil when DNS does not answer.
     private static func lookup(_ host: String, family: Int32) -> String? {
         var hints = addrinfo()
         hints.ai_family = family
