@@ -1,6 +1,5 @@
 using System;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Microsoft.Win32;
@@ -17,14 +16,7 @@ public class TrayManager : IDisposable
     private SolidBrush _textBrush = new(Color.White);
     private bool _disposed;
 
-    private const int IconWidth = 64;
-    private const int IconHeight = 64;
-    private const int DotSize = 7;
-    private const int DotY = 0;
     private const int MaxTrayLatencyMs = 999;
-    private const int TwoDigitFontSize = 48;
-    private const int ThreeDigitFontSize = 32;
-    private static readonly StringFormat StringFormat = StringFormat.GenericTypographic;
 
     public event Action? TrayIconClicked;
 
@@ -131,27 +123,7 @@ public class TrayManager : IDisposable
         if (_disposed) return;
         var color = GetColor();
         var displayText = GetDisplayText();
-
-        using var bitmap = new Bitmap(IconWidth, IconHeight);
-        using var g = Graphics.FromImage(bitmap);
-        g.SmoothingMode = SmoothingMode.AntiAlias;
-        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-        g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
-        g.Clear(Color.Transparent);
-
-        var dotX = (IconWidth - DotSize) / 2;
-        using (var brush = new SolidBrush(color))
-        {
-            g.FillEllipse(brush, dotX, DotY, DotSize, DotSize);
-        }
-
-        var fontSize = displayText.Length == 3 ? ThreeDigitFontSize : TwoDigitFontSize;
-        using var font = new Font("Consolas", fontSize, FontStyle.Regular, GraphicsUnit.Pixel);
-        var textSize = g.MeasureString(displayText, font, int.MaxValue, StringFormat);
-        var textX = (IconWidth - textSize.Width) / 2;
-        var textY = DotY + DotSize;
-
-        g.DrawString(displayText, font, _textBrush, textX, textY, StringFormat);
+        using var bitmap = TrayIconRenderer.Render(displayText, color, _textBrush.Color);
 
         var hIcon = bitmap.GetHicon();
         try

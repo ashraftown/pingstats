@@ -92,6 +92,9 @@ jobs:
       - name: Test
         run: dotnet test apps/windows/PingStats.Windows.Tests/PingStats.Windows.Tests.csproj -c Release
 
+      - name: Test tray rendering
+        run: dotnet test apps/windows/PingStats.Windows.Rendering.Tests/PingStats.Windows.Rendering.Tests.csproj -c Release
+
       - name: Build Release
         run: dotnet build apps/windows/PingStats.Windows/PingStats.Windows.csproj -c Release --no-restore
 
