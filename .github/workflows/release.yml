@@ -185,6 +185,6 @@ jobs:
             dist/PingStats-${{ needs.meta.outputs.version }}-windows-setup.exe
             PingStats-${{ needs.meta.outputs.version }}-windows.zip
             PingStats-windows.zip
-          generate_release_notes: true
+          # The macOS job generates the notes. Setting it here appends a second copy.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
