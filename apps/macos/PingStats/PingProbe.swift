@@ -245,9 +245,16 @@ private enum Target {
             address.sin6_family = sa_family_t(AF_INET6)
             address.sin6_len = UInt8(MemoryLayout<sockaddr_in6>.size)
             if let zone, !zone.isEmpty {
-                let index = zone.withCString { if_nametoindex($0) }
-                guard index != 0 else { return nil }
-                address.sin6_scope_id = index
+                // A scope is either an interface index such as %5 or a name
+                // such as %en0.
+                if let index = UInt32(zone) {
+                    guard index != 0 else { return nil }
+                    address.sin6_scope_id = index
+                } else {
+                    let index = zone.withCString { if_nametoindex($0) }
+                    guard index != 0 else { return nil }
+                    address.sin6_scope_id = index
+                }
             }
             self = .ipv6(address)
         } else {

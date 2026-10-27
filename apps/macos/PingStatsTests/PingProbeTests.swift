@@ -91,6 +91,12 @@ final class PingProbeTests: XCTestCase {
         }
     }
 
+    func testAcceptsNumericIPv6Scope() {
+        let result = PingProbe.run(address: "fe80::1%1", timeout: 0.5)
+
+        XCTAssertNotEqual(result, .failure("Invalid address"))
+    }
+
     // MARK: Helpers
 
     private func reply(family: AddressFamily, sequence: UInt16) -> [UInt8] {
