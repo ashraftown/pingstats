@@ -115,9 +115,10 @@ The installer does not require administrator access. It also updates the app's e
 
 ### macOS
 
-- Shells out to `/sbin/ping -c 1` and parses `time=… ms` (same numbers as Terminal)
-- Menu bar shows the **latest** sample; popup keeps **min/avg/max** of the successes in the last 30 attempts. A timeout is a gap on the chart.
-- Sandbox is **off** so `ping` can run
+- Sends one ICMP echo request from an unprivileged datagram socket, so no `ping` subprocess runs and no root access is needed
+- Supports IPv4 and IPv6, including scoped addresses such as `fe80::1%en0`. Names prefer IPv4 and fall back to IPv6 when there is no A record
+- Menu bar shows the **latest** sample; popup keeps **min/avg/max** of the successes in the last 30 attempts. A timeout is a gap on the chart. Local and network errors show as `Error: …` under the host
+- The address is resolved again after three failed probes, so a network change recovers without a restart
 
 ### Windows
 

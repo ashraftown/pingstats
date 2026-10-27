@@ -1,12 +1,6 @@
 import XCTest
 
 final class PingManagerTests: XCTestCase {
-    func testParsePingOutput() {
-        XCTAssertEqual(PingManager.parsePingOutput("64 bytes from 8.8.8.8: icmp_seq=0 ttl=117 time=12.5 ms"), 12.5)
-        XCTAssertEqual(PingManager.parsePingOutput("time=0.4ms"), 0.4)
-        XCTAssertNil(PingManager.parsePingOutput("Request timeout for icmp_seq 0"))
-    }
-
     func testNormalizedInterval() {
         XCTAssertEqual(PingManager.normalizedInterval(7), 5)
         XCTAssertEqual(PingManager.normalizedInterval(0), 1)
@@ -18,15 +12,11 @@ final class PingManagerTests: XCTestCase {
         XCTAssertTrue(PingManager.isValidHost("8.8.8.8"))
         XCTAssertTrue(PingManager.isValidHost("example.com"))
         XCTAssertTrue(PingManager.isValidHost("fe80::1"))
+        XCTAssertTrue(PingManager.isValidHost("fe80::1%en0"))
         XCTAssertFalse(PingManager.isValidHost("-c"))
         XCTAssertFalse(PingManager.isValidHost("bad host"))
+        XCTAssertFalse(PingManager.isValidHost("fe80::1%en0%en1"))
         XCTAssertFalse(PingManager.isValidHost(""))
-    }
-
-    func testPingArguments() {
-        XCTAssertEqual(PingManager.pingArguments("8.8.8.8"), ["-c", "1", "-W", "2000", "8.8.8.8"])
-        XCTAssertEqual(PingManager.pingArguments("fe80::1"), ["-6", "-c", "1", "-W", "2000", "fe80::1"])
-        XCTAssertEqual(PingManager.pingArguments("[::1]"), ["-6", "-c", "1", "-W", "2000", "::1"])
     }
 
     func testIsIPAddress() {
@@ -36,5 +26,34 @@ final class PingManagerTests: XCTestCase {
         XCTAssertTrue(PingManager.isIPAddress("fe80::1%en0"))
         XCTAssertFalse(PingManager.isIPAddress("example.com"))
         XCTAssertFalse(PingManager.isIPAddress(""))
+    }
+
+    func testProbeTimeoutStaysBelowInterval() {
+        for interval in PingManager.supportedIntervals {
+            let timeout = PingProbe.timeout(forInterval: interval)
+
+            XCTAssertLessThan(timeout, interval)
+            XCTAssertGreaterThanOrEqual(timeout, 0.3)
+            XCTAssertLessThanOrEqual(timeout, 2)
+        }
+    }
+
+    func testMonitorsLoopbackHost() {
+        let manager = PingManager()
+        manager.host = "localhost"
+        manager.startPinging()
+
+        let deadline = Date().addingTimeInterval(3)
+        while !manager.isConnected && Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.02))
+        }
+
+        XCTAssertTrue(manager.isConnected)
+        XCTAssertEqual(manager.resolvedIP, "127.0.0.1")
+        XCTAssertGreaterThan(manager.latestLatencyMs ?? 0, 0)
+
+        manager.stopPinging()
+        XCTAssertFalse(manager.isRunning)
+        XCTAssertFalse(manager.isConnected)
     }
 }

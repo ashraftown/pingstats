@@ -1,5 +1,4 @@
 import Foundation
-import Network
 import Darwin
 
 class PingManager: NSObject, ObservableObject {
@@ -18,7 +17,9 @@ class PingManager: NSObject, ObservableObject {
     /// Seconds between pings. Default 1. Clamped to 1...60.
     @Published var intervalSeconds: Double
 
-    private var queue = DispatchQueue(label: "com.pingapp.ping")
+    /// Probes run concurrently so a restarted probe never waits behind the one
+    /// it replaced. `probeActive` still keeps a single probe per schedule.
+    private var queue = DispatchQueue(label: "com.pingapp.ping", attributes: .concurrent)
     /// DNS lookups run here so a slow resolver never delays probes waiting on
     /// the shared ping queue.
     private let resolveQueue = DispatchQueue(label: "com.pingapp.resolve")
@@ -26,9 +27,14 @@ class PingManager: NSObject, ObservableObject {
     private var generation = 0
     private var probeActive = false
     private var probeAddress = ""
+    /// Failed probes since the last reply. A few in a row trigger a fresh DNS
+    /// lookup, so a stale address or a changed network recovers on its own.
+    private var consecutiveFailures = 0
 
     /// Delay between DNS retries after a failed resolve.
     private static let resolveRetrySeconds: TimeInterval = 3
+    /// Failed probes before the address is resolved again.
+    private static let failuresBeforeResolve = 3
 
     private static let hostKey = "PingStats.host"
     private static let intervalKey = "PingStats.intervalSeconds"
@@ -38,19 +44,9 @@ class PingManager: NSObject, ObservableObject {
     private static let defaultInterval: Double = 1.0
     private static let sampleWindow = 30
     static let supportedIntervals: [Double] = [1, 5, 10, 30, 60]
-    private static let pingOutputRegex = try? NSRegularExpression(
-        pattern: "time=([0-9.]+)\\s*ms",
-        options: []
-    )
     private static let hostCharacters = CharacterSet(
         charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-:[]"
     )
-
-    private enum ProbeResult {
-        case sample(Double)
-        case timeout
-        case failed(String)
-    }
 
     override init() {
         let ud = UserDefaults.standard
@@ -87,7 +83,7 @@ class PingManager: NSObject, ObservableObject {
         return supportedIntervals.min { abs($0 - clamped) < abs($1 - clamped) } ?? defaultInterval
     }
 
-    /// True when the string can be passed to ping without being read as a flag.
+    /// True when the string is a host name or IP address that can be probed.
     static func isValidHost(_ raw: String) -> Bool {
         let host = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !host.isEmpty, host.count <= 253, !host.hasPrefix("-") else { return false }
@@ -125,30 +121,6 @@ class PingManager: NSObject, ObservableObject {
         return address.withCString { inet_pton(AF_INET, $0, &parsed) == 1 }
     }
 
-    /// Arguments for one macOS ping. IPv6 addresses get `-6`.
-    static func pingArguments(_ address: String) -> [String] {
-        var probe = address
-        if probe.hasPrefix("["), probe.hasSuffix("]"), probe.count >= 2 {
-            probe = String(probe.dropFirst().dropLast())
-        }
-        var args = ["-c", "1", "-W", "2000"]
-        if probe.contains(":") {
-            args.insert("-6", at: 0)
-        }
-        args.append(probe)
-        return args
-    }
-
-    static func parsePingOutput(_ output: String) -> Double? {
-        guard let regex = pingOutputRegex else { return nil }
-        let range = NSRange(output.startIndex..., in: output)
-        if let match = regex.firstMatch(in: output, options: [], range: range),
-           let timeRange = Range(match.range(at: 1), in: output) {
-            return Double(output[timeRange])
-        }
-        return nil
-    }
-
     /// Start (or restart) continuous pings. Uses `host` and `intervalSeconds`.
     func startPinging(host newHost: String? = nil) {
         if let newHost = newHost?.trimmingCharacters(in: .whitespacesAndNewlines), !newHost.isEmpty {
@@ -168,6 +140,7 @@ class PingManager: NSObject, ObservableObject {
         let gen = generation
         probeActive = false
         probeAddress = ""
+        consecutiveFailures = 0
         pingTimer?.invalidate()
         pingTimer = nil
         pingResults.removeAll()
@@ -181,14 +154,19 @@ class PingManager: NSObject, ObservableObject {
         isConnected = false
 
         let target = host
-        attemptResolve(for: target, generation: gen)
+        attemptResolve(for: target, generation: gen, startProbeOnSuccess: true)
     }
 
     /// Resolve `target`, then start probing it. If DNS does not answer, retry
     /// every `resolveRetrySeconds` until it does (or the session changes), so
-    /// monitoring resumes on its own after an offline start. IP literals
-    /// resolve locally and never block on DNS.
-    private func attemptResolve(for target: String, generation gen: Int) {
+    /// monitoring resumes on its own after an offline start. IP literals skip
+    /// DNS. IPv4 is preferred, IPv6 is used when a name has no A record.
+    private func attemptResolve(for target: String, generation gen: Int, startProbeOnSuccess: Bool) {
+        if Self.isIPAddress(target) {
+            accept(address: target, host: target, generation: gen, startProbeOnSuccess: startProbeOnSuccess)
+            return
+        }
+
         resolveQueue.async { [weak self] in
             guard let self = self else { return }
             let address = Self.lookupIPv4or6(target)
@@ -196,50 +174,68 @@ class PingManager: NSObject, ObservableObject {
             DispatchQueue.main.async {
                 guard self.isRunning, self.host == target, self.generation == gen else { return }
 
-                if Self.isIPAddress(target) || address != nil {
-                    let effective = address ?? target
-                    self.resolvedIP = effective
-                    self.probeAddress = effective
-                    self.statusMessage = "Connecting..."
-                    self.performPing(host: target, generation: gen, probeAddress: effective)
+                guard let address else {
+                    self.statusMessage = "Waiting for DNS..."
+                    self.scheduleResolveRetry(for: target, generation: gen, startProbeOnSuccess: startProbeOnSuccess)
                     return
                 }
 
-                self.statusMessage = "Waiting for DNS..."
-                self.scheduleResolveRetry(for: target, generation: gen)
+                self.accept(address: address, host: target, generation: gen, startProbeOnSuccess: startProbeOnSuccess)
             }
         }
     }
 
-    private func scheduleResolveRetry(for target: String, generation gen: Int) {
+    private func accept(address: String, host target: String, generation gen: Int, startProbeOnSuccess: Bool) {
+        resolvedIP = address
+        probeAddress = address
+        guard startProbeOnSuccess else { return }
+        statusMessage = "Connecting..."
+        performPing(host: target, generation: gen, probeAddress: address)
+    }
+
+    private func scheduleResolveRetry(for target: String, generation gen: Int, startProbeOnSuccess: Bool) {
         resolveQueue.asyncAfter(deadline: .now() + Self.resolveRetrySeconds) { [weak self] in
             guard let self = self else { return }
-            self.attemptResolve(for: target, generation: gen)
+            self.attemptResolve(for: target, generation: gen, startProbeOnSuccess: startProbeOnSuccess)
         }
     }
 
-    /// Update interval; persists and reschedules if currently running and idle.
+    /// Update interval; persists and restarts the timer if currently running.
+    /// A probe in flight was sized for the old interval, so it is abandoned and
+    /// one probe with the new timeout starts at once.
     func setInterval(_ seconds: Double) {
         let normalized = Self.normalizedInterval(seconds)
         intervalSeconds = normalized
         UserDefaults.standard.set(normalized, forKey: Self.intervalKey)
 
-        guard isRunning, !probeActive, !probeAddress.isEmpty else { return }
-        scheduleTimer(for: host, generation: generation)
+        guard isRunning, !probeAddress.isEmpty else { return }
+        if probeActive {
+            generation += 1
+            probeActive = false
+            performPing(host: host, generation: generation, probeAddress: probeAddress)
+        }
+        restartTimer(for: host, generation: generation)
     }
 
-    private func scheduleTimer(for target: String, generation gen: Int) {
-        pingTimer?.invalidate()
+    /// One repeating timer keeps the sample cadence steady. A tick that lands
+    /// while a probe is still in flight is skipped.
+    private func ensureTimer(for target: String, generation gen: Int) {
+        guard pingTimer == nil else { return }
 
-        let timer = Timer(timeInterval: intervalSeconds, repeats: false) { [weak self] _ in
+        let timer = Timer(timeInterval: intervalSeconds, repeats: true) { [weak self] _ in
             guard let self else { return }
-            guard self.isRunning, self.host == target, self.generation == gen, !self.probeActive else { return }
-            // DNS still pending; the resolve retry will start the first probe.
-            guard !self.probeAddress.isEmpty else { return }
+            guard self.isRunning, self.host == target, self.generation == gen,
+                  !self.probeActive, !self.probeAddress.isEmpty else { return }
             self.performPing(host: target, generation: gen, probeAddress: self.probeAddress)
         }
         RunLoop.main.add(timer, forMode: .common)
         pingTimer = timer
+    }
+
+    private func restartTimer(for target: String, generation gen: Int) {
+        pingTimer?.invalidate()
+        pingTimer = nil
+        ensureTimer(for: target, generation: gen)
     }
 
     /// Resolve a target to an address string via DNS, preferring IPv4.
@@ -277,6 +273,7 @@ class PingManager: NSObject, ObservableObject {
         generation += 1
         probeActive = false
         probeAddress = ""
+        consecutiveFailures = 0
         pingTimer?.invalidate()
         pingTimer = nil
         isRunning = false
@@ -291,53 +288,24 @@ class PingManager: NSObject, ObservableObject {
     private func performPing(host: String, generation gen: Int, probeAddress: String) {
         guard !probeActive else { return }
         probeActive = true
+        let timeout = PingProbe.timeout(forInterval: intervalSeconds)
         queue.async { [weak self] in
             guard let self else { return }
-            let result = self.runPing(probeAddress)
+            let result = PingProbe.run(address: probeAddress, timeout: timeout)
             DispatchQueue.main.async {
                 guard self.generation == gen else { return }
                 self.probeActive = false
                 guard self.isRunning, self.host == host else { return }
                 self.apply(result)
-                self.scheduleTimer(for: host, generation: gen)
+                self.ensureTimer(for: host, generation: gen)
             }
         }
     }
 
-    private func runPing(_ address: String) -> ProbeResult {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/sbin/ping")
-        process.arguments = Self.pingArguments(address)
-
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-
-        do {
-            try process.run()
-            let watchdog = DispatchWorkItem {
-                if process.isRunning {
-                    process.terminate()
-                }
-            }
-            DispatchQueue.global().asyncAfter(deadline: .now() + 3, execute: watchdog)
-            process.waitUntilExit()
-            watchdog.cancel()
-
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            let output = String(data: data, encoding: .utf8) ?? ""
-            if let latency = Self.parsePingOutput(output) {
-                return .sample(latency)
-            }
-            return .timeout
-        } catch {
-            return .failed(error.localizedDescription)
-        }
-    }
-
-    private func apply(_ result: ProbeResult) {
+    private func apply(_ result: PingProbeResult) {
         switch result {
-        case .sample(let latency):
+        case .latency(let latency):
+            consecutiveFailures = 0
             latestLatencyMs = latency
             latestLatency = String(format: "%.2f ms", latency)
             append(latency)
@@ -350,13 +318,24 @@ class PingManager: NSObject, ObservableObject {
             latestLatency = "✗"
             latestLatencyMs = nil
             append(nil)
-        case .failed(let message):
+            handleProbeFailure()
+        case .failure(let message):
             statusMessage = "Error: \(message)"
             isConnected = false
             latestLatency = "✗"
             latestLatencyMs = nil
             append(nil)
+            handleProbeFailure()
         }
+    }
+
+    /// After a few failed probes in a row, resolve again. A Wi-Fi change or a
+    /// bad address family choice then recovers without a manual restart.
+    private func handleProbeFailure() {
+        consecutiveFailures += 1
+        guard consecutiveFailures >= Self.failuresBeforeResolve else { return }
+        consecutiveFailures = 0
+        attemptResolve(for: host, generation: generation, startProbeOnSuccess: false)
     }
 
     private func append(_ sample: Double?) {
