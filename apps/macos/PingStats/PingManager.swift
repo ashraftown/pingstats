@@ -27,6 +27,9 @@ class PingManager: NSObject, ObservableObject {
     private var generation = 0
     private var probeActive = false
     private var probeAddress = ""
+    /// Identifies the probe in flight, so an interval change can abandon just
+    /// that probe without touching session-wide DNS work.
+    private var probeToken = 0
     /// Failed probes since the last reply. A few in a row trigger a fresh DNS
     /// lookup, so a stale address or a changed network recovers on its own.
     private var consecutiveFailures = 0
@@ -232,7 +235,6 @@ class PingManager: NSObject, ObservableObject {
 
         guard isRunning, !probeAddress.isEmpty else { return }
         if probeActive {
-            generation += 1
             probeActive = false
             performPing(host: host, generation: generation, probeAddress: probeAddress)
         }
@@ -311,12 +313,14 @@ class PingManager: NSObject, ObservableObject {
     private func performPing(host: String, generation gen: Int, probeAddress: String) {
         guard !probeActive else { return }
         probeActive = true
+        probeToken += 1
+        let token = probeToken
         let timeout = PingProbe.timeout(forInterval: intervalSeconds)
         queue.async { [weak self] in
             guard let self else { return }
             let result = PingProbe.run(address: probeAddress, timeout: timeout)
             DispatchQueue.main.async {
-                guard self.generation == gen else { return }
+                guard self.generation == gen, self.probeToken == token else { return }
                 self.probeActive = false
                 guard self.isRunning, self.host == host else { return }
                 self.apply(result)
