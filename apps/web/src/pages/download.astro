@@ -1,6 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { GITHUB_REPO, MACOS_DMG, WINDOWS_ZIP } from "../consts";
+import { GITHUB_REPO } from "../consts";
 import { RELEASES_URL } from "../lib/releases";
 import { siteLogo } from "../site";
 ---
@@ -29,7 +29,7 @@ import { siteLogo } from "../site";
           <h2 class="platform-name">macOS</h2>
         </div>
         <div class="download-cards">
-          <a id="dl-mac-card" class="download-card" href={MACOS_DMG}>
+          <a id="dl-mac-card" class="download-card" href={RELEASES_URL}>
             <span class="card-text">
               <span class="card-arch">Apple Silicon (arm64)</span>
               <span class="card-format">.dmg</span>
@@ -58,7 +58,7 @@ import { siteLogo } from "../site";
         </div>
         <p class="intel-note">
           Prefer a portable copy? Download the
-          <a href={WINDOWS_ZIP} target="_blank" rel="noopener noreferrer">.zip</a>.
+          <a id="dl-zip" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">.zip</a>.
         </p>
       </section>
     </div>
@@ -79,6 +79,7 @@ import { siteLogo } from "../site";
   const changelogLink = document.getElementById("changelog-link") as HTMLAnchorElement;
   const macCard = document.getElementById("dl-mac-card") as HTMLAnchorElement | null;
   const winCard = document.getElementById("dl-win-card") as HTMLAnchorElement | null;
+  const zipCard = document.getElementById("dl-zip") as HTMLAnchorElement | null;
 
   async function load() {
     try {
@@ -87,11 +88,13 @@ import { siteLogo } from "../site";
       if (release.html_url) changelogLink.href = release.html_url;
       if (macCard) macCard.href = pickAsset(release.assets ?? [], "mac") ?? RELEASES_URL;
       if (winCard) winCard.href = pickAsset(release.assets ?? [], "win") ?? RELEASES_URL;
+      if (zipCard) zipCard.href = pickAsset(release.assets ?? [], "win-zip") ?? RELEASES_URL;
     } catch {
       versionLabel.textContent = "Releases";
       changelogLink.href = RELEASES_URL;
       if (macCard) macCard.href = RELEASES_URL;
       if (winCard) winCard.href = RELEASES_URL;
+      if (zipCard) zipCard.href = RELEASES_URL;
     }
   }
 
