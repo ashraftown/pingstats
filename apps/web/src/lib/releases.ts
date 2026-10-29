@@ -3,8 +3,9 @@ import { GITHUB_REPO } from "../consts";
 // Ported from t3code apps/marketing/src/lib/releases.ts (stable channel only;
 // PingStats has no nightly train, no Linux build, and no mobile apps).
 // Resolves the exact versioned assets (PingStats-<version>-macos.dmg,
-// PingStats-<version>-windows-setup.exe) instead of relying on the
-// /releases/latest/download redirect, and exposes the tag for display.
+// PingStats-<version>-windows-setup.exe, PingStats-<version>-windows.zip)
+// instead of relying on the unversioned release aliases, and exposes the tag
+// for display.
 
 export const RELEASES_URL = `${GITHUB_REPO}/releases`;
 
@@ -24,20 +25,27 @@ export interface Release {
 
 const CACHE_KEY = "pingstats-release";
 
+export type AssetPlatform = "mac" | "win" | "win-zip";
+
+const ASSET_SUFFIX: Record<AssetPlatform, string> = {
+  mac: "-macos.dmg",
+  win: "-windows-setup.exe",
+  "win-zip": "-windows.zip",
+};
+
 export function pickAsset(
   assets: ReleaseAsset[],
-  platform: "mac" | "win",
+  platform: AssetPlatform,
 ): string | null {
-  const suffix = platform === "mac" ? "-macos.dmg" : "-windows-setup.exe";
-  const matches = assets.filter((a) => a.name.endsWith(suffix));
-  // Prefer the versioned asset over the unversioned release alias.
+  const matches = assets.filter((a) => a.name.endsWith(ASSET_SUFFIX[platform]));
+  // Older releases also carry an unversioned alias; prefer the versioned file.
   return (matches.find((a) => /^PingStats-\d/.test(a.name)) ?? matches[0])
     ?.browser_download_url ?? null;
 }
 
 // Resolves the exact versioned download for a platform. Falls back to the
 // releases page when the GitHub API fails, so links never 404.
-export async function resolveDownloadUrl(platform: "mac" | "win"): Promise<string> {
+export async function resolveDownloadUrl(platform: AssetPlatform): Promise<string> {
   try {
     const release = await fetchLatestRelease();
     return pickAsset(release.assets ?? [], platform) ?? RELEASES_URL;
